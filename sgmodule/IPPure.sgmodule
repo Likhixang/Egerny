@@ -1,6 +1,12 @@
 #!name=IP-Pure
 #!desc=节点 IP 纯净度检测（IPPure）
 #!category=网络检测
+#!arguments=Proxy:DIRECT
+#!arguments-desc=Proxy: 选择策略组,默认DIRECT. @from wish
+
+[Rulel
+DOMAIN-SUFFIX,ippure.com,
+{{{Proxy}}}
 
 [Panel]
 IP-Pure = script-name=IP-Pure, title=IP 纯净度, content=刷新中…, style=info, update-interval=300
