@@ -1,0 +1,9 @@
+#!name=IP-Pure
+#!desc=节点 IP 纯净度检测（IPPure）
+#!category=网络检测
+
+[Panel]
+IP-Pure = script-name=IP-Pure, title=IP 纯净度, content=刷新中…, style=info, update-interval=300
+
+[Script]
+IP-Pure = type=generic, timeout=5, script-path=https://gist.githubusercontent.com/Likhixang/022b8b4082a3ab6385aacdf65540eb01/raw/IPPure.js
