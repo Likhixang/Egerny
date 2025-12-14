@@ -1,5 +1,5 @@
 #!name=IP-Pure
-#!desc=节点 IP 纯净度检测（IPPure）
+#!desc=节点 IP 纯净度检测（IPPure）,请先在参数内选择策略组。
 #!category=网络检测
 #!arguments=Proxy:DIRECT
 #!arguments-desc=Proxy: 选择策略组,默认DIRECT. @from wish
