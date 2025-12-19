@@ -96,7 +96,7 @@ hostname = duckduckgo.com
 ---
 
 **Author:** [Li Khixang](https://github.com/Likhixang)  
-**Project:** [Looney / X-search](https://github.com/Likhixang/Looney)  
+**Project:** [Egerny / X-search](https://github.com/Likhixang/Egerny)  
 **License:** MIT
 
 ---
