@@ -1,6 +1,5 @@
 #!name = X-search
-#!desc = Safari快速搜索和页面跳转，关键词+空格+内容，即刻直达
-#!openUrl = https://raw.githubusercontent.com/Likhixang/Egerny/refs/heads/main/markdown/X-search.md
+#!desc = Safari快速搜索和页面跳转，关键词+空格+内容，即刻直达\n更多技巧: https://github.com/Likhixang/Egerny/blob/main/markdown/X-search_cn.md\nMore Skills: https://github.com/Likhixang/Egerny/blob/main/markdown/X-search_en.md
 #!author = Li Khixang
 #!homepage = https://github.com/Likhixang
 #!icon = https://raw.githubusercontent.com/Likhixang/Egerny/refs/heads/main/icons/X-search.png
