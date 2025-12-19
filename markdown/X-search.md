@@ -76,7 +76,7 @@ Quickword + Space + Search content
 | `gimg cat` | [Google 图片 cat](https://www.google.com/search?tbm=isch&q=cat) |
 | `gh X-search` | [GitHub 搜索 X-search](https://github.com/search?q=X-search) |
 | `fanyi bonjour` | [Google 翻译 bonjour](https://translate.google.com/#view=home&op=translate&sl=auto&tl=zh-CN&text=bonjour) |
-| `tf Looney` | Google 搜索 “Looney site:testflight.apple.com” |
+| `tf Wechat` | Google 搜索 “Wechat site:testflight.apple.com” |
 
 ---
 
