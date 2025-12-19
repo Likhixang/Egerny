@@ -1,10 +1,10 @@
 #!name = X-search
-#!desc = Safari quick search and page jump, keywords + space + content for instant redirect
+#!desc = Safari快速搜索和页面跳转，关键词+空格+内容，即刻直达
 #!openUrl = https://raw.githubusercontent.com/Likhixang/Egerny/refs/heads/main/markdown/X-search.md
 #!author = Li Khixang
 #!homepage = https://github.com/Likhixang
 #!icon = https://raw.githubusercontent.com/Likhixang/Egerny/refs/heads/main/icons/X-search.png
-#!date = 2025-12-19 20:32:00
+#!date = 2025-12-19 20:36:00
 [URL Rewrite]
 ^(?i)https:\/\/duckduckgo\.com\/\?q=bd\+([^&]+).+ https://www.baidu.com/s?wd=$1 307
 ^(?i)https:\/\/duckduckgo\.com\/\?q=bdimg\+([^&]+).+ https://image.baidu.com/search/index?tn=baiduimage&word=$1 307
