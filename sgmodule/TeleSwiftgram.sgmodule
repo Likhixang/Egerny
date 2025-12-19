@@ -1,0 +1,14 @@
+#!name=TeleSwiftgram
+#!desc=Telegram外部链接跳转至Swiftgram
+#!openUrl=https://apps.apple.com/app/id6471879502
+#!author = Li Khixang
+#!homepage = https://github.com/Likhixang
+#!icon = https://raw.githubusercontent.com/lige47/QuanX-icon-rule/main/icon/Swiftgram.png
+#!date = 2025-10-28 18:00:00
+
+
+[URL Rewrite]
+(https:\/\/)?t\.me\/(.+) sg://resolve?domain=$2 302
+
+[MITM]
+hostname = %APPEND% t.me
