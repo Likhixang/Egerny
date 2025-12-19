@@ -14,9 +14,9 @@
 | **Description** | Safari quick search and page jump, keywords + space + content for instant redirect |
 | **Author** | [Li Khixang](https://github.com/Likhixang) |
 | **Homepage** | [GitHub / Likhixang](https://github.com/Likhixang) |
-| **Open URL** | [X-search.md](https://github.com/Likhixang/Looney/blob/main/Markdown/X-search.md) |
-| **Icon** | ![X-search icon](https://raw.githubusercontent.com/Likhixang/Looney/main/Icons/X-search.png) |
-| **Date** | 2025-10-13 08:52:00 |
+| **Open URL** | [X-search.md](https://raw.githubusercontent.com/Likhixang/Egerny/refs/heads/main/markdown/X-search.md) |
+| **Icon** | ![X-search icon](https://raw.githubusercontent.com/Likhixang/Egerny/refs/heads/main/icons/X-search.png) |
+| **Date** | 2025-12-19 20:39:00 |
 
 ---
 
@@ -91,15 +91,7 @@ hostname = duckduckgo.com
 | Date | Change |
 |:------|:--------|
 | **2025-10-13** | Initial release with 17 Quickwords and Bing fallback. |
-
----
-
-## 🚀 Ongoing
-
-- Add multi-language Wikipedia redirects  
-- Add AI search (Claude / Gemini)  
-- Add Apple Developer & App Store shortcuts  
-- Add customizable Quickword config  
+| **2025-12-19** | Loon2Egern. |
 
 ---
 
