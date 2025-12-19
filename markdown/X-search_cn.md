@@ -14,7 +14,6 @@
 | **简介** | Safari 快速搜索与页面直达，通过“关键词 + 空格 + 内容”实现即时重定向 |
 | **作者** | [Li Khixang](https://github.com/Likhixang) |
 | **主页** | [GitHub / Likhixang](https://github.com/Likhixang) |
-| **打开地址** | [X-search.md](https://raw.githubusercontent.com/Likhixang/Egerny/refs/heads/main/markdown/X-search.md) |
 | **图标** | ![X-search icon](https://raw.githubusercontent.com/Likhixang/Egerny/refs/heads/main/icons/X-search.png) |
 | **日期** | 2025-12-19 20:39:00 |
 
