@@ -1,0 +1,14 @@
+#!name=TeleTurrit
+#!desc=Telegram外部链接跳转至Turrit
+#!openUrl=https://apps.apple.com/app/id6471781238
+#!author = Li Khixang
+#!homepage = https://github.com/Likhixang
+#!icon = https://raw.githubusercontent.com/lige47/QuanX-icon-rule/main/icon/Turrit.png
+#!date = 2025-12-05 17:00:00
+
+
+[URL Rewrite]
+(https:\/\/)?t.me\/(.+) turrit://resolve?domain=$2 302
+
+[MITM]
+hostname = %APPEND% t.me
