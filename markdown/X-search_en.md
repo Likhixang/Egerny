@@ -14,7 +14,6 @@
 | **Description** | Safari quick search and page jump, keywords + space + content for instant redirect |
 | **Author** | [Li Khixang](https://github.com/Likhixang) |
 | **Homepage** | [GitHub / Likhixang](https://github.com/Likhixang) |
-| **Open URL** | [X-search.md](https://raw.githubusercontent.com/Likhixang/Egerny/refs/heads/main/markdown/X-search.md) |
 | **Icon** | ![X-search icon](https://raw.githubusercontent.com/Likhixang/Egerny/refs/heads/main/icons/X-search.png) |
 | **Date** | 2025-12-19 20:39:00 |
 
