@@ -1,0 +1,42 @@
+#!name = X-search
+#!desc = Safari quick search and page jump, keywords + space + content for instant redirect
+#!openUrl = https://raw.githubusercontent.com/Likhixang/Egerny/refs/heads/main/markdown/X-search.md
+#!author = Li Khixang
+#!homepage = https://github.com/Likhixang
+#!icon = https://raw.githubusercontent.com/Likhixang/Egerny/refs/heads/main/icons/X-search.png
+#!date = 2025-12-19 20:32:00
+[URL Rewrite]
+^(?i)https:\/\/duckduckgo\.com\/\?q=bd\+([^&]+).+ https://www.baidu.com/s?wd=$1 307
+^(?i)https:\/\/duckduckgo\.com\/\?q=bdimg\+([^&]+).+ https://image.baidu.com/search/index?tn=baiduimage&word=$1 307
+
+^(?i)https:\/\/duckduckgo\.com\/\?q=(b|bing)\+([^&]+).+ https://www.bing.com/search?q=$2 307
+
+^(?i)https:\/\/duckduckgo\.com\/\?q=(g|gg|google)\+([^&]+).+ https://www.google.com/search?q=$2 307
+^(?i)https:\/\/duckduckgo\.com\/\?q=gimg\+([^&]+).+ https://www.google.com/search?tbm=isch&q=$1 307
+
+^(?i)https:\/\/duckduckgo\.com\/\?q=(chatgpt|gpt)\+([^&]+).+ https://chatgpt.com/?hints=search&q=$2 307
+
+^(?i)https:\/\/duckduckgo\.com\/\?q=pp\+([^&]+).+ https://www.perplexity.ai/search/new?q=$1 307
+
+^(?i)https:\/\/duckduckgo\.com\/\?q=(wk|wiki)\+([^&]+).+ https://zh.wikipedia.org/wiki/$2 307
+
+^(?i)https:\/\/duckduckgo\.com\/\?q=qm\+([^&]+).+ https://www.qimai.cn/search/index/country/cn/search/$1 307
+
+^(?i)https:\/\/duckduckgo\.com\/\?q=(gh|github)\+([^&]+).+ https://github.com/search?q=$2 307
+
+^(?i)https:\/\/duckduckgo\.com\/\?q=(tf|testflight)\+([^&]+).+ https://www.google.com/search?as_q=$2&as_sitesearch=testflight.apple.com 307
+
+^(?i)https:\/\/duckduckgo\.com\/\?q=fanyi\+([^&]+).+ https://translate.google.com/#view=home&op=translate&sl=auto&tl=zh-CN&text=$1 307
+
+^(?i)https:\/\/duckduckgo\.com\/\?q=(yt|youtube)\+([^&]+).+ https://www.youtube.com/results?search_query=$2 307
+
+^(?i)https:\/\/duckduckgo\.com\/\?q=pornhub\+([^&]+).+ https://cn.pornhub.com/video/search?search=$1 307
+
+^(?i)https:\/\/duckduckgo\.com\/\?q=tmdb\+([^&]+).+ https://www.themoviedb.org/search?query=$1 307
+
+^(?i)https:\/\/duckduckgo\.com\/\?q=ddg\+([^&]+).+ https://duckduckgo.com/?t=h_&q=$1 307
+
+^https:\/\/duckduckgo\.com\/\?q=([^&]+).+ https://www.bing.com/search?q=$1 307
+
+[MITM]
+hostname = %APPEND% duckduckgo.com,duck.co,improving.duckduckgo.com,links.duckduckgo.com,external-content.duckduckgo.com
