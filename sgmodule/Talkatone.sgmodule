@@ -1,0 +1,97 @@
+#!name = Talkatone
+#!desc = Talkatone 日常使用分流，插件内选择代理指向策略组，默认Proxy。
+#!author = 原作者@LowerTop @YunS 修改@Li_Khixang
+#!icon = https://raw.githubusercontent.com/lige47/QuanX-icon-rule/refs/heads/main/icon/talkatone.png
+#!arguments=Proxy:Proxy
+#!arguments-desc=Proxy: 选择策略组,默认Proxy.
+[Rule]
+# 以下为该软件部分去广告规则
+# DOMAIN-KEYWORD,googleads,REJECT
+DOMAIN-SUFFIX,aax.amazon-adsystem.com,REJECT
+DOMAIN-SUFFIX,aax-fe.amazon-adsystem.com,REJECT
+DOMAIN-SUFFIX,aax-fe-sin.amazon-adsystem.com,REJECT
+DOMAIN-SUFFIX,ads.inmobi.com,REJECT
+DOMAIN-SUFFIX,ads.pubmatic.com,REJECT
+DOMAIN-SUFFIX,adsappier.com,REJECT
+DOMAIN-SUFFIX,amazon-adsystem.com,REJECT
+DOMAIN-SUFFIX,app-analytics-services.com,REJECT
+DOMAIN-SUFFIX,appier.net,REJECT
+DOMAIN-SUFFIX,appiersig.com,REJECT
+DOMAIN-SUFFIX,au.w.inmobi.com,REJECT
+DOMAIN-SUFFIX,b.de.inmobi.com,REJECT
+DOMAIN-SUFFIX,bidder.criteo.com,REJECT
+DOMAIN-SUFFIX,c.amazon-adsystem.com,REJECT
+DOMAIN-SUFFIX,cdn.liftoff-creatives.io,REJECT
+DOMAIN-SUFFIX,cdn.mobilefuse.com,REJECT
+DOMAIN-SUFFIX,cdn2.inner-active.mobi,REJECT
+DOMAIN-SUFFIX,cdn-f.adsmoloco.com,REJECT
+DOMAIN-SUFFIX,config.inmobi.com,REJECT
+DOMAIN-SUFFIX,cr.adsappier.com,REJECT
+DOMAIN-SUFFIX,criteo.com,REJECT
+DOMAIN-SUFFIX,dspbeacons.ihasdsp.inmobi.com,REJECT
+DOMAIN-SUFFIX,dspbeacons.old.ihasdsp.inmobi.com,REJECT
+DOMAIN-SUFFIX,ep7.facebook.com,REJECT
+DOMAIN-SUFFIX,et-eus.w.inmobi.com,REJECT
+DOMAIN-SUFFIX,ets-ap-southeast-1.track.smaato.net,REJECT
+DOMAIN-SUFFIX,exchange-b-events.inner-active.mobi,REJECT
+DOMAIN-SUFFIX,firebaseinstallations.googleapis.com,REJECT
+DOMAIN-SUFFIX,firebaselogging-pa.googleapis.com,REJECT
+DOMAIN-SUFFIX,firebaseremoteconfig.googleapis.com,REJECT
+DOMAIN-SUFFIX,firebase-settings.crashlytics.com,REJECT
+DOMAIN-SUFFIX,fundingchoicesmessages.google.com,REJECT
+DOMAIN-SUFFIX,googleads.g.doubleclick.net,REJECT
+DOMAIN-SUFFIX,googleads.g.doubleclick-cn.net,REJECT
+DOMAIN-SUFFIX,googlesyndication.com,REJECT
+DOMAIN-SUFFIX,gum.criteo.com,REJECT
+DOMAIN-SUFFIX,i.l.inmobicdn.net,REJECT
+DOMAIN-SUFFIX,i.l-dsp.inmobicdn.net,REJECT
+DOMAIN-SUFFIX,ic.de.inmobi.com,REJECT
+DOMAIN-SUFFIX,impression.link,REJECT
+DOMAIN-SUFFIX,impression-asia.liftoff.io,REJECT
+DOMAIN-SUFFIX,ins.track.tappx.com,REJECT
+DOMAIN-SUFFIX,lh3.googleadsserving.cn,REJECT
+DOMAIN-SUFFIX,mads.amazon-adsystem.com,REJECT
+DOMAIN-SUFFIX,mfx.mobilefuse.com,REJECT
+DOMAIN-SUFFIX,mt-usw.appiersig.com,REJECT
+DOMAIN-SUFFIX,pagead2.googlesyndication-cn.com,REJECT
+DOMAIN-SUFFIX,pubmatic.com,REJECT
+DOMAIN-SUFFIX,sdk-dnt.ad.smaato.net,REJECT
+DOMAIN-SUFFIX,sdk-events.inner-active.mobi,REJECT
+DOMAIN-SUFFIX,sdk-files.smaato.net,REJECT
+DOMAIN-SUFFIX,sdk-hb-cfg.smaato.net,REJECT
+DOMAIN-SUFFIX,skadnetworks.fyber.com,REJECT
+DOMAIN-SUFFIX,smaato.net,REJECT
+DOMAIN-SUFFIX,ssp.api.tappx.com,REJECT
+DOMAIN-SUFFIX,supply.inmobicdn.net,REJECT
+DOMAIN-SUFFIX,taboola.com,REJECT
+DOMAIN-SUFFIX,tappx.com,REJECT
+DOMAIN-SUFFIX,tpc.googlesyndication-cn.com,REJECT
+DOMAIN-SUFFIX,tr-asia.adsmoloco.com,REJECT
+DOMAIN-SUFFIX,view.adjust.com,REJECT
+DOMAIN-SUFFIX,vst.c.appier.net,REJECT
+DOMAIN-SUFFIX,wv.inner-active.mobi,REJECT
+DOMAIN-SUFFIX,www.googletagservices-cn.com,REJECT
+
+# 以下为该软件可能需要走代理的规则
+DOMAIN-SUFFIX,tktn.at,{{{Proxy}}}
+DOMAIN-SUFFIX,tktn.be,{{{Proxy}}}
+# 语音留言地址，一般需要代理
+DOMAIN-SUFFIX,vm.talkatone.com,{{{Proxy}}}
+# 贴图服务
+DOMAIN-SUFFIX,tenor.com,{{{Proxy}}}
+
+# 以下为该软件可能需要走直连的规则
+DOMAIN-SUFFIX,agkn.com,DIRECT
+DOMAIN-SUFFIX,cohere.com,DIRECT
+DOMAIN-SUFFIX,crashlytics.com,DIRECT
+DOMAIN-SUFFIX,inmobi.com,DIRECT
+DOMAIN-SUFFIX,inner-active.mobi,DIRECT
+DOMAIN-SUFFIX,ip-api.com,DIRECT
+DOMAIN-SUFFIX,kochava.com,DIRECT
+DOMAIN-SUFFIX,mobilefuse.com,DIRECT
+DOMAIN-SUFFIX,talkatone.com,DIRECT
+IP-CIDR,205.164.56.0/24,DIRECT,no-resolve
+IP-CIDR,216.172.154.0/24,DIRECT,no-resolve
+IP-CIDR,50.117.27.0/24,DIRECT,no-resolve
+IP-CIDR,63.251.124.0/24,DIRECT,no-resolve
+IP-CIDR,69.46.75.0/24,DIRECT,no-resolve
