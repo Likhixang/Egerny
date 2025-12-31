@@ -1,5 +1,5 @@
 #!name=ddgksf2Egern
-#!desc=墨鱼索引页 ddgksf2013.top 添加脚本或重写至Egern工具, 使用前请添加ScriptHub模块.
+#!desc=能添加≠能使用, pathjs严格限制UA, 请先使用其他模块实现所需功能.墨鱼索引页 ddgksf2013.top 添加脚本或重写至Egern工具, 使用前请添加ScriptHub模块.
 #!author=@小白脸 @xream @keywos @ckyb @ddgksf2013 @Li_Khixang
 
 [General]
