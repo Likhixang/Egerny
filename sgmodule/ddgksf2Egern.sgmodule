@@ -1,0 +1,13 @@
+#!name=Script Hub: QX重写&脚本自动转换模块
+#!desc=墨鱼索引页 ddgksf2013.top 添加脚本或重写至Egern工具
+#!author=@小白脸 @xream @keywos @ckyb @ddgksf2013 @Li_Khixang
+
+[General]
+force-http-engine-hosts = %APPEND% script.hub, *.script.hub
+
+[Script]
+OpenConverter =type=http-response, pattern=^https?:\/\/ddgksf2013.top\/$,requires-body=1,max-size=-1,script-path=https://raw.githubusercontent.com/Likhixang/Egerny/main/js/Web.Egern.js, timeout=3500
+Script Hub: 重写转换 = type=http-request, pattern=^https?:\/\/script\.hub\/file\/_start_\/.+type=(?:qx-rewrite|surge-module|all-module), script-path=https://raw.githubusercontent.com/Script-Hub-Org/Script-Hub/main/Rewrite-Parser.js, timeout=300
+
+[MITM]
+hostname = %APPEND% script.hub, *.script.hub, ddgksf2013.top
