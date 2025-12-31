@@ -1,5 +1,5 @@
 name: LoonKissSurge2Egern
-description: 支持直接点击Surge图标给Egern安装使用; 非Loon用户切勿反馈插件任何问题，尊重原创
+description: 支持直接点击Surge图标给Egern安装使用; 非Loon用户切勿反馈插件任何问题，尊重原创，使用前请添加ScriptHub模块.
 author: 原作者@iKeLee
 body_rewrites:
 - response_regex:
