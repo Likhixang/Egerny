@@ -1,14 +1,26 @@
 #!name=TeleSwiftgram
-#!desc=Telegram外部链接跳转至Swiftgram
+#!desc=Telegram 外部链接跳转至 Swiftgram
 #!openUrl=https://apps.apple.com/app/id6471879502
-#!author = Li Khixang
-#!homepage = https://github.com/Likhixang
-#!icon = https://raw.githubusercontent.com/lige47/QuanX-icon-rule/main/icon/Swiftgram.png
-#!date = 2025-10-28 18:00:00
-
+#!author=Li Khixang
+#!homepage=https://github.com/Likhixang
+#!icon=https://raw.githubusercontent.com/lige47/QuanX-icon-rule/main/icon/Swiftgram.png
+#!date=2026-01-02 14:40:00
 
 [URL Rewrite]
-(https:\/\/)?t\.me\/(.+) sg://resolve?domain=$2 302
+# 用户 / 频道 / 群组
+(https:\/\/)?(t\.me|telegram\.me|telegram\.dog)\/([A-Za-z0-9_]+)$ sg://resolve?domain=$3 302
+
+# 指定消息
+(https:\/\/)?(t\.me|telegram\.me|telegram\.dog)\/([A-Za-z0-9_]+)\/([0-9]+)$ sg://resolve?domain=$3&post=$4 302
+
+# 邀请链接（joinchat / +）
+(https:\/\/)?(t\.me|telegram\.me|telegram\.dog)\/(joinchat\/|\+)([A-Za-z0-9_-]+)$ sg://join?invite=$4 302
+
+# 私有频道消息
+(https:\/\/)?(t\.me|telegram\.me|telegram\.dog)\/c\/([0-9]+)\/([0-9]+)$ sg://privatepost?channel=$3&post=$4 302
+
+# 预览页
+(https:\/\/)?telesco\.pe\/(.+)$ sg://resolve?domain=$2 302
 
 [MITM]
-hostname = %APPEND% t.me
+hostname = %APPEND% t.me, telegram.me, telegram.dog, telesco.pe
