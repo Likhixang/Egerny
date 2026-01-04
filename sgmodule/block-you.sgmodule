@@ -1,0 +1,14 @@
+#!name=屏蔽你
+#!desc=Linux.do 屏蔽你不想看到的用户
+#!system=ios
+#!author=原作者@pushduck, 仅修复js路径.
+#!category=Linux.do
+#!arguments=NAMES:username,NOTIFY:on
+#!arguments-desc=NAMES:\n填入多个用户名，逗号分开\n例: neo,floki,user3\n\nNOTIFY:\n屏蔽时通知。开启：on，关闭：off，默认开启
+
+[Script]
+BlockYou = type=http-response,pattern=^https?:\/\/linux\.do\/(new|latest)\.json.*,requires-body=1,max-size=0,binary-body-mode=0,debug=1,script-path=https://raw.githubusercontent.com/Likhixang/Egerny/main/js/block-you.js,argument="NAMES={{{NAMES}}}&NOTIFY={{{NOTIFY}}}"
+
+[MITM]
+hostname = %APPEND% linux.do
+h2 = true
