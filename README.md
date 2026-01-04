@@ -5,7 +5,7 @@
 <!-- Title -->
 
 <div align="center">
-  <img src="https://raw.githubusercontent.com/Likhixang/Egerny/refs/heads/main/icons/Egern.JPG" width="128" height="128">
+  <img src="https://raw.githubusercontent.com/Likhixang/Egerny/main/icons/Egern.jpg" width="128" height="128">
 </div>
 
 <!-- Egern Icon -->
