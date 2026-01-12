@@ -1,0 +1,61 @@
+{
+  "colors" : {
+    "accent" : {
+      "dark" : "#6C7CFF",
+      "light" : "#5A67FF"
+    },
+    "background" : {
+      "dark" : "#000000",
+      "light" : "#FFFFFF"
+    },
+    "blue" : {
+      "dark" : "#6C7CFF",
+      "light" : "#5A67FF"
+    },
+    "cyan" : {
+      "dark" : "#4ADEDE",
+      "light" : "#22C1C3"
+    },
+    "green" : {
+      "dark" : "#34D399",
+      "light" : "#10B981"
+    },
+    "groupedBackground" : {
+      "dark" : "#000000",
+      "light" : "#F6F7FB"
+    },
+    "indigo" : {
+      "dark" : "#7B7CFF",
+      "light" : "#6366F1"
+    },
+    "orange" : {
+      "dark" : "#FF9F43",
+      "light" : "#FF8C1A"
+    },
+    "purple" : {
+      "dark" : "#C084FC",
+      "light" : "#A855F7"
+    },
+    "red" : {
+      "dark" : "#FF6B6B",
+      "light" : "#F44336"
+    },
+    "secondaryGroupedBackground" : {
+      "dark" : "#121212",
+      "light" : "#FFFFFF"
+    },
+    "teal" : {
+      "dark" : "#2DD4BF",
+      "light" : "#14B8A6"
+    },
+    "tertiaryGroupedBackground" : {
+      "dark" : "#1E1E1E",
+      "light" : "#EEF0F6"
+    },
+    "yellow" : {
+      "dark" : "#FACC15",
+      "light" : "#EAB308"
+    }
+  },
+  "name" : "OriginOS"
+}
