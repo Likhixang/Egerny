@@ -1,0 +1,61 @@
+{
+  "colors" : {
+    "accent" : {
+      "dark" : "#8AB4F8",
+      "light" : "#1A73E8"
+    },
+    "background" : {
+      "dark" : "#121212",
+      "light" : "#FFFFFF"
+    },
+    "blue" : {
+      "dark" : "#8AB4F8",
+      "light" : "#1A73E8"
+    },
+    "cyan" : {
+      "dark" : "#80DEEA",
+      "light" : "#24C1E0"
+    },
+    "green" : {
+      "dark" : "#81C995",
+      "light" : "#34A853"
+    },
+    "groupedBackground" : {
+      "dark" : "#121212",
+      "light" : "#F5F5F5"
+    },
+    "indigo" : {
+      "dark" : "#9FA8DA",
+      "light" : "#3F51B5"
+    },
+    "orange" : {
+      "dark" : "#F9AB00",
+      "light" : "#F29900"
+    },
+    "purple" : {
+      "dark" : "#D7AEFB",
+      "light" : "#A142F4"
+    },
+    "red" : {
+      "dark" : "#F28B82",
+      "light" : "#EA4335"
+    },
+    "secondaryGroupedBackground" : {
+      "dark" : "#1E1E1E",
+      "light" : "#FFFFFF"
+    },
+    "teal" : {
+      "dark" : "#66E0D3",
+      "light" : "#00BFA5"
+    },
+    "tertiaryGroupedBackground" : {
+      "dark" : "#2A2A2A",
+      "light" : "#EEEEEE"
+    },
+    "yellow" : {
+      "dark" : "#FDD663",
+      "light" : "#FBBC04"
+    }
+  },
+  "name" : "Android"
+}
