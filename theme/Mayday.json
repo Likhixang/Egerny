@@ -1,0 +1,61 @@
+{
+  "colors" : {
+    "accent" : {
+      "dark" : "#0FA36A",
+      "light" : "#19B977"
+    },
+    "background" : {
+      "dark" : "#000000",
+      "light" : "#FFFFFF"
+    },
+    "blue" : {
+      "dark" : "#1F8FC4",
+      "light" : "#2FA8DE"
+    },
+    "cyan" : {
+      "dark" : "#1AA3A8",
+      "light" : "#3BC7C9"
+    },
+    "green" : {
+      "dark" : "#0E8E56",
+      "light" : "#13AF68"
+    },
+    "groupedBackground" : {
+      "dark" : "#000000",
+      "light" : "#F2F2F7"
+    },
+    "indigo" : {
+      "dark" : "#D65A12",
+      "light" : "#F06A1A"
+    },
+    "orange" : {
+      "dark" : "#D65A12",
+      "light" : "#F06A1A"
+    },
+    "purple" : {
+      "dark" : "#9B5A8F",
+      "light" : "#E274A9"
+    },
+    "red" : {
+      "dark" : "#C93A2A",
+      "light" : "#E95412"
+    },
+    "secondaryGroupedBackground" : {
+      "dark" : "#1C1C1E",
+      "light" : "#FFFFFF"
+    },
+    "teal" : {
+      "dark" : "#138F87",
+      "light" : "#21C6B3"
+    },
+    "tertiaryGroupedBackground" : {
+      "dark" : "#2C2C2E",
+      "light" : "#F2F2F7"
+    },
+    "yellow" : {
+      "dark" : "#E0B800",
+      "light" : "#FFE009"
+    }
+  },
+  "name" : "Mayday"
+}
