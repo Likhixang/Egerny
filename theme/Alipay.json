@@ -1,0 +1,61 @@
+{
+  "colors" : {
+    "accent" : {
+      "dark" : "#1677FF",
+      "light" : "#1677FF"
+    },
+    "background" : {
+      "dark" : "#000000",
+      "light" : "#FFFFFF"
+    },
+    "blue" : {
+      "dark" : "#1677FF",
+      "light" : "#1677FF"
+    },
+    "cyan" : {
+      "dark" : "#22B8CF",
+      "light" : "#22B8CF"
+    },
+    "green" : {
+      "dark" : "#30BF78",
+      "light" : "#30BF78"
+    },
+    "groupedBackground" : {
+      "dark" : "#000000",
+      "light" : "#F5F5F5"
+    },
+    "indigo" : {
+      "dark" : "#3A6FF7",
+      "light" : "#3A6FF7"
+    },
+    "orange" : {
+      "dark" : "#FF8F1F",
+      "light" : "#FF8F1F"
+    },
+    "purple" : {
+      "dark" : "#7B61FF",
+      "light" : "#7B61FF"
+    },
+    "red" : {
+      "dark" : "#FF4D4F",
+      "light" : "#FF4D4F"
+    },
+    "secondaryGroupedBackground" : {
+      "dark" : "#1C1C1E",
+      "light" : "#FFFFFF"
+    },
+    "teal" : {
+      "dark" : "#20C997",
+      "light" : "#20C997"
+    },
+    "tertiaryGroupedBackground" : {
+      "dark" : "#2C2C2E",
+      "light" : "#FAFAFA"
+    },
+    "yellow" : {
+      "dark" : "#FAAD14",
+      "light" : "#FAAD14"
+    }
+  },
+  "name" : "Alipay"
+}
