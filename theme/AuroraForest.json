@@ -1,0 +1,61 @@
+{
+  "colors" : {
+    "accent" : {
+      "dark" : "#82B1FF",
+      "light" : "#4A90E2"
+    },
+    "background" : {
+      "dark" : "#0F172A",
+      "light" : "#F8FAFC"
+    },
+    "blue" : {
+      "dark" : "#60A5FA",
+      "light" : "#2563EB"
+    },
+    "cyan" : {
+      "dark" : "#22D3EE",
+      "light" : "#0891B2"
+    },
+    "green" : {
+      "dark" : "#34D399",
+      "light" : "#059669"
+    },
+    "groupedBackground" : {
+      "dark" : "#1E293B",
+      "light" : "#F1F5F9"
+    },
+    "indigo" : {
+      "dark" : "#818CF8",
+      "light" : "#4F46E5"
+    },
+    "orange" : {
+      "dark" : "#FB923C",
+      "light" : "#EA580C"
+    },
+    "purple" : {
+      "dark" : "#A78BFA",
+      "light" : "#7C3AED"
+    },
+    "red" : {
+      "dark" : "#F87171",
+      "light" : "#DC2626"
+    },
+    "secondaryGroupedBackground" : {
+      "dark" : "#334155",
+      "light" : "#FFFFFF"
+    },
+    "teal" : {
+      "dark" : "#2DD4BF",
+      "light" : "#0D9488"
+    },
+    "tertiaryGroupedBackground" : {
+      "dark" : "#475569",
+      "light" : "#E2E8F0"
+    },
+    "yellow" : {
+      "dark" : "#FBBF24",
+      "light" : "#D97706"
+    }
+  },
+  "name" : "Aurora Forest"
+}
