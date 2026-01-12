@@ -1,0 +1,61 @@
+{
+  "colors" : {
+    "accent" : {
+      "dark" : "#78AEED",
+      "light" : "#3584E4"
+    },
+    "background" : {
+      "dark" : "#1E1E1E",
+      "light" : "#FFFFFF"
+    },
+    "blue" : {
+      "dark" : "#78AEED",
+      "light" : "#3584E4"
+    },
+    "cyan" : {
+      "dark" : "#62C6F5",
+      "light" : "#1C9ED8"
+    },
+    "green" : {
+      "dark" : "#57E389",
+      "light" : "#2EC27E"
+    },
+    "groupedBackground" : {
+      "dark" : "#1E1E1E",
+      "light" : "#F6F5F4"
+    },
+    "indigo" : {
+      "dark" : "#8B8DFF",
+      "light" : "#6366F1"
+    },
+    "orange" : {
+      "dark" : "#FFB86C",
+      "light" : "#F6A100"
+    },
+    "purple" : {
+      "dark" : "#C7A7F3",
+      "light" : "#9141AC"
+    },
+    "red" : {
+      "dark" : "#FF7B7B",
+      "light" : "#E01B24"
+    },
+    "secondaryGroupedBackground" : {
+      "dark" : "#2A2A2A",
+      "light" : "#FFFFFF"
+    },
+    "teal" : {
+      "dark" : "#5BC8AF",
+      "light" : "#2EC4B6"
+    },
+    "tertiaryGroupedBackground" : {
+      "dark" : "#333333",
+      "light" : "#ECECEC"
+    },
+    "yellow" : {
+      "dark" : "#FFD866",
+      "light" : "#F5C211"
+    }
+  },
+  "name" : "GNOME"
+}
