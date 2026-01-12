@@ -1,0 +1,61 @@
+{
+  "colors" : {
+    "accent" : {
+      "dark" : "#0A84FF",
+      "light" : "#007AFF"
+    },
+    "background" : {
+      "dark" : "#000000",
+      "light" : "#FFFFFF"
+    },
+    "blue" : {
+      "dark" : "#0A84FF",
+      "light" : "#007AFF"
+    },
+    "cyan" : {
+      "dark" : "#64D2FF",
+      "light" : "#32ADE6"
+    },
+    "green" : {
+      "dark" : "#30D158",
+      "light" : "#34C759"
+    },
+    "groupedBackground" : {
+      "dark" : "#000000",
+      "light" : "#F2F2F7"
+    },
+    "indigo" : {
+      "dark" : "#5E5CE6",
+      "light" : "#5856D6"
+    },
+    "orange" : {
+      "dark" : "#FF9F0A",
+      "light" : "#FF9500"
+    },
+    "purple" : {
+      "dark" : "#BF5AF2",
+      "light" : "#AF52DE"
+    },
+    "red" : {
+      "dark" : "#FF453A",
+      "light" : "#FF3B30"
+    },
+    "secondaryGroupedBackground" : {
+      "dark" : "#1C1C1E",
+      "light" : "#FFFFFF"
+    },
+    "teal" : {
+      "dark" : "#64D2FF",
+      "light" : "#5AC8FA"
+    },
+    "tertiaryGroupedBackground" : {
+      "dark" : "#2C2C2E",
+      "light" : "#F2F2F7"
+    },
+    "yellow" : {
+      "dark" : "#FFD60A",
+      "light" : "#FFCC00"
+    }
+  },
+  "name" : "iOS"
+}
