@@ -1,0 +1,61 @@
+{
+  "colors" : {
+    "accent" : {
+      "dark" : "#4FA3FF",
+      "light" : "#007AFF"
+    },
+    "background" : {
+      "dark" : "#1E1E1E",
+      "light" : "#FFFFFF"
+    },
+    "blue" : {
+      "dark" : "#4FA3FF",
+      "light" : "#007AFF"
+    },
+    "cyan" : {
+      "dark" : "#5AC8FA",
+      "light" : "#32ADE6"
+    },
+    "green" : {
+      "dark" : "#32D74B",
+      "light" : "#34C759"
+    },
+    "groupedBackground" : {
+      "dark" : "#1E1E1E",
+      "light" : "#F5F5F7"
+    },
+    "indigo" : {
+      "dark" : "#6E6CF5",
+      "light" : "#5856D6"
+    },
+    "orange" : {
+      "dark" : "#FF9F0A",
+      "light" : "#FF9500"
+    },
+    "purple" : {
+      "dark" : "#DA8FFF",
+      "light" : "#AF52DE"
+    },
+    "red" : {
+      "dark" : "#FF453A",
+      "light" : "#FF3B30"
+    },
+    "secondaryGroupedBackground" : {
+      "dark" : "#2A2A2A",
+      "light" : "#FFFFFF"
+    },
+    "teal" : {
+      "dark" : "#64D2FF",
+      "light" : "#5AC8FA"
+    },
+    "tertiaryGroupedBackground" : {
+      "dark" : "#333333",
+      "light" : "#EFEFF0"
+    },
+    "yellow" : {
+      "dark" : "#FFD60A",
+      "light" : "#FFCC00"
+    }
+  },
+  "name" : "macOS"
+}
