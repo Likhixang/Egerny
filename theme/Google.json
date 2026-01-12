@@ -1,0 +1,61 @@
+{
+  "colors" : {
+    "accent" : {
+      "dark" : "#4285F4",
+      "light" : "#4285F4"
+    },
+    "background" : {
+      "dark" : "#000000",
+      "light" : "#FFFFFF"
+    },
+    "blue" : {
+      "dark" : "#4285F4",
+      "light" : "#4285F4"
+    },
+    "cyan" : {
+      "dark" : "#14C5E1",
+      "light" : "#07A4C3"
+    },
+    "green" : {
+      "dark" : "#34A853",
+      "light" : "#34A853"
+    },
+    "groupedBackground" : {
+      "dark" : "#000000",
+      "light" : "#F1F3F4"
+    },
+    "indigo" : {
+      "dark" : "#7279F5",
+      "light" : "#5956EB"
+    },
+    "orange" : {
+      "dark" : "#FA8329",
+      "light" : "#F26611"
+    },
+    "purple" : {
+      "dark" : "#9974F8",
+      "light" : "#844BF2"
+    },
+    "red" : {
+      "dark" : "#EA4335",
+      "light" : "#EA4335"
+    },
+    "secondaryGroupedBackground" : {
+      "dark" : "#202124",
+      "light" : "#FFFFFF"
+    },
+    "teal" : {
+      "dark" : "#21C6B3",
+      "light" : "#11A697"
+    },
+    "tertiaryGroupedBackground" : {
+      "dark" : "#303134",
+      "light" : "#F1F3F4"
+    },
+    "yellow" : {
+      "dark" : "#FBBC05",
+      "light" : "#FBBC05"
+    }
+  },
+  "name" : "Google"
+}
