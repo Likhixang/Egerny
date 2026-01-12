@@ -1,0 +1,61 @@
+{
+  "colors" : {
+    "accent" : {
+      "dark" : "#5E6AD2",
+      "light" : "#4B57C8"
+    },
+    "background" : {
+      "dark" : "#0B0C10",
+      "light" : "#FFFFFF"
+    },
+    "blue" : {
+      "dark" : "#4A7DFF",
+      "light" : "#2F63F0"
+    },
+    "cyan" : {
+      "dark" : "#1FB6C9",
+      "light" : "#1298AC"
+    },
+    "green" : {
+      "dark" : "#2BBF8C",
+      "light" : "#18A874"
+    },
+    "groupedBackground" : {
+      "dark" : "#0B0C10",
+      "light" : "#F3F4F6"
+    },
+    "indigo" : {
+      "dark" : "#5E6AD2",
+      "light" : "#4B57C8"
+    },
+    "orange" : {
+      "dark" : "#F38B2A",
+      "light" : "#E56A12"
+    },
+    "purple" : {
+      "dark" : "#8C7CF0",
+      "light" : "#735CE6"
+    },
+    "red" : {
+      "dark" : "#F05A6E",
+      "light" : "#E0314F"
+    },
+    "secondaryGroupedBackground" : {
+      "dark" : "#16181D",
+      "light" : "#FFFFFF"
+    },
+    "teal" : {
+      "dark" : "#2FB7A3",
+      "light" : "#1A9C8A"
+    },
+    "tertiaryGroupedBackground" : {
+      "dark" : "#1F2127",
+      "light" : "#F3F4F6"
+    },
+    "yellow" : {
+      "dark" : "#EFB64A",
+      "light" : "#D9961E"
+    }
+  },
+  "name" : "Muted Indigo"
+}
