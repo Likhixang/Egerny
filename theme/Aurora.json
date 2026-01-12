@@ -1,0 +1,61 @@
+{
+  "colors" : {
+    "accent" : {
+      "dark" : "#7C90FF",
+      "light" : "#5B7BFF"
+    },
+    "background" : {
+      "dark" : "#0F0F1A",
+      "light" : "#FAFAFF"
+    },
+    "blue" : {
+      "dark" : "#4A9EFF",
+      "light" : "#2B7FFF"
+    },
+    "cyan" : {
+      "dark" : "#00D4D4",
+      "light" : "#00B4B4"
+    },
+    "green" : {
+      "dark" : "#32D987",
+      "light" : "#00C165"
+    },
+    "groupedBackground" : {
+      "dark" : "#1A1A2A",
+      "light" : "#F0F2FF"
+    },
+    "indigo" : {
+      "dark" : "#7C90FF",
+      "light" : "#5B7BFF"
+    },
+    "orange" : {
+      "dark" : "#FF9D4A",
+      "light" : "#FF852B"
+    },
+    "purple" : {
+      "dark" : "#B08AFF",
+      "light" : "#9868FF"
+    },
+    "red" : {
+      "dark" : "#FF6B7C",
+      "light" : "#FF4D5E"
+    },
+    "secondaryGroupedBackground" : {
+      "dark" : "#252538",
+      "light" : "#FFFFFF"
+    },
+    "teal" : {
+      "dark" : "#2DD4BF",
+      "light" : "#0DB4A0"
+    },
+    "tertiaryGroupedBackground" : {
+      "dark" : "#30304A",
+      "light" : "#F0F2FF"
+    },
+    "yellow" : {
+      "dark" : "#FFD166",
+      "light" : "#FFB938"
+    }
+  },
+  "name" : "Aurora"
+}
