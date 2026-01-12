@@ -1,0 +1,61 @@
+{
+  "colors" : {
+    "accent" : {
+      "dark" : "#12B7F5",
+      "light" : "#12B7F5"
+    },
+    "background" : {
+      "dark" : "#000000",
+      "light" : "#FFFFFF"
+    },
+    "blue" : {
+      "dark" : "#12B7F5",
+      "light" : "#12B7F5"
+    },
+    "cyan" : {
+      "dark" : "#4CD3FF",
+      "light" : "#4CD3FF"
+    },
+    "green" : {
+      "dark" : "#2ECC71",
+      "light" : "#2ECC71"
+    },
+    "groupedBackground" : {
+      "dark" : "#000000",
+      "light" : "#F2F6FC"
+    },
+    "indigo" : {
+      "dark" : "#4C6EF5",
+      "light" : "#4C6EF5"
+    },
+    "orange" : {
+      "dark" : "#FFA940",
+      "light" : "#FFA940"
+    },
+    "purple" : {
+      "dark" : "#9B7BFF",
+      "light" : "#9B7BFF"
+    },
+    "red" : {
+      "dark" : "#FF4D4F",
+      "light" : "#FF4D4F"
+    },
+    "secondaryGroupedBackground" : {
+      "dark" : "#1C1C1E",
+      "light" : "#FFFFFF"
+    },
+    "teal" : {
+      "dark" : "#3BC9DB",
+      "light" : "#3BC9DB"
+    },
+    "tertiaryGroupedBackground" : {
+      "dark" : "#2C2C2E",
+      "light" : "#F5F8FC"
+    },
+    "yellow" : {
+      "dark" : "#FFD666",
+      "light" : "#FFD666"
+    }
+  },
+  "name" : "QQ"
+}
