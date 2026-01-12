@@ -1,0 +1,61 @@
+{
+  "colors" : {
+    "accent" : {
+      "dark" : "#3B7CFF",
+      "light" : "#3B7CFF"
+    },
+    "background" : {
+      "dark" : "#000000",
+      "light" : "#FFFFFF"
+    },
+    "blue" : {
+      "dark" : "#3B7CFF",
+      "light" : "#3B7CFF"
+    },
+    "cyan" : {
+      "dark" : "#22D3EE",
+      "light" : "#06B6D4"
+    },
+    "green" : {
+      "dark" : "#34D399",
+      "light" : "#10B981"
+    },
+    "groupedBackground" : {
+      "dark" : "#000000",
+      "light" : "#F5F6FA"
+    },
+    "indigo" : {
+      "dark" : "#6366F1",
+      "light" : "#4F46E5"
+    },
+    "orange" : {
+      "dark" : "#FB923C",
+      "light" : "#F97316"
+    },
+    "purple" : {
+      "dark" : "#C084FC",
+      "light" : "#A855F7"
+    },
+    "red" : {
+      "dark" : "#F87171",
+      "light" : "#EF4444"
+    },
+    "secondaryGroupedBackground" : {
+      "dark" : "#121212",
+      "light" : "#FFFFFF"
+    },
+    "teal" : {
+      "dark" : "#2DD4BF",
+      "light" : "#14B8A6"
+    },
+    "tertiaryGroupedBackground" : {
+      "dark" : "#1E1E1E",
+      "light" : "#F0F1F5"
+    },
+    "yellow" : {
+      "dark" : "#FACC15",
+      "light" : "#EAB308"
+    }
+  },
+  "name" : "HyperOS"
+}
