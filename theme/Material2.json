@@ -1,0 +1,61 @@
+{
+  "colors" : {
+    "accent" : {
+      "dark" : "#82B1FF",
+      "light" : "#2962FF"
+    },
+    "background" : {
+      "dark" : "#121212",
+      "light" : "#FFFFFF"
+    },
+    "blue" : {
+      "dark" : "#82B1FF",
+      "light" : "#2962FF"
+    },
+    "cyan" : {
+      "dark" : "#4DD0E1",
+      "light" : "#00ACC1"
+    },
+    "green" : {
+      "dark" : "#69F0AE",
+      "light" : "#00C853"
+    },
+    "groupedBackground" : {
+      "dark" : "#121212",
+      "light" : "#FAFAFA"
+    },
+    "indigo" : {
+      "dark" : "#9FA8DA",
+      "light" : "#3F51B5"
+    },
+    "orange" : {
+      "dark" : "#FFB74D",
+      "light" : "#FB8C00"
+    },
+    "purple" : {
+      "dark" : "#CE93D8",
+      "light" : "#9C27B0"
+    },
+    "red" : {
+      "dark" : "#FF8A80",
+      "light" : "#F44336"
+    },
+    "secondaryGroupedBackground" : {
+      "dark" : "#1E1E1E",
+      "light" : "#FFFFFF"
+    },
+    "teal" : {
+      "dark" : "#4DB6AC",
+      "light" : "#009688"
+    },
+    "tertiaryGroupedBackground" : {
+      "dark" : "#2A2A2A",
+      "light" : "#F0F0F0"
+    },
+    "yellow" : {
+      "dark" : "#FFF176",
+      "light" : "#FDD835"
+    }
+  },
+  "name" : "Material 2"
+}
