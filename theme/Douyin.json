@@ -1,0 +1,61 @@
+{
+  "colors" : {
+    "accent" : {
+      "dark" : "#00F2EA",
+      "light" : "#FE2C55"
+    },
+    "background" : {
+      "dark" : "#000000",
+      "light" : "#FFFFFF"
+    },
+    "blue" : {
+      "dark" : "#00F2EA",
+      "light" : "#00C8C8"
+    },
+    "cyan" : {
+      "dark" : "#00F2EA",
+      "light" : "#00D5CF"
+    },
+    "green" : {
+      "dark" : "#3DFF7F",
+      "light" : "#2ECC71"
+    },
+    "groupedBackground" : {
+      "dark" : "#000000",
+      "light" : "#F5F5F5"
+    },
+    "indigo" : {
+      "dark" : "#5B5FFF",
+      "light" : "#4C4CFF"
+    },
+    "orange" : {
+      "dark" : "#FF8F1F",
+      "light" : "#FF7A18"
+    },
+    "purple" : {
+      "dark" : "#9B5CFF",
+      "light" : "#8A3FFC"
+    },
+    "red" : {
+      "dark" : "#FE2C55",
+      "light" : "#FE2C55"
+    },
+    "secondaryGroupedBackground" : {
+      "dark" : "#1A1A1A",
+      "light" : "#FFFFFF"
+    },
+    "teal" : {
+      "dark" : "#00E0D3",
+      "light" : "#00CFC3"
+    },
+    "tertiaryGroupedBackground" : {
+      "dark" : "#2A2A2A",
+      "light" : "#EFEFEF"
+    },
+    "yellow" : {
+      "dark" : "#FFD84D",
+      "light" : "#FFC93C"
+    }
+  },
+  "name" : "Douyin"
+}
