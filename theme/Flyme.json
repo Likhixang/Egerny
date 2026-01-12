@@ -1,0 +1,61 @@
+{
+  "colors" : {
+    "accent" : {
+      "dark" : "#4DA3FF",
+      "light" : "#198CFF"
+    },
+    "background" : {
+      "dark" : "#000000",
+      "light" : "#FFFFFF"
+    },
+    "blue" : {
+      "dark" : "#4DA3FF",
+      "light" : "#198CFF"
+    },
+    "cyan" : {
+      "dark" : "#5AC8FA",
+      "light" : "#32ADE6"
+    },
+    "green" : {
+      "dark" : "#4CD964",
+      "light" : "#34C759"
+    },
+    "groupedBackground" : {
+      "dark" : "#000000",
+      "light" : "#F7F8FA"
+    },
+    "indigo" : {
+      "dark" : "#6C7CFF",
+      "light" : "#5A67FF"
+    },
+    "orange" : {
+      "dark" : "#FFA94D",
+      "light" : "#FF9500"
+    },
+    "purple" : {
+      "dark" : "#B794F4",
+      "light" : "#9F7AEA"
+    },
+    "red" : {
+      "dark" : "#FF6B6B",
+      "light" : "#F44336"
+    },
+    "secondaryGroupedBackground" : {
+      "dark" : "#121212",
+      "light" : "#FFFFFF"
+    },
+    "teal" : {
+      "dark" : "#4FD1C5",
+      "light" : "#2EC4B6"
+    },
+    "tertiaryGroupedBackground" : {
+      "dark" : "#1E1E1E",
+      "light" : "#F0F2F5"
+    },
+    "yellow" : {
+      "dark" : "#FFD166",
+      "light" : "#FFC107"
+    }
+  },
+  "name" : "Flyme"
+}
