@@ -1,0 +1,61 @@
+{
+  "colors" : {
+    "accent" : {
+      "dark" : "#60CDFF",
+      "light" : "#0078D4"
+    },
+    "background" : {
+      "dark" : "#202020",
+      "light" : "#FFFFFF"
+    },
+    "blue" : {
+      "dark" : "#60CDFF",
+      "light" : "#0078D4"
+    },
+    "cyan" : {
+      "dark" : "#4CC2FF",
+      "light" : "#0099BC"
+    },
+    "green" : {
+      "dark" : "#6CCB5F",
+      "light" : "#107C10"
+    },
+    "groupedBackground" : {
+      "dark" : "#202020",
+      "light" : "#F3F3F3"
+    },
+    "indigo" : {
+      "dark" : "#9FA8DA",
+      "light" : "#3F51B5"
+    },
+    "orange" : {
+      "dark" : "#FFB900",
+      "light" : "#F7630C"
+    },
+    "purple" : {
+      "dark" : "#C586C0",
+      "light" : "#744DA9"
+    },
+    "red" : {
+      "dark" : "#F1707B",
+      "light" : "#D13438"
+    },
+    "secondaryGroupedBackground" : {
+      "dark" : "#2B2B2B",
+      "light" : "#FFFFFF"
+    },
+    "teal" : {
+      "dark" : "#4FD1C5",
+      "light" : "#038387"
+    },
+    "tertiaryGroupedBackground" : {
+      "dark" : "#333333",
+      "light" : "#EDEDED"
+    },
+    "yellow" : {
+      "dark" : "#FFD966",
+      "light" : "#FFB900"
+    }
+  },
+  "name" : "Windows"
+}
