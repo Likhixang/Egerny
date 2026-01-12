@@ -1,0 +1,61 @@
+{
+  "colors" : {
+    "accent" : {
+      "dark" : "#0A59F7",
+      "light" : "#0A59F7"
+    },
+    "background" : {
+      "dark" : "#000000",
+      "light" : "#FFFFFF"
+    },
+    "blue" : {
+      "dark" : "#0A59F7",
+      "light" : "#0A59F7"
+    },
+    "cyan" : {
+      "dark" : "#21C6B3",
+      "light" : "#11A697"
+    },
+    "green" : {
+      "dark" : "#22C68D",
+      "light" : "#0BA875"
+    },
+    "groupedBackground" : {
+      "dark" : "#000000",
+      "light" : "#F2F2F7"
+    },
+    "indigo" : {
+      "dark" : "#0A59F7",
+      "light" : "#0A59F7"
+    },
+    "orange" : {
+      "dark" : "#FA8329",
+      "light" : "#F26611"
+    },
+    "purple" : {
+      "dark" : "#9974F8",
+      "light" : "#844BF2"
+    },
+    "red" : {
+      "dark" : "#F85872",
+      "light" : "#EB2E53"
+    },
+    "secondaryGroupedBackground" : {
+      "dark" : "#1C1C1E",
+      "light" : "#FFFFFF"
+    },
+    "teal" : {
+      "dark" : "#21C6B3",
+      "light" : "#11A697"
+    },
+    "tertiaryGroupedBackground" : {
+      "dark" : "#2C2C2E",
+      "light" : "#F2F2F7"
+    },
+    "yellow" : {
+      "dark" : "#F8AE18",
+      "light" : "#E78B09"
+    }
+  },
+  "name" : "HarmonyOS"
+}
