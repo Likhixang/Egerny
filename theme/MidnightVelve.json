@@ -1,0 +1,61 @@
+{
+  "colors" : {
+    "accent" : {
+      "dark" : "#7B5EFF",
+      "light" : "#6A4CFF"
+    },
+    "background" : {
+      "dark" : "#0F0F12",
+      "light" : "#FAFAFC"
+    },
+    "blue" : {
+      "dark" : "#5E8CFF",
+      "light" : "#4A78FF"
+    },
+    "cyan" : {
+      "dark" : "#00D4FF",
+      "light" : "#00B8E0"
+    },
+    "green" : {
+      "dark" : "#3CEAA3",
+      "light" : "#2CD68F"
+    },
+    "groupedBackground" : {
+      "dark" : "#16161A",
+      "light" : "#F5F5FA"
+    },
+    "indigo" : {
+      "dark" : "#7B5EFF",
+      "light" : "#6A4CFF"
+    },
+    "orange" : {
+      "dark" : "#FF8A4F",
+      "light" : "#FF742E"
+    },
+    "purple" : {
+      "dark" : "#C06CFF",
+      "light" : "#B04FFF"
+    },
+    "red" : {
+      "dark" : "#FF5E7A",
+      "light" : "#FF4263"
+    },
+    "secondaryGroupedBackground" : {
+      "dark" : "#1A1A20",
+      "light" : "#FFFFFF"
+    },
+    "teal" : {
+      "dark" : "#26E0D4",
+      "light" : "#12D0C2"
+    },
+    "tertiaryGroupedBackground" : {
+      "dark" : "#222228",
+      "light" : "#EBEBF0"
+    },
+    "yellow" : {
+      "dark" : "#FFD166",
+      "light" : "#FFBE33"
+    }
+  },
+  "name" : "Midnight Velvet"
+}
