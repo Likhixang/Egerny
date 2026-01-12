@@ -1,0 +1,61 @@
+{
+  "colors" : {
+    "accent" : {
+      "dark" : "#07C160",
+      "light" : "#07C160"
+    },
+    "background" : {
+      "dark" : "#000000",
+      "light" : "#FFFFFF"
+    },
+    "blue" : {
+      "dark" : "#4A90E2",
+      "light" : "#4A90E2"
+    },
+    "cyan" : {
+      "dark" : "#2FC9C3",
+      "light" : "#2FC9C3"
+    },
+    "green" : {
+      "dark" : "#07C160",
+      "light" : "#07C160"
+    },
+    "groupedBackground" : {
+      "dark" : "#000000",
+      "light" : "#EDEDED"
+    },
+    "indigo" : {
+      "dark" : "#5A6FF0",
+      "light" : "#5A6FF0"
+    },
+    "orange" : {
+      "dark" : "#FA9D3B",
+      "light" : "#FA9D3B"
+    },
+    "purple" : {
+      "dark" : "#8E7BEE",
+      "light" : "#8E7BEE"
+    },
+    "red" : {
+      "dark" : "#FA5151",
+      "light" : "#FA5151"
+    },
+    "secondaryGroupedBackground" : {
+      "dark" : "#1C1C1E",
+      "light" : "#FFFFFF"
+    },
+    "teal" : {
+      "dark" : "#1FC7A1",
+      "light" : "#1FC7A1"
+    },
+    "tertiaryGroupedBackground" : {
+      "dark" : "#2C2C2E",
+      "light" : "#F7F7F7"
+    },
+    "yellow" : {
+      "dark" : "#FFC300",
+      "light" : "#FFC300"
+    }
+  },
+  "name" : "WeChat"
+}
