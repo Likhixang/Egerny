@@ -1,16 +1,17 @@
 #!name=Google全服务重定向
-#!desc=将 Google.cn 和 .com.hk 的所有服务（搜索、地图、翻译等）重定向至 .com，解决区域限制问题。
-#!date=2026-01-03 15:56:00
+#!desc=将 Google.cn 的所有服务（搜索、地图、翻译等）重定向至 .com，解决区域限制问题。
+#!date=2026-01-16 20:46:00
+# 修复重定向过多
 
 [URL Rewrite]
 # 处理简写 g.cn 和无子域名的主域名 (google.cn / google.com.hk)
 # 目标：统一跳转到 www.google.com
-^https?:\/\/(g|google)\.(cn|com\.hk) https://www.google.com 307
+^https?:\/\/(g|google)\.cn\/?$ https://www.google.com 307
 
 # 处理所有子域名 (www, maps, translate, developers 等)
 # 逻辑：保留子域名部分 ($1)，仅将后缀替换为 .com
 # 例如：maps.google.cn -> maps.google.com
-^https?:\/\/([\w-]+)\.google\.(cn|com\.hk) https://$1.google.com 307
+^https?:\/\/([\w-]+)\.google\.cn(\/.*)?$ https://$1.google.com$2 307
 
 [MITM]
-hostname = %APPEND% *.google.cn, *.google.com.hk, *.g.cn
+hostname = %APPEND% *.google.cn, *.g.cn
