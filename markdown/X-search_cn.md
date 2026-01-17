@@ -41,6 +41,7 @@
 | **bd** | 百度 | [baidu.com](https://www.baidu.com/) |
 | **bdimg** | 百度图片 | [image.baidu.com](https://image.baidu.com/) |
 | **b**, **bing** | Bing | [bing.com](https://www.bing.com/) |
+| **gai**, **gaimode**, **aimode** | Google 搜索 AI 模式 | [google.com](https://www.google.com/search?udm=50)) |
 | **g**, **gg**, **google** | Google 搜索 | [google.com](https://www.google.com/) |
 | **gimg** | Google 图片 | [images.google.com](https://images.google.com/) |
 | **gpt**, **chatgpt** | ChatGPT | [chatgpt.com](https://chatgpt.com/) |
