@@ -15,7 +15,7 @@
 | **Author** | [Li Khixang](https://github.com/Likhixang) |
 | **Homepage** | [GitHub / Likhixang](https://github.com/Likhixang) |
 | **Icon** | ![X-search icon](https://raw.githubusercontent.com/Likhixang/Egerny/refs/heads/main/icons/X-search.png) |
-| **Date** | 2025-12-19 20:39:00 |
+| **Date** | 2026-01-17 17:48:00 |
 
 ---
 
@@ -41,6 +41,7 @@ Quickword + Space + Search content
 | **bd** | Baidu | [baidu.com](https://www.baidu.com/) |
 | **bdimg** | Baidu Image | [image.baidu.com](https://image.baidu.com/) |
 | **b**, **bing** | Bing | [bing.com](https://www.bing.com/) |
+| **gai**, **gaimode**, **aimode** | Google Search AI Mode| [google.com](https://www.google.com/search?udm=50) |
 | **g**, **gg**, **google** | Google Search | [google.com](https://www.google.com/) |
 | **gimg** | Google Image | [images.google.com](https://images.google.com/) |
 | **gpt**, **chatgpt** | ChatGPT | [chatgpt.com](https://chatgpt.com/) |
