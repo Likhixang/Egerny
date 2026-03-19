@@ -35,6 +35,7 @@ function buildWidget(data, options) {
     padding: 14,
     gap: 10,
     refreshAfter: new Date(Date.now() + 5 * 60 * 1000).toISOString(),
+    backgroundColor: riskMeta.background,
     backgroundGradient: {
       colors: riskMeta.gradient,
       startPoint: { x: 0, y: 0 },
@@ -61,7 +62,7 @@ function buildWidget(data, options) {
                 type: "text",
                 text: region,
                 font: { size: "caption1", weight: "medium" },
-                textColor: "#D7E4F5",
+                textColor: "#607085",
                 opacity: 0.92
               }
             ]
@@ -78,7 +79,7 @@ function buildWidget(data, options) {
                 type: "text",
                 text: riskMeta.badge,
                 font: { size: "caption2", weight: "bold" },
-                textColor: "#FFFFFF"
+                textColor: riskMeta.badgeText
               }
             ]
           }
@@ -94,22 +95,22 @@ function buildWidget(data, options) {
             flex: 1,
             padding: 12,
             gap: 2,
-            backgroundColor: { light: "#FFFFFF1F", dark: "#FFFFFF1F" },
+            backgroundColor: riskMeta.cardBackground,
             borderRadius: 18,
             borderWidth: 1,
-            borderColor: { light: "#FFFFFF29", dark: "#FFFFFF29" },
+            borderColor: riskMeta.cardBorder,
             children: [
               {
                 type: "text",
                 text: "风险分数",
                 font: { size: "caption2", weight: "semibold" },
-                textColor: "#CFE0F2"
+                textColor: "#6B7C92"
               },
               {
                 type: "text",
                 text: scoreText,
                 font: { size: "title1", weight: "bold" },
-                textColor: "#FFFFFF"
+                textColor: "#16202B"
               },
               {
                 type: "text",
@@ -137,13 +138,13 @@ function buildWidget(data, options) {
         direction: "row",
         gap: 8,
         children: [
-          footerCard("来源", "IPPure"),
+          footerCard("自动刷新", "5 分钟"),
           footerCard("更新", {
             type: "date",
             date: new Date().toISOString(),
             format: "relative",
             font: { size: "caption2", weight: "medium" },
-            textColor: "#E8EEF8"
+            textColor: "#435469"
           })
         ]
       }
@@ -156,8 +157,10 @@ function buildErrorWidget(title, error) {
     type: "widget",
     padding: 14,
     gap: 10,
+    refreshAfter: new Date(Date.now() + 5 * 60 * 1000).toISOString(),
+    backgroundColor: "#F8EDEE",
     backgroundGradient: {
-      colors: ["#35131A", "#5E1D29", "#7A2634"],
+      colors: ["#FFF6F7", "#FBEAEC"],
       startPoint: { x: 0, y: 0 },
       endPoint: { x: 1, y: 1 }
     },
@@ -166,28 +169,28 @@ function buildErrorWidget(title, error) {
         type: "text",
         text: title,
         font: { size: "headline", weight: "bold" },
-        textColor: "#FFFFFF"
+        textColor: "#2D1F24"
       },
       {
         type: "stack",
         padding: 12,
         gap: 6,
-        backgroundColor: { light: "#FFFFFF1A", dark: "#FFFFFF1A" },
+        backgroundColor: "#FFFDFD",
         borderRadius: 18,
         borderWidth: 1,
-        borderColor: { light: "#FFFFFF1F", dark: "#FFFFFF1F" },
+        borderColor: "#F0D7DC",
         children: [
           {
             type: "text",
             text: "小组件暂时无法获取纯净度",
             font: { size: "subheadline", weight: "semibold" },
-            textColor: "#FFFFFF"
+            textColor: "#3A2A2F"
           },
           {
             type: "text",
             text: String(error && error.message ? error.message : error || "Unknown error"),
             font: { size: "caption1" },
-            textColor: "#FFD2D8"
+            textColor: "#8A5A63"
           }
         ]
       },
@@ -196,7 +199,7 @@ function buildErrorWidget(title, error) {
         date: new Date().toISOString(),
         format: "relative",
         font: { size: "caption2", weight: "medium" },
-        textColor: "#FFD2D8"
+        textColor: "#8A5A63"
       }
     ]
   };
@@ -208,22 +211,22 @@ function statCard(label, value) {
     direction: "column",
     gap: 2,
     padding: [9, 10, 9, 10],
-    backgroundColor: { light: "#070E2433", dark: "#070E2433" },
+    backgroundColor: "#FFFFFF",
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: { light: "#FFFFFF1A", dark: "#FFFFFF1A" },
+    borderColor: "#DCE5EE",
     children: [
       {
         type: "text",
         text: label,
         font: { size: "caption2", weight: "semibold" },
-        textColor: "#C9D8EA"
+        textColor: "#6B7C92"
       },
       {
         type: "text",
         text: value,
         font: { size: "caption1", weight: "medium" },
-        textColor: "#FFFFFF"
+        textColor: "#1C2733"
       }
     ]
   };
@@ -236,21 +239,23 @@ function footerCard(label, value) {
     direction: "column",
     gap: 2,
     padding: [8, 10, 8, 10],
-    backgroundColor: { light: "#FFFFFF14", dark: "#FFFFFF14" },
+    backgroundColor: "#FFFFFF",
     borderRadius: 14,
+    borderWidth: 1,
+    borderColor: "#DCE5EE",
     children: [
       {
         type: "text",
         text: label,
         font: { size: "caption2", weight: "semibold" },
-        textColor: "#C9D8EA"
+        textColor: "#6B7C92"
       },
       typeof value === "string"
         ? {
             type: "text",
             text: value,
             font: { size: "caption2", weight: "medium" },
-            textColor: "#E8EEF8"
+            textColor: "#435469"
           }
         : value
     ]
@@ -262,10 +267,14 @@ function getRiskMeta(risk) {
     return {
       badge: "极高风险",
       scoreLabel: "建议更换节点",
-      accent: "#FFB8C4",
-      badgeBackground: { light: "#961A326B", dark: "#961A326B" },
-      badgeBorder: { light: "#FFBECD38", dark: "#FFBECD38" },
-      gradient: ["#22070C", "#571420", "#8B2536"]
+      accent: "#C54E5E",
+      badgeText: "#8D2336",
+      badgeBackground: "#FBE4E8",
+      badgeBorder: "#F3C6CE",
+      background: "#FFF8F8",
+      cardBackground: "#FFFFFF",
+      cardBorder: "#E8D6DA",
+      gradient: ["#FFF9F9", "#FDF0F2"]
     };
   }
 
@@ -273,10 +282,14 @@ function getRiskMeta(risk) {
     return {
       badge: "高风险",
       scoreLabel: "可用性偏低",
-      accent: "#FFD38B",
-      badgeBackground: { light: "#A459086B", dark: "#A459086B" },
-      badgeBorder: { light: "#FFDEAA38", dark: "#FFDEAA38" },
-      gradient: ["#1D1308", "#5B3610", "#945816"]
+      accent: "#B87119",
+      badgeText: "#8A520C",
+      badgeBackground: "#FDF0DE",
+      badgeBorder: "#F1D5A8",
+      background: "#FFFBF5",
+      cardBackground: "#FFFFFF",
+      cardBorder: "#EADFCF",
+      gradient: ["#FFFCF7", "#FBF2E4"]
     };
   }
 
@@ -284,20 +297,28 @@ function getRiskMeta(risk) {
     return {
       badge: "中等风险",
       scoreLabel: "谨慎使用",
-      accent: "#FFF0A6",
-      badgeBackground: { light: "#8F7C1257", dark: "#8F7C1257" },
-      badgeBorder: { light: "#FFF4BA38", dark: "#FFF4BA38" },
-      gradient: ["#16170B", "#4A4512", "#807325"]
+      accent: "#9A8618",
+      badgeText: "#74630E",
+      badgeBackground: "#F9F4DA",
+      badgeBorder: "#ECE1A4",
+      background: "#FFFDF6",
+      cardBackground: "#FFFFFF",
+      cardBorder: "#E8E2CB",
+      gradient: ["#FFFDF8", "#F8F3E0"]
     };
   }
 
   return {
     badge: "低风险",
     scoreLabel: "纯净度良好",
-    accent: "#A9FFD1",
-    badgeBackground: { light: "#15704A57", dark: "#15704A57" },
-    badgeBorder: { light: "#B5FFD933", dark: "#B5FFD933" },
-    gradient: ["#081A16", "#0F342B", "#1F6C55"]
+    accent: "#1E8A69",
+    badgeText: "#12654D",
+    badgeBackground: "#DDF5EC",
+    badgeBorder: "#B7E8D7",
+    background: "#F8FCFB",
+    cardBackground: "#FFFFFF",
+    cardBorder: "#D7E9E2",
+    gradient: ["#FBFEFD", "#EEF7F4"]
   };
 }
 
