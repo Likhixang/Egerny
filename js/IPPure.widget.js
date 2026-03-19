@@ -34,6 +34,7 @@ function buildWidget(data, options) {
     type: "widget",
     padding: 14,
     gap: 10,
+    refreshAfter: new Date(Date.now() + 5 * 60 * 1000).toISOString(),
     backgroundGradient: {
       colors: riskMeta.gradient,
       startPoint: { x: 0, y: 0 },
@@ -93,10 +94,10 @@ function buildWidget(data, options) {
             flex: 1,
             padding: 12,
             gap: 2,
-            backgroundColor: "rgba(255,255,255,0.12)",
+            backgroundColor: { light: "#FFFFFF1F", dark: "#FFFFFF1F" },
             borderRadius: 18,
             borderWidth: 1,
-            borderColor: "rgba(255,255,255,0.16)",
+            borderColor: { light: "#FFFFFF29", dark: "#FFFFFF29" },
             children: [
               {
                 type: "text",
@@ -171,10 +172,10 @@ function buildErrorWidget(title, error) {
         type: "stack",
         padding: 12,
         gap: 6,
-        backgroundColor: "rgba(255,255,255,0.10)",
+        backgroundColor: { light: "#FFFFFF1A", dark: "#FFFFFF1A" },
         borderRadius: 18,
         borderWidth: 1,
-        borderColor: "rgba(255,255,255,0.12)",
+        borderColor: { light: "#FFFFFF1F", dark: "#FFFFFF1F" },
         children: [
           {
             type: "text",
@@ -207,10 +208,10 @@ function statCard(label, value) {
     direction: "column",
     gap: 2,
     padding: [9, 10, 9, 10],
-    backgroundColor: "rgba(7,14,24,0.20)",
+    backgroundColor: { light: "#070E2433", dark: "#070E2433" },
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.10)",
+    borderColor: { light: "#FFFFFF1A", dark: "#FFFFFF1A" },
     children: [
       {
         type: "text",
@@ -235,7 +236,7 @@ function footerCard(label, value) {
     direction: "column",
     gap: 2,
     padding: [8, 10, 8, 10],
-    backgroundColor: "rgba(255,255,255,0.08)",
+    backgroundColor: { light: "#FFFFFF14", dark: "#FFFFFF14" },
     borderRadius: 14,
     children: [
       {
@@ -262,8 +263,8 @@ function getRiskMeta(risk) {
       badge: "极高风险",
       scoreLabel: "建议更换节点",
       accent: "#FFB8C4",
-      badgeBackground: "rgba(150,26,50,0.42)",
-      badgeBorder: "rgba(255,190,205,0.22)",
+      badgeBackground: { light: "#961A326B", dark: "#961A326B" },
+      badgeBorder: { light: "#FFBECD38", dark: "#FFBECD38" },
       gradient: ["#22070C", "#571420", "#8B2536"]
     };
   }
@@ -273,8 +274,8 @@ function getRiskMeta(risk) {
       badge: "高风险",
       scoreLabel: "可用性偏低",
       accent: "#FFD38B",
-      badgeBackground: "rgba(164,89,8,0.42)",
-      badgeBorder: "rgba(255,222,170,0.22)",
+      badgeBackground: { light: "#A459086B", dark: "#A459086B" },
+      badgeBorder: { light: "#FFDEAA38", dark: "#FFDEAA38" },
       gradient: ["#1D1308", "#5B3610", "#945816"]
     };
   }
@@ -284,8 +285,8 @@ function getRiskMeta(risk) {
       badge: "中等风险",
       scoreLabel: "谨慎使用",
       accent: "#FFF0A6",
-      badgeBackground: "rgba(143,124,18,0.34)",
-      badgeBorder: "rgba(255,244,186,0.22)",
+      badgeBackground: { light: "#8F7C1257", dark: "#8F7C1257" },
+      badgeBorder: { light: "#FFF4BA38", dark: "#FFF4BA38" },
       gradient: ["#16170B", "#4A4512", "#807325"]
     };
   }
@@ -294,8 +295,8 @@ function getRiskMeta(risk) {
     badge: "低风险",
     scoreLabel: "纯净度良好",
     accent: "#A9FFD1",
-    badgeBackground: "rgba(21,112,74,0.34)",
-    badgeBorder: "rgba(181,255,217,0.20)",
+    badgeBackground: { light: "#15704A57", dark: "#15704A57" },
+    badgeBorder: { light: "#B5FFD933", dark: "#B5FFD933" },
     gradient: ["#081A16", "#0F342B", "#1F6C55"]
   };
 }

@@ -38,3 +38,7 @@ scriptings:
 
 widgets:
   - name: "IP-Pure"
+    script_name: "ip-pure-widget"
+    env:
+      TITLE: "IP 纯净度"
+      MARK_IP: "{{{MarkIP}}}"
