@@ -33,7 +33,7 @@ function buildWidget(data, options) {
   return {
     type: "widget",
     padding: 14,
-    gap: 10,
+    gap: 12,
     refreshAfter: new Date(Date.now() + 5 * 60 * 1000).toISOString(),
     backgroundColor: riskMeta.background,
     backgroundGradient: {
@@ -45,35 +45,34 @@ function buildWidget(data, options) {
       {
         type: "stack",
         direction: "row",
+        alignItems: "start",
         children: [
           {
             type: "stack",
             direction: "column",
-            gap: 2,
+            gap: 3,
             flex: 1,
             children: [
               {
                 type: "text",
                 text: options.title,
-                font: { size: "headline", weight: "bold" },
-                textColor: "#FFFFFF"
+                font: { size: "subheadline", weight: "semibold" },
+                textColor: "#1B1F23"
               },
               {
                 type: "text",
                 text: region,
-                font: { size: "caption1", weight: "medium" },
-                textColor: "#607085",
+                font: { size: "caption2", weight: "medium" },
+                textColor: "#7A8696",
                 opacity: 0.92
               }
             ]
           },
           {
             type: "stack",
-            padding: [6, 10, 6, 10],
+            padding: [5, 9, 5, 9],
             backgroundColor: riskMeta.badgeBackground,
-            borderRadius: 999,
-            borderWidth: 1,
-            borderColor: riskMeta.badgeBorder,
+            borderRadius: 12,
             children: [
               {
                 type: "text",
@@ -87,42 +86,86 @@ function buildWidget(data, options) {
       },
       {
         type: "stack",
-        direction: "row",
+        direction: "column",
         gap: 10,
         children: [
           {
             type: "stack",
-            flex: 1,
-            padding: 12,
-            gap: 2,
+            direction: "row",
+            alignItems: "center",
+            padding: [14, 14, 14, 14],
+            gap: 12,
             backgroundColor: riskMeta.cardBackground,
-            borderRadius: 18,
+            borderRadius: 20,
             borderWidth: 1,
             borderColor: riskMeta.cardBorder,
             children: [
               {
-                type: "text",
-                text: "风险分数",
-                font: { size: "caption2", weight: "semibold" },
-                textColor: "#6B7C92"
+                type: "stack",
+                width: 72,
+                height: 72,
+                borderRadius: 18,
+                backgroundColor: riskMeta.scoreBackground,
+                alignItems: "center",
+                children: [
+                  {
+                    type: "stack",
+                    direction: "column",
+                    flex: 1,
+                    gap: 0,
+                    children: [
+                      { type: "spacer" },
+                      {
+                        type: "text",
+                        text: scoreText,
+                        font: { size: "title2", weight: "bold" },
+                        textColor: "#11161C",
+                        textAlign: "center"
+                      },
+                      {
+                        type: "text",
+                        text: "分",
+                        font: { size: "caption2", weight: "semibold" },
+                        textColor: "#6F7B89",
+                        textAlign: "center"
+                      },
+                      { type: "spacer" }
+                    ]
+                  }
+                ]
               },
               {
-                type: "text",
-                text: scoreText,
-                font: { size: "title1", weight: "bold" },
-                textColor: "#16202B"
-              },
-              {
-                type: "text",
-                text: riskMeta.scoreLabel,
-                font: { size: "caption1", weight: "semibold" },
-                textColor: riskMeta.accent
+                type: "stack",
+                flex: 1,
+                direction: "column",
+                gap: 3,
+                children: [
+                  {
+                    type: "text",
+                    text: "风险分数",
+                    font: { size: "caption1", weight: "semibold" },
+                    textColor: "#6B7C92"
+                  },
+                  {
+                    type: "text",
+                    text: riskMeta.scoreLabel,
+                    font: { size: "title3", weight: "bold" },
+                    textColor: "#1D232B",
+                    maxLines: 1,
+                    minScale: 0.8
+                  },
+                  {
+                    type: "text",
+                    text: riskMeta.hint,
+                    font: { size: "caption2", weight: "medium" },
+                    textColor: riskMeta.accent
+                  }
+                ]
               }
             ]
           },
           {
             type: "stack",
-            flex: 2,
             direction: "column",
             gap: 8,
             children: [
@@ -208,9 +251,9 @@ function buildErrorWidget(title, error) {
 function statCard(label, value) {
   return {
     type: "stack",
-    direction: "column",
-    gap: 2,
-    padding: [9, 10, 9, 10],
+    direction: "row",
+    gap: 8,
+    padding: [10, 12, 10, 12],
     backgroundColor: "#FFFFFF",
     borderRadius: 16,
     borderWidth: 1,
@@ -222,6 +265,7 @@ function statCard(label, value) {
         font: { size: "caption2", weight: "semibold" },
         textColor: "#6B7C92"
       },
+      { type: "spacer" },
       {
         type: "text",
         text: value,
@@ -237,12 +281,12 @@ function footerCard(label, value) {
     type: "stack",
     flex: 1,
     direction: "column",
-    gap: 2,
-    padding: [8, 10, 8, 10],
-    backgroundColor: "#FFFFFF",
+    gap: 3,
+    padding: [9, 10, 9, 10],
+    backgroundColor: "#FFFFFFCC",
     borderRadius: 14,
     borderWidth: 1,
-    borderColor: "#DCE5EE",
+    borderColor: "#E2E8EF",
     children: [
       {
         type: "text",
@@ -266,15 +310,17 @@ function getRiskMeta(risk) {
   if (risk >= 80) {
     return {
       badge: "极高风险",
-      scoreLabel: "建议更换节点",
-      accent: "#C54E5E",
+      scoreLabel: "风险偏高",
+      hint: "建议更换节点",
+      accent: "#B54B5B",
       badgeText: "#8D2336",
       badgeBackground: "#FBE4E8",
       badgeBorder: "#F3C6CE",
-      background: "#FFF8F8",
+      background: "#FBFBFC",
+      scoreBackground: "#F8E4E8",
       cardBackground: "#FFFFFF",
-      cardBorder: "#E8D6DA",
-      gradient: ["#FFF9F9", "#FDF0F2"]
+      cardBorder: "#E7E8EC",
+      gradient: ["#FCFCFD", "#F6F1F3"]
     };
   }
 
@@ -282,14 +328,16 @@ function getRiskMeta(risk) {
     return {
       badge: "高风险",
       scoreLabel: "可用性偏低",
-      accent: "#B87119",
+      hint: "更适合临时使用",
+      accent: "#A96C1B",
       badgeText: "#8A520C",
       badgeBackground: "#FDF0DE",
       badgeBorder: "#F1D5A8",
-      background: "#FFFBF5",
+      background: "#FBFBFC",
+      scoreBackground: "#F8EEDC",
       cardBackground: "#FFFFFF",
-      cardBorder: "#EADFCF",
-      gradient: ["#FFFCF7", "#FBF2E4"]
+      cardBorder: "#E7E8EC",
+      gradient: ["#FCFCFD", "#F6F3EE"]
     };
   }
 
@@ -297,28 +345,32 @@ function getRiskMeta(risk) {
     return {
       badge: "中等风险",
       scoreLabel: "谨慎使用",
-      accent: "#9A8618",
+      hint: "基础访问通常可用",
+      accent: "#8D7B1D",
       badgeText: "#74630E",
       badgeBackground: "#F9F4DA",
       badgeBorder: "#ECE1A4",
-      background: "#FFFDF6",
+      background: "#FBFBFC",
+      scoreBackground: "#F5F1DE",
       cardBackground: "#FFFFFF",
-      cardBorder: "#E8E2CB",
-      gradient: ["#FFFDF8", "#F8F3E0"]
+      cardBorder: "#E7E8EC",
+      gradient: ["#FCFCFD", "#F5F4EF"]
     };
   }
 
   return {
     badge: "低风险",
     scoreLabel: "纯净度良好",
-    accent: "#1E8A69",
+    hint: "适合日常使用",
+    accent: "#1C8162",
     badgeText: "#12654D",
     badgeBackground: "#DDF5EC",
     badgeBorder: "#B7E8D7",
-    background: "#F8FCFB",
+    background: "#FBFBFC",
+    scoreBackground: "#E6F4EE",
     cardBackground: "#FFFFFF",
-    cardBorder: "#D7E9E2",
-    gradient: ["#FBFEFD", "#EEF7F4"]
+    cardBorder: "#E7E8EC",
+    gradient: ["#FCFCFD", "#F1F6F3"]
   };
 }
 
