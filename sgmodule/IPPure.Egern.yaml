@@ -1,0 +1,40 @@
+name: "IP-Pure"
+description: "节点 IP 纯净度检测（IPPure）小组件，请先在参数内选择策略组。"
+author: "wish, Likhixang"
+homepage: "https://github.com/Likhixang/Egerny"
+icon: "checkmark.shield"
+
+compat_arguments:
+  Proxy: "DIRECT"
+  MarkIP: "false"
+
+compat_arguments_desc: "Proxy: 选择策略组，默认 DIRECT. | MarkIP: IP 打码(true/false)，默认 false"
+
+env_schema:
+  TITLE:
+    name: 标题
+    description: 小组件顶部显示的标题
+    default_value: "IP 纯净度"
+  MARK_IP:
+    name: IP 打码
+    description: 是否在小组件中对 IP 地址打码
+    options:
+      - "true"
+      - "false"
+
+rules:
+  - domain_suffix:
+      match: "ippure.com"
+      policy: "{{{Proxy}}}"
+
+scriptings:
+  - generic:
+      name: "ip-pure-widget"
+      script_url: "https://raw.githubusercontent.com/Likhixang/Egerny/main/js/IPPure.widget.js"
+      timeout: 10
+      env:
+        TITLE: "IP 纯净度"
+        MARK_IP: "{{{MarkIP}}}"
+
+widgets:
+  - name: "IP-Pure"
