@@ -6,17 +6,6 @@
  *       Apple TV+ / Spotify / Discovery+ / ESPN+
  */
 
-// 解析参数：IPv4:true,IPv6:false
-const args = (() => {
-  const obj = { IPv4: true, IPv6: false }
-  const raw = $argument || ''
-  raw.split(',').forEach(seg => {
-    const [k, v] = seg.split('=')
-    if (k && v !== undefined) obj[k.trim()] = v.trim().toLowerCase() === 'true'
-  })
-  return obj
-})()
-
 const TIMEOUT = 6000
 
 // 各服务检测配置
@@ -204,46 +193,23 @@ function tryJSON(str) {
   try { return JSON.parse(str) } catch { return null }
 }
 
-// 单次请求，node 指定 'IPv4' 或 'IPv6'
-function request(svc, node, cb) {
-  $httpClient.get(
-    {
-      url: svc.url,
-      timeout: TIMEOUT / 1000,
-      node,
-      headers: { 'User-Agent': 'Mozilla/5.0' }
-    },
-    (err, resp, body) => {
-      const status = err ? 0 : (resp ? resp.status : 0)
-      let r
-      try { r = svc.check(status, body || '') } catch { r = { ok: false } }
-      cb({ name: `${svc.name}${node === 'IPv6' ? ' (v6)' : ''}`, ...r })
-    }
-  )
-}
-
-// 并发请求所有服务（按 IPv4/IPv6 参数决定）
+// 并发请求所有服务
 function checkAll() {
-  if (!args.IPv4 && !args.IPv6) {
-    $done({ title: '流媒体解锁', content: '请至少启用 IPv4 或 IPv6 其中一项', icon: 'exclamationmark.circle' })
-    return
-  }
-
-  const tasks = []
-  SERVICES.forEach(svc => {
-    if (args.IPv4) tasks.push({ svc, node: 'IPv4' })
-    if (args.IPv6) tasks.push({ svc, node: 'IPv6' })
-  })
-
   const results = []
-  let pending = tasks.length
+  let pending = SERVICES.length
 
-  tasks.forEach(({ svc, node }) => {
-    request(svc, node, r => {
-      results.push(r)
-      pending--
-      if (pending === 0) render(results)
-    })
+  SERVICES.forEach(svc => {
+    $httpClient.get(
+      { url: svc.url, timeout: TIMEOUT / 1000, headers: { 'User-Agent': 'Mozilla/5.0' } },
+      (err, resp, body) => {
+        const status = err ? 0 : (resp ? resp.status : 0)
+        let r
+        try { r = svc.check(status, body || '') } catch { r = { ok: false } }
+        results.push({ name: svc.name, ...r })
+        pending--
+        if (pending === 0) render(results)
+      }
+    )
   })
 }
 

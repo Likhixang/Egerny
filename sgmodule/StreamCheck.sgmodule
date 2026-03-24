@@ -1,8 +1,6 @@
 #!name=流媒体解锁检测
 #!desc=检测当前节点的流媒体解锁情况，支持 Netflix / Disney+ / YouTube Premium 等 18 个服务。
 #!category=流媒体
-#!arguments=IPv4:true,IPv6:false
-#!arguments-desc=IPv4: 检测 IPv4 连通性（true/false），默认 true. @from wish | IPv6: 检测 IPv6 连通性（true/false），默认 false
 
 [Panel]
 StreamCheck = script-name=StreamCheck, title=流媒体解锁, content=检测中…, style=info, update-interval=0
