@@ -335,13 +335,6 @@ function timeout(delay) {
         })
       }
       
-      function timeout(delay = 5000) {
-        return new Promise((resolve, reject) => {
-          setTimeout(() => {
-            reject('Timeout')
-          }, delay)
-        })
-      }
 
 async function check_hbomax() {
   let inner_check = () => {
