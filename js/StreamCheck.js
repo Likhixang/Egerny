@@ -273,7 +273,7 @@ function timeout(delay) {
               return
             }
       
-            data = JSON.parse(data)
+            try { data = JSON.parse(data) } catch(e) { reject('Not Available'); return }
             if(data && data.errors){
               console.log('getLocationInfo: ' + data)
               reject('Not Available')
