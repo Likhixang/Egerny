@@ -203,16 +203,8 @@ function timeout(delay) {
   async function testDisneyPlus() {
     try {
         let { region, cnbl } = await Promise.race([testHomePage(), timeout(7000)])
-        console.log(`homepage: region=${region}, cnbl=${cnbl}`)
-        // 即将登陆
-    //  if (cnbl == 2) {
-    //    return { region, status: STATUS_COMING }
-    //  }
         let { countryCode, inSupportedLocation } = await Promise.race([getLocationInfo(), timeout(7000)])
-        console.log(`getLocationInfo: countryCode=${countryCode}, inSupportedLocation=${inSupportedLocation}`)
-        
-        region = countryCode ?? region
-        console.log( "region:"+region)
+        region = countryCode || region
         // 即将登陆
         if (inSupportedLocation === false || inSupportedLocation === 'false') {
           return { region, status: STATUS_COMING }
@@ -285,19 +277,19 @@ function timeout(delay) {
             }
       
             data = JSON.parse(data)
-            if(data?.errors){
+            if(data && data.errors){
               console.log('getLocationInfo: ' + data)
               reject('Not Available')
               return
             }
-      
+
             let {
               token: { accessToken },
               session: {
                 inSupportedLocation,
                 location: { countryCode },
               },
-            } = data?.extensions?.sdk
+            } = data && data.extensions && data.extensions.sdk
             resolve({ inSupportedLocation, countryCode, accessToken })
           })
         })
