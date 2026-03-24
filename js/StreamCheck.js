@@ -203,7 +203,14 @@ function tryJSON(str) {
 }
 
 ;(async () => {
-  const results = await Promise.all([
+  let panel = {
+    title: '流媒体解锁',
+    content: '',
+    icon: 'play.tv.fill',
+    'icon-color': '#FF2D55',
+  }
+
+  await Promise.all([
     check_netflix(),
     check_disney(),
     check_youtube(),
@@ -222,21 +229,16 @@ function tryJSON(str) {
     check_spotify(),
     check_discovery(),
     check_espn(),
-  ])
-
-  const unlocked = results.filter(r => r.includes('✅')).length
-  const total = results.length
-  const ratio = unlocked / total
-
-  let iconColor
-  if (ratio >= 0.7) iconColor = '#34C759'
-  else if (ratio >= 0.4) iconColor = '#FF9500'
-  else iconColor = '#FF3B30'
-
-  $done({
-    title: `流媒体解锁 ${unlocked}/${total}`,
-    content: results.join('\n'),
-    icon: 'play.tv.fill',
-    'icon-color': iconColor,
+  ]).then((results) => {
+    const unlocked = results.filter(r => r.includes('✅')).length
+    const total = results.length
+    const ratio = unlocked / total
+    if (ratio >= 0.7) panel['icon-color'] = '#34C759'
+    else if (ratio >= 0.4) panel['icon-color'] = '#FF9500'
+    else panel['icon-color'] = '#FF3B30'
+    panel.title = `流媒体解锁 ${unlocked}/${total}`
+    panel.content = results.join('\n')
+  }).finally(() => {
+    $done(panel)
   })
 })()
