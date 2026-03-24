@@ -193,21 +193,33 @@ function tryJSON(str) {
   try { return JSON.parse(str) } catch { return null }
 }
 
-// 并发请求所有服务
+// 并发请求所有服务，每个请求有独立超时保底
 function checkAll() {
   const results = []
   let pending = SERVICES.length
 
+  function done(entry) {
+    results.push(entry)
+    pending--
+    if (pending === 0) render(results)
+  }
+
   SERVICES.forEach(svc => {
+    let settled = false
+    const timer = setTimeout(() => {
+      if (!settled) { settled = true; done({ name: svc.name, ok: false }) }
+    }, TIMEOUT)
+
     $httpClient.get(
       { url: svc.url, timeout: TIMEOUT / 1000, headers: { 'User-Agent': 'Mozilla/5.0' } },
       (err, resp, body) => {
+        if (settled) return
+        settled = true
+        clearTimeout(timer)
         const status = err ? 0 : (resp ? resp.status : 0)
         let r
         try { r = svc.check(status, body || '') } catch { r = { ok: false } }
-        results.push({ name: svc.name, ...r })
-        pending--
-        if (pending === 0) render(results)
+        done({ name: svc.name, ...r })
       }
     )
   })
