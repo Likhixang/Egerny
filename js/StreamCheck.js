@@ -25,6 +25,12 @@ const STATUS_ERROR = -2
 
 const UA = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/94.0.4606.61 Safari/537.36'
 
+function timeout(delay) {
+  delay = delay || 5000
+  return new Promise((resolve, reject) => {
+    setTimeout(() => reject('Timeout'), delay)
+  })
+}
 
   ;(async () => {
     let panel_result = {
@@ -496,7 +502,7 @@ async function check_crunchyroll() {
   let result = 'Crunchyroll: '
   await Promise.race([inner_check(), timeout()]).then((code) => {
     result += code === 'Available' ? '已解锁 ✅' : '未支持 🚫'
-  }).catch((e) => { result += e === 'Timeout' ? '检测超时 ��' : '检测失败' })
+  }).catch((e) => { result += e === 'Timeout' ? '检测超时 🚦' : '检测失败' })
   return result
 }
 
