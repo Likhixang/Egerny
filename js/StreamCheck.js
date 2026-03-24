@@ -153,10 +153,10 @@ function timeout(delay) {
           }
   
           if (response.status === 200) {
-            let url = response.headers['x-originating-url']
-            let region = url.split('/')[3]
-            region = region.split('-')[0]
-            if (region == 'title') {
+            let url = response.headers['x-originating-url'] || ''
+            let parts = url.split('/')
+            let region = parts[3] ? parts[3].split('-')[0] : 'us'
+            if (region == 'title' || !region) {
               region = 'us'
             }
             resolve(region)
