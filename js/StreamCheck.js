@@ -91,7 +91,7 @@ function timeout(delay) {
             reject('Error')
             return
           }
-  
+          data = data || ''
           if (data.indexOf('Premium is not available in your country') !== -1) {
             resolve('Not Available')
             return
@@ -308,6 +308,7 @@ function timeout(delay) {
               reject('Error')
               return
             }
+            data = data || ''
             if (response.status !== 200 || data.indexOf('Sorry, Disney+ is not available in your region.') !== -1) {
               reject('Not Available')
               return
@@ -332,6 +333,7 @@ async function check_hbomax() {
     return new Promise((resolve, reject) => {
       $httpClient.get({ url: 'https://www.max.com', headers: REQUEST_HEADERS }, function(error, response, data) {
         if (error) { reject('Error'); return }
+        data = data || ''
         if (response.status === 200 && data.indexOf('not available in your region') === -1) { resolve('Available'); return }
         resolve('Not Available')
       })
@@ -383,6 +385,7 @@ async function check_bbc() {
     return new Promise((resolve, reject) => {
       $httpClient.get({ url: 'https://open.live.bbc.co.uk/mediaselector/6/select/version/2.0/mediaset/pc/vpid/bbc_one_london', headers: REQUEST_HEADERS }, function(error, response, data) {
         if (error) { reject('Error'); return }
+        data = data || ''
         if (data.indexOf('geolocation') !== -1) { resolve('Not Available'); return }
         if (data.indexOf('href') !== -1) { resolve('UK'); return }
         resolve('Not Available')
@@ -401,6 +404,7 @@ async function check_bahamut() {
     return new Promise((resolve, reject) => {
       $httpClient.get({ url: 'https://ani.gamer.com.tw/ajax/token.php?adID=89422&sn=14667', headers: REQUEST_HEADERS }, function(error, response, data) {
         if (error) { reject('Error'); return }
+        data = data || ''
         if (data.indexOf('animeSn') !== -1) { resolve('TW'); return }
         resolve('Not Available')
       })
@@ -478,6 +482,7 @@ async function check_crunchyroll() {
     return new Promise((resolve, reject) => {
       $httpClient.get({ url: 'https://www.crunchyroll.com', headers: REQUEST_HEADERS }, function(error, response, data) {
         if (error) { reject('Error'); return }
+        data = data || ''
         if (response.status === 200 && data.indexOf('not available') === -1) { resolve('Available'); return }
         resolve('Not Available')
       })
@@ -566,6 +571,7 @@ async function check_discovery() {
     return new Promise((resolve, reject) => {
       $httpClient.get({ url: 'https://www.discoveryplus.com', headers: REQUEST_HEADERS }, function(error, response, data) {
         if (error) { reject('Error'); return }
+        data = data || ''
         if (response.status === 200 && data.indexOf('not available') === -1) { resolve('Available'); return }
         resolve('Not Available')
       })
