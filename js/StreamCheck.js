@@ -283,13 +283,14 @@ function timeout(delay) {
               return
             }
 
-            let {
-              token: { accessToken },
-              session: {
-                inSupportedLocation,
-                location: { countryCode },
-              },
-            } = data && data.extensions && data.extensions.sdk
+            if (!data || !data.extensions || !data.extensions.sdk) {
+              reject('Not Available')
+              return
+            }
+            let sdk = data.extensions.sdk
+            let accessToken = sdk.token && sdk.token.accessToken
+            let inSupportedLocation = sdk.session && sdk.session.inSupportedLocation
+            let countryCode = sdk.session && sdk.session.location && sdk.session.location.countryCode
             resolve({ inSupportedLocation, countryCode, accessToken })
           })
         })
