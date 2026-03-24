@@ -34,30 +34,39 @@ const UA = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (
       'icon-color': '#FF2D55',
     }
   let [{ region, status }] = await Promise.all([testDisneyPlus()])
-    await Promise.all([check_youtube_premium(),check_netflix()])
-      .then((result) => { 
-         console.log(result)
- let disney_result=""
-    if (status==STATUS_COMING) {
-        //console.log(1)
-        disney_result="Disney+: 即将登陆~"+region.toUpperCase()
-      } else if (status==STATUS_AVAILABLE){
-        //console.log(2)
-        console.log(region)
-        disney_result="Disney+: 已解锁 ➟ "+region.toUpperCase()
-        // console.log(result["Disney"])
-      } else if (status==STATUS_NOT_AVAILABLE) {
-        //console.log(3)
-        disney_result="Disney+: 未支持 🚫 "
-      } else if (status==STATUS_TIMEOUT) {
-        disney_result="Disney+: 检测超时 🚦"
-      }
-result.push(disney_result)
-console.log(result)
+    await Promise.all([
+      check_youtube_premium(),
+      check_netflix(),
+      check_hbomax(),
+      check_hulu(),
+      check_amazon(),
+      check_bbc(),
+      check_bahamut(),
+      check_bilibili(),
+      check_abema(),
+      check_dazn(),
+      check_crunchyroll(),
+      check_paramount(),
+      check_peacock(),
+      check_appletv(),
+      check_spotify(),
+      check_discovery(),
+      check_espn(),
+    ])
+      .then((result) => {
+        let disney_result = ''
+        if (status == STATUS_COMING) {
+          disney_result = 'Disney+: 即将登陆 ' + region.toUpperCase()
+        } else if (status == STATUS_AVAILABLE) {
+          disney_result = 'Disney+: 已解锁 ➟ ' + region.toUpperCase()
+        } else if (status == STATUS_NOT_AVAILABLE) {
+          disney_result = 'Disney+: 未支持 🚫'
+        } else if (status == STATUS_TIMEOUT) {
+          disney_result = 'Disney+: 检测超时 🚦'
+        }
+        result.splice(1, 0, disney_result)
         let content = result.join('\n')
-        console.log(content)
-     
-panel_result['content'] = content
+        panel_result['content'] = content
       })
       .finally(() => {
         $done(panel_result)
@@ -327,3 +336,271 @@ panel_result['content'] = content
           }, delay)
         })
       }
+
+async function check_hbomax() {
+  let inner_check = () => {
+    return new Promise((resolve, reject) => {
+      $httpClient.get({ url: 'https://www.max.com', headers: REQUEST_HEADERS }, function(error, response, data) {
+        if (error) { reject('Error'); return }
+        if (response.status === 200 && data.indexOf('not available in your region') === -1) { resolve('Available'); return }
+        resolve('Not Available')
+      })
+    })
+  }
+  let result = 'HBO Max: '
+  await Promise.race([inner_check(), timeout()]).then((code) => {
+    result += code === 'Available' ? '已解锁 ✅' : '未支持 🚫'
+  }).catch((e) => { result += e === 'Timeout' ? '检测超时 🚦' : '检测失败' })
+  return result
+}
+
+async function check_hulu() {
+  let inner_check = () => {
+    return new Promise((resolve, reject) => {
+      $httpClient.get({ url: 'https://www.hulu.com', headers: REQUEST_HEADERS }, function(error, response, data) {
+        if (error) { reject('Error'); return }
+        if (response.status === 200) { resolve('US'); return }
+        resolve('Not Available')
+      })
+    })
+  }
+  let result = 'Hulu: '
+  await Promise.race([inner_check(), timeout()]).then((code) => {
+    result += code === 'Not Available' ? '未支持 🚫' : '已解锁 ➟ ' + code
+  }).catch((e) => { result += e === 'Timeout' ? '检测超时 🚦' : '检测失败' })
+  return result
+}
+
+async function check_amazon() {
+  let inner_check = () => {
+    return new Promise((resolve, reject) => {
+      $httpClient.get({ url: 'https://www.amazon.com/gp/video/storefront', headers: REQUEST_HEADERS }, function(error, response, data) {
+        if (error) { reject('Error'); return }
+        if (response.status === 200) { resolve('Available'); return }
+        resolve('Not Available')
+      })
+    })
+  }
+  let result = 'Amazon Prime: '
+  await Promise.race([inner_check(), timeout()]).then((code) => {
+    result += code === 'Available' ? '已解锁 ✅' : '未支持 🚫'
+  }).catch((e) => { result += e === 'Timeout' ? '检测超时 🚦' : '检测失败' })
+  return result
+}
+
+async function check_bbc() {
+  let inner_check = () => {
+    return new Promise((resolve, reject) => {
+      $httpClient.get({ url: 'https://open.live.bbc.co.uk/mediaselector/6/select/version/2.0/mediaset/pc/vpid/bbc_one_london', headers: REQUEST_HEADERS }, function(error, response, data) {
+        if (error) { reject('Error'); return }
+        if (data.indexOf('geolocation') !== -1) { resolve('Not Available'); return }
+        if (data.indexOf('href') !== -1) { resolve('UK'); return }
+        resolve('Not Available')
+      })
+    })
+  }
+  let result = 'BBC iPlayer: '
+  await Promise.race([inner_check(), timeout()]).then((code) => {
+    result += code === 'Not Available' ? '未支持 🚫' : '已解锁 ➟ ' + code
+  }).catch((e) => { result += e === 'Timeout' ? '检测超时 🚦' : '检测失败' })
+  return result
+}
+
+async function check_bahamut() {
+  let inner_check = () => {
+    return new Promise((resolve, reject) => {
+      $httpClient.get({ url: 'https://ani.gamer.com.tw/ajax/token.php?adID=89422&sn=14667', headers: REQUEST_HEADERS }, function(error, response, data) {
+        if (error) { reject('Error'); return }
+        if (data.indexOf('animeSn') !== -1) { resolve('TW'); return }
+        resolve('Not Available')
+      })
+    })
+  }
+  let result = 'Bahamut: '
+  await Promise.race([inner_check(), timeout()]).then((code) => {
+    result += code === 'Not Available' ? '未支持 🚫' : '已解锁 ➟ ' + code
+  }).catch((e) => { result += e === 'Timeout' ? '检测超时 🚦' : '检测失败' })
+  return result
+}
+
+async function check_bilibili() {
+  let inner_check = () => {
+    return new Promise((resolve, reject) => {
+      $httpClient.get({ url: 'https://api.bilibili.com/pgc/player/web/playurl?avid=82846771&qn=0&type=&otype=json&ep_id=307247&fourk=1&fnver=0&fnval=16&module=bangumi', headers: REQUEST_HEADERS }, function(error, response, data) {
+        if (error) { reject('Error'); return }
+        try {
+          let j = JSON.parse(data)
+          if (j.code === 0) { resolve('大陆'); return }
+        } catch(e) {}
+        resolve('Not Available')
+      })
+    })
+  }
+  let result = 'Bilibili: '
+  await Promise.race([inner_check(), timeout()]).then((code) => {
+    result += code === 'Not Available' ? '未支持 🚫' : '已解锁 ➟ ' + code
+  }).catch((e) => { result += e === 'Timeout' ? '检测超时 🚦' : '检测失败' })
+  return result
+}
+
+async function check_abema() {
+  let inner_check = () => {
+    return new Promise((resolve, reject) => {
+      $httpClient.get({ url: 'https://api.abema.io/v1/ip/check?device=pc', headers: REQUEST_HEADERS }, function(error, response, data) {
+        if (error) { reject('Error'); return }
+        try {
+          let j = JSON.parse(data)
+          if (j.isoCountryCode === 'JP') { resolve('JP'); return }
+        } catch(e) {}
+        resolve('Not Available')
+      })
+    })
+  }
+  let result = 'Abema: '
+  await Promise.race([inner_check(), timeout()]).then((code) => {
+    result += code === 'Not Available' ? '未支持 🚫' : '已解锁 ➟ ' + code
+  }).catch((e) => { result += e === 'Timeout' ? '检测超时 🚦' : '检测失败' })
+  return result
+}
+
+async function check_dazn() {
+  let inner_check = () => {
+    return new Promise((resolve, reject) => {
+      $httpClient.get({ url: 'https://startup.core.indazn.com/misl/v5/Startup?Platform=web', headers: REQUEST_HEADERS }, function(error, response, data) {
+        if (error) { reject('Error'); return }
+        try {
+          let j = JSON.parse(data)
+          if (j.Region) { resolve(j.Region.toUpperCase()); return }
+        } catch(e) {}
+        resolve('Not Available')
+      })
+    })
+  }
+  let result = 'DAZN: '
+  await Promise.race([inner_check(), timeout()]).then((code) => {
+    result += code === 'Not Available' ? '未支持 🚫' : '已解锁 ➟ ' + code
+  }).catch((e) => { result += e === 'Timeout' ? '检测超时 🚦' : '检测失败' })
+  return result
+}
+
+async function check_crunchyroll() {
+  let inner_check = () => {
+    return new Promise((resolve, reject) => {
+      $httpClient.get({ url: 'https://www.crunchyroll.com', headers: REQUEST_HEADERS }, function(error, response, data) {
+        if (error) { reject('Error'); return }
+        if (response.status === 200 && data.indexOf('not available') === -1) { resolve('Available'); return }
+        resolve('Not Available')
+      })
+    })
+  }
+  let result = 'Crunchyroll: '
+  await Promise.race([inner_check(), timeout()]).then((code) => {
+    result += code === 'Available' ? '已解锁 ✅' : '未支持 🚫'
+  }).catch((e) => { result += e === 'Timeout' ? '检测超时 ��' : '检测失败' })
+  return result
+}
+
+async function check_paramount() {
+  let inner_check = () => {
+    return new Promise((resolve, reject) => {
+      $httpClient.get({ url: 'https://www.paramountplus.com', headers: REQUEST_HEADERS }, function(error, response, data) {
+        if (error) { reject('Error'); return }
+        if (response.status === 200) { resolve('Available'); return }
+        resolve('Not Available')
+      })
+    })
+  }
+  let result = 'Paramount+: '
+  await Promise.race([inner_check(), timeout()]).then((code) => {
+    result += code === 'Available' ? '已解锁 ✅' : '未支持 🚫'
+  }).catch((e) => { result += e === 'Timeout' ? '检测超时 🚦' : '检测失败' })
+  return result
+}
+
+async function check_peacock() {
+  let inner_check = () => {
+    return new Promise((resolve, reject) => {
+      $httpClient.get({ url: 'https://www.peacocktv.com', headers: REQUEST_HEADERS }, function(error, response, data) {
+        if (error) { reject('Error'); return }
+        if (response.status === 200) { resolve('US'); return }
+        resolve('Not Available')
+      })
+    })
+  }
+  let result = 'Peacock: '
+  await Promise.race([inner_check(), timeout()]).then((code) => {
+    result += code === 'Not Available' ? '未支持 🚫' : '已解锁 ➟ ' + code
+  }).catch((e) => { result += e === 'Timeout' ? '检测超时 🚦' : '检测失败' })
+  return result
+}
+
+async function check_appletv() {
+  let inner_check = () => {
+    return new Promise((resolve, reject) => {
+      $httpClient.get({ url: 'https://tv.apple.com', headers: REQUEST_HEADERS }, function(error, response, data) {
+        if (error) { reject('Error'); return }
+        if (response.status === 200) { resolve('Available'); return }
+        resolve('Not Available')
+      })
+    })
+  }
+  let result = 'Apple TV+: '
+  await Promise.race([inner_check(), timeout()]).then((code) => {
+    result += code === 'Available' ? '已解锁 ✅' : '未支持 🚫'
+  }).catch((e) => { result += e === 'Timeout' ? '检测超时 🚦' : '检测失败' })
+  return result
+}
+
+async function check_spotify() {
+  let inner_check = () => {
+    return new Promise((resolve, reject) => {
+      $httpClient.get({ url: 'https://spclient.wg.spotify.com/signup/public/v1/account?validate=1&email=support%40spotify.com', headers: REQUEST_HEADERS }, function(error, response, data) {
+        if (error) { reject('Error'); return }
+        try {
+          let j = JSON.parse(data)
+          if (j.country) { resolve(j.country.toUpperCase()); return }
+        } catch(e) {}
+        resolve('Not Available')
+      })
+    })
+  }
+  let result = 'Spotify: '
+  await Promise.race([inner_check(), timeout()]).then((code) => {
+    result += code === 'Not Available' ? '未支持 🚫' : '已解锁 ➟ ' + code
+  }).catch((e) => { result += e === 'Timeout' ? '检测超时 🚦' : '检测失败' })
+  return result
+}
+
+async function check_discovery() {
+  let inner_check = () => {
+    return new Promise((resolve, reject) => {
+      $httpClient.get({ url: 'https://www.discoveryplus.com', headers: REQUEST_HEADERS }, function(error, response, data) {
+        if (error) { reject('Error'); return }
+        if (response.status === 200 && data.indexOf('not available') === -1) { resolve('Available'); return }
+        resolve('Not Available')
+      })
+    })
+  }
+  let result = 'Discovery+: '
+  await Promise.race([inner_check(), timeout()]).then((code) => {
+    result += code === 'Available' ? '已解锁 ✅' : '未支持 🚫'
+  }).catch((e) => { result += e === 'Timeout' ? '检测超时 🚦' : '检测失败' })
+  return result
+}
+
+async function check_espn() {
+  let inner_check = () => {
+    return new Promise((resolve, reject) => {
+      $httpClient.get({ url: 'https://www.espnplus.com', headers: REQUEST_HEADERS }, function(error, response, data) {
+        if (error) { reject('Error'); return }
+        if (response.status === 200) { resolve('US'); return }
+        resolve('Not Available')
+      })
+    })
+  }
+  let result = 'ESPN+: '
+  await Promise.race([inner_check(), timeout()]).then((code) => {
+    result += code === 'Not Available' ? '未支持 🚫' : '已解锁 ➟ ' + code
+  }).catch((e) => { result += e === 'Timeout' ? '检测超时 🚦' : '检测失败' })
+  return result
+}
