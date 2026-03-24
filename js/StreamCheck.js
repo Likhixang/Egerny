@@ -113,8 +113,8 @@ function timeout(delay) {
     }
   
     let youtube_check_result = 'YouTube: '
-  
-    await inner_check()
+
+    await Promise.race([inner_check(), timeout()])
       .then((code) => {
         if (code === 'Not Available') {
           youtube_check_result += '不支持解锁'
@@ -123,9 +123,9 @@ function timeout(delay) {
         }
       })
       .catch((error) => {
-        youtube_check_result += '检测失败，请刷新面板'
+        youtube_check_result += error === 'Timeout' ? '检测超时 🚦' : '检测失败，请刷新面板'
       })
-  
+
     return youtube_check_result
   }
 
@@ -169,8 +169,8 @@ function timeout(delay) {
     }
   
     let netflix_check_result = 'Netflix: '
-  
-    await inner_check(81280792)
+
+    await Promise.race([inner_check(81280792), timeout()])
       .then((code) => {
         if (code === 'Not Found') {
           return inner_check(80018499)
@@ -182,21 +182,18 @@ function timeout(delay) {
         if (code === 'Not Found') {
           return Promise.reject('Not Available')
         }
-  
         netflix_check_result += '仅解锁自制剧 ➟ ' + code.toUpperCase()
         return Promise.reject('BreakSignal')
       })
       .catch((error) => {
-        if (error === 'BreakSignal') {
-          return
-        }
+        if (error === 'BreakSignal') return
         if (error === 'Not Available') {
           netflix_check_result += '该节点不支持解锁'
           return
         }
-        netflix_check_result += '检测失败，请刷新面板'
+        netflix_check_result += error === 'Timeout' ? '检测超时 🚦' : '检测失败，请刷新面板'
       })
-  
+
     return netflix_check_result
   }
 
