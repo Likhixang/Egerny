@@ -61,10 +61,11 @@ function timeout(delay) {
     ])
       .then((result) => {
         let disney_result = ''
+        let regionStr = (region && typeof region === 'string') ? region.toUpperCase() : ''
         if (status == STATUS_COMING) {
-          disney_result = 'Disney+: 即将登陆 ' + region.toUpperCase()
+          disney_result = 'Disney+: 即将登陆 ' + regionStr
         } else if (status == STATUS_AVAILABLE) {
-          disney_result = 'Disney+: 已解锁 ➟ ' + region.toUpperCase()
+          disney_result = 'Disney+: 已解锁 ➟ ' + regionStr
         } else if (status == STATUS_NOT_AVAILABLE) {
           disney_result = 'Disney+: 未支持 🚫'
         } else if (status == STATUS_TIMEOUT) {
