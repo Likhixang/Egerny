@@ -71,7 +71,7 @@ function timeout(delay) {
         } else if (status == STATUS_TIMEOUT) {
           disney_result = 'Disney+: 检测超时 🚦'
         }
-        result.splice(1, 0, disney_result)
+        if (disney_result) result.splice(1, 0, disney_result)
         let content = result.join('\n')
         panel_result['content'] = content
       })
