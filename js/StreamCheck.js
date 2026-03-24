@@ -24,7 +24,9 @@ const STATUS_ERROR = -2
     'icon-color': '#FF2D55',
   }
 
-  let [{ region, status }] = await Promise.all([testDisneyPlus()])
+  let [disneyResult] = await Promise.all([testDisneyPlus()])
+  let region = disneyResult.region || ''
+  let status = disneyResult.status
   await Promise.all([check_youtube_premium(), check_netflix()])
     .then((result) => {
       let disney_result = ''
