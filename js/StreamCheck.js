@@ -173,7 +173,7 @@ function timeout(delay) {
     await Promise.race([inner_check(81280792), timeout()])
       .then((code) => {
         if (code === 'Not Found') {
-          return inner_check(80018499)
+          return Promise.race([inner_check(80018499), timeout()])
         }
         netflix_check_result += '已完整解锁 ➟ ' + code.toUpperCase()
         return Promise.reject('BreakSignal')
