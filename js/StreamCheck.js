@@ -202,8 +202,8 @@ function timeout(delay) {
 
   async function testDisneyPlus() {
     try {
-        let { region, cnbl } = await Promise.race([testHomePage(), timeout(7000)])
-        let { countryCode, inSupportedLocation } = await Promise.race([getLocationInfo(), timeout(7000)])
+        let { region, cnbl } = await Promise.race([testHomePage(), timeout(5000)])
+        let { countryCode, inSupportedLocation } = await Promise.race([getLocationInfo(), timeout(5000)])
         region = countryCode || region
         // 即将登陆
         if (inSupportedLocation === false || inSupportedLocation === 'false') {
