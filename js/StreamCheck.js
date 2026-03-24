@@ -217,6 +217,7 @@ async function check_espn() {
 }
 
 ;(async () => {
+  console.log('[StreamCheck] script started')
   let panel = {
     title: '流媒体解锁',
     content: '',
@@ -253,6 +254,7 @@ async function check_espn() {
     panel.title = '流媒体解锁 ' + unlocked + '/' + total
     panel.content = results.join('\n')
   }).finally(() => {
+    console.log('[StreamCheck] done: ' + panel.title)
     $done(panel)
   })
 })()
