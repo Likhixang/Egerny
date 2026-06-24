@@ -1,5 +1,5 @@
 #!name=TeleOpenLink
-#!desc=Telegram 外部链接跳转至指定客户端（支持短链、贴纸包、分享 URL）
+#!desc=Telegram 外部链接跳转至指定客户端
 #!author=Li Khixang
 #!homepage=https://github.com/Likhixang
 #!arguments=Client:sg
