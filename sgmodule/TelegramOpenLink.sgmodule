@@ -3,7 +3,7 @@
 #!author=Li Khixang
 #!homepage=https://github.com/Likhixang
 #!arguments=Client:sg
-#!arguments-desc=Client: 目标客户端 URL scheme（sg / turrit / telegram 等）
+#!arguments-desc=Client: 目标客户端 URL scheme（Telegram>tg , Swiftgram>sg , Ghostgram>gg/ghostgram , Turrit>turrit , iMe>ime , Nicegram>ng , Lingogram:>lingo,等）
 
 [URL Rewrite]
 # 用户 / 频道 / 群组
