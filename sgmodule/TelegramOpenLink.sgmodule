@@ -1,12 +1,24 @@
 #!name=TeleOpenLink
-#!desc=Telegram 外部链接跳转至指定客户端
+#!desc=Telegram 外部链接跳转至指定客户端（支持短链、贴纸包、分享 URL）
 #!author=Li Khixang
 #!homepage=https://github.com/Likhixang
 #!arguments=Client:sg
 #!arguments-desc=Client: 目标客户端 URL scheme（Telegram>tg , Swiftgram>sg , Ghostgram>gg/ghostgram , Turrit>turrit , iMe>ime , Nicegram>ng , Lingogram>lingo,等）
 
 [URL Rewrite]
-# 用户 / 频道 / 群组
+# s/ 短链 — 指定消息
+(https:\/\/)?(t\.me|telegram\.me|telegram\.dog)\/s\/([A-Za-z0-9_]+)\/([0-9]+)$ {{{Client}}}://resolve?domain=$3&post=$4 302
+
+# s/ 短链 — 用户 / 频道 / 群组
+(https:\/\/)?(t\.me|telegram\.me|telegram\.dog)\/s\/([A-Za-z0-9_]+)$ {{{Client}}}://resolve?domain=$3 302
+
+# 贴纸包
+(https:\/\/)?(t\.me|telegram\.me|telegram\.dog)\/addstickers\/(.+)$ {{{Client}}}://addstickers?set=$3 302
+
+# 分享 URL
+(https:\/\/)?(t\.me|telegram\.me|telegram\.dog)\/share\/url\?(.+)$ {{{Client}}}://msg_url?$3 302
+
+# 用户 / 频道 / 群组（不含查询参数）
 (https:\/\/)?(t\.me|telegram\.me|telegram\.dog)\/([A-Za-z0-9_]+)$ {{{Client}}}://resolve?domain=$3 302
 
 # Bot 链接（含 start 等查询参数，原样透传）
