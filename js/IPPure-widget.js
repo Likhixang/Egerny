@@ -3,6 +3,7 @@
  * 支持尺寸：systemSmall / systemMedium / systemLarge / accessoryRectangular（锁屏矩形）
  * 数据源：https://my.ippure.com/v1/info
  * 环境变量：MarkIP = true 时对 IP 地址打码显示
+ * 背景跟随系统亮暗模式（不设固定背景），文本颜色自适应 light/dark
  */
 export default async function(ctx) {
   const url = "https://my.ippure.com/v1/info"
@@ -17,11 +18,10 @@ export default async function(ctx) {
       type: "widget",
       padding: 16,
       children: [
-        { type: "text", text: "节点 IP 纯净度", font: { size: "headline", weight: "bold" }, textColor: "#FFFFFF" },
+        { type: "text", text: "节点 IP 纯净度", font: { size: "headline", weight: "bold" }, textColor: C.primary },
         { type: "spacer" },
         { type: "text", text: "请求失败", font: { size: "subheadline" }, textColor: "#FF3B30" }
-      ],
-      backgroundColor: "#1A1A2E"
+      ]
     }
   }
 
@@ -66,16 +66,15 @@ export default async function(ctx) {
   if (family === "systemSmall") {
     return {
       type: "widget",
-      backgroundGradient: { type: "linear", colors: ["#1A1A2E", "#16213E"], startPoint: { x: 0, y: 0 }, endPoint: { x: 1, y: 1 } },
       padding: 14,
       children: [
         { type: "stack", direction: "row", alignItems: "center", gap: 6, children: [
           { type: "image", src: "sf-symbol:" + widgetIcon, color: level.color, width: 14, height: 14 },
-          { type: "text", text: "IP 纯净度", font: { size: "caption1", weight: "semibold" }, textColor: "#A0A0B0" }
+          { type: "text", text: "IP 纯净度", font: { size: "caption1", weight: "semibold" }, textColor: C.secondary }
         ]},
         { type: "spacer" },
-        { type: "text", text: showIP, font: { size: "headline", weight: "bold" }, textColor: "#FFFFFF", maxLines: 1, minScale: 0.5 },
-        { type: "text", text: `${ipLabel} · ${flag} ${j.country || ""}`.trim(), font: { size: "caption2" }, textColor: "#C0C0D0", maxLines: 1 },
+        { type: "text", text: showIP, font: { size: "headline", weight: "bold" }, textColor: C.primary, maxLines: 1, minScale: 0.5 },
+        { type: "text", text: `${ipLabel} · ${flag} ${j.country || ""}`.trim(), font: { size: "caption2" }, textColor: C.secondary, maxLines: 1 },
         { type: "spacer" },
         { type: "text", text: `${level.text} (${risk})`, font: { size: "footnote", weight: "semibold" }, textColor: level.color }
       ]
@@ -86,19 +85,18 @@ export default async function(ctx) {
   if (family === "systemLarge") {
     return {
       type: "widget",
-      backgroundGradient: { type: "linear", colors: ["#1A1A2E", "#16213E"], startPoint: { x: 0, y: 0 }, endPoint: { x: 1, y: 1 } },
       padding: 16,
       children: [
         { type: "stack", direction: "row", alignItems: "center", gap: 8, children: [
           { type: "image", src: "sf-symbol:" + widgetIcon, color: level.color, width: 20, height: 20 },
-          { type: "text", text: "节点 IP 纯净度", font: { size: "headline", weight: "bold" }, textColor: "#FFFFFF", flex: 1 },
+          { type: "text", text: "节点 IP 纯净度", font: { size: "headline", weight: "bold" }, textColor: C.primary, flex: 1 },
           { type: "text", text: `${level.text} (${risk})`, font: { size: "footnote", weight: "semibold" }, textColor: level.color }
         ]},
         { type: "spacer", length: 12 },
-        { type: "text", text: `${ipLabel}：${showIP}`, font: { size: "subheadline", weight: "medium" }, textColor: "#FFFFFF" },
-        { type: "text", text: `ASN：${asnText}`, font: { size: "subheadline" }, textColor: "#C0C0D0", maxLines: 1, minScale: 0.6 },
-        { type: "text", text: `位置：${locationText}`, font: { size: "subheadline" }, textColor: "#C0C0D0", maxLines: 1 },
-        { type: "text", text: `原生 IP：${nativeText}`, font: { size: "subheadline" }, textColor: "#C0C0D0", maxLines: 1 },
+        { type: "text", text: `${ipLabel}：${showIP}`, font: { size: "subheadline", weight: "medium" }, textColor: C.primary },
+        { type: "text", text: `ASN：${asnText}`, font: { size: "subheadline" }, textColor: C.secondary, maxLines: 1, minScale: 0.6 },
+        { type: "text", text: `位置：${locationText}`, font: { size: "subheadline" }, textColor: C.secondary, maxLines: 1 },
+        { type: "text", text: `原生 IP：${nativeText}`, font: { size: "subheadline" }, textColor: C.secondary, maxLines: 1 },
         { type: "spacer" },
         { type: "text", text: `${level.text} · 分数 ${risk}/100`, font: { size: "caption2" }, textColor: level.color }
       ]
@@ -108,28 +106,33 @@ export default async function(ctx) {
   // 主屏中尺寸（默认）
   return {
     type: "widget",
-    backgroundGradient: { type: "linear", colors: ["#1A1A2E", "#16213E"], startPoint: { x: 0, y: 0 }, endPoint: { x: 1, y: 1 } },
     padding: 14,
     children: [
       { type: "stack", direction: "row", alignItems: "center", gap: 6, children: [
         { type: "image", src: "sf-symbol:" + widgetIcon, color: level.color, width: 16, height: 16 },
-        { type: "text", text: "节点 IP 纯净度", font: { size: "headline", weight: "bold" }, textColor: "#FFFFFF" }
+        { type: "text", text: "节点 IP 纯净度", font: { size: "headline", weight: "bold" }, textColor: C.primary }
       ]},
       { type: "spacer", length: 8 },
       { type: "stack", direction: "row", gap: 12, children: [
         { type: "stack", direction: "column", flex: 1, gap: 4, children: [
-          { type: "text", text: showIP, font: { size: "title3", weight: "bold" }, textColor: "#FFFFFF", maxLines: 1, minScale: 0.5 },
-          { type: "text", text: `${ipLabel} · ${locationText}`.trim(), font: { size: "caption2" }, textColor: "#C0C0D0", maxLines: 1, minScale: 0.7 }
+          { type: "text", text: showIP, font: { size: "title3", weight: "bold" }, textColor: C.primary, maxLines: 1, minScale: 0.5 },
+          { type: "text", text: `${ipLabel} · ${locationText}`.trim(), font: { size: "caption2" }, textColor: C.secondary, maxLines: 1, minScale: 0.7 }
         ]},
         { type: "stack", direction: "column", flex: 1, gap: 4, children: [
-          { type: "text", text: asnText, font: { size: "caption1" }, textColor: "#C0C0D0", maxLines: 1, minScale: 0.6 },
-          { type: "text", text: `原生：${nativeText}`, font: { size: "caption1" }, textColor: "#C0C0D0", maxLines: 1 }
+          { type: "text", text: asnText, font: { size: "caption1" }, textColor: C.secondary, maxLines: 1, minScale: 0.6 },
+          { type: "text", text: `原生：${nativeText}`, font: { size: "caption1" }, textColor: C.secondary, maxLines: 1 }
         ]}
       ]},
       { type: "spacer" },
       { type: "text", text: `${level.text} (${risk})`, font: { size: "footnote", weight: "semibold" }, textColor: level.color }
     ]
   }
+}
+
+// 自适应文本颜色：随系统亮暗模式切换
+const C = {
+  primary:   { light: "#1C1C1E", dark: "#FFFFFF" },   // 主文本
+  secondary: { light: "#6E6E73", dark: "#AEAEB2" }    // 次要文本
 }
 
 function riskLevel(risk) {
