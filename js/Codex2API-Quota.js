@@ -172,18 +172,18 @@ function parseAccountItem(acc) {
   const healthTier = acc.health_tier || "healthy";
 
   // 5h Window
-  const has5h = acc.usage_percent_5h !== undefined && acc.usage_percent_5h !== null;
-  const usage5h = has5h ? Number(acc.usage_percent_5h) : null;
-  const remainingFraction5h = usage5h !== null ? Math.max(0, Math.min(1, (100 - usage5h) / 100)) : 1.0;
+  const has5h = acc.usage_percent_5h !== undefined && acc.usage_percent_5h !== null && !isNaN(Number(acc.usage_percent_5h));
+  const usage5h = has5h ? Number(acc.usage_percent_5h) : 0;
+  const remainingFraction5h = has5h ? Math.max(0, Math.min(1, (100 - usage5h) / 100)) : 1.0;
   const reset5hAtMs = acc.reset_5h_at ? new Date(acc.reset_5h_at).getTime() : null;
   const reset5hTimeStr = reset5hAtMs ? formatTimeOnly(reset5hAtMs) : "--:--";
   const reset5hCountdownStr = formatCountdown(reset5hAtMs, remainingFraction5h);
   const billed5h = typeof acc.billed_5h === "number" ? acc.billed_5h : null;
 
   // 7d Window (周额度)
-  const has7d = acc.usage_percent_7d !== undefined && acc.usage_percent_7d !== null;
-  const usage7d = has7d ? Number(acc.usage_percent_7d) : null;
-  const remainingFraction7d = usage7d !== null ? Math.max(0, Math.min(1, (100 - usage7d) / 100)) : 1.0;
+  const has7d = acc.usage_percent_7d !== undefined && acc.usage_percent_7d !== null && !isNaN(Number(acc.usage_percent_7d));
+  const usage7d = has7d ? Number(acc.usage_percent_7d) : 0;
+  const remainingFraction7d = has7d ? Math.max(0, Math.min(1, (100 - usage7d) / 100)) : 1.0;
   const reset7dAtMs = acc.reset_7d_at ? new Date(acc.reset_7d_at).getTime() : null;
   const reset7dTimeStr = reset7dAtMs ? formatShortDate(reset7dAtMs) : "--/--";
   const reset7dCountdownStr = formatCountdown(reset7dAtMs, remainingFraction7d);
@@ -687,7 +687,8 @@ function renderMediumWidget(accounts, updateStr, maskEmailEnabled) {
   const first = accounts[0];
 
   if (isSingle && first) {
-    const isDual = first.has5h && first.has7d;
+    // 单账号场景：只要有 7d 或者 Pro/Plus 方案，默认始终呈现「双额度」完整看板
+    const isDual = (first.has5h && first.has7d) || first.has7d || first.isSecondarySpark || first.planType.includes("pro") || first.planType.includes("plus");
     const accBadge = getAccountBadge(first);
     const used5h = first.usagePercent5h !== null ? Math.round(first.usagePercent5h) : Math.round((1 - first.remainingFraction5h) * 100);
     const remain5h = Math.round(first.remainingFraction5h * 100);
