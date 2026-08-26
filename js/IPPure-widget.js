@@ -1,16 +1,15 @@
 /*
  * IPPure 节点 IP 纯净度 — Egern 新式小组件
  * 设计系统：Apple HIG 现代化自适应排版
- *   - Small: 显式固定精密间距控制（彻底解决弹性 Spacer 塌陷导致的上下间距失衡）
+ *   - Small: 显式固定精密间距控制
  *   - Medium: 经典宽屏仪表盘（左侧大圆环仪表 + 右侧结构化信息流）
- *   - Large: 顶部 Header + 顶部大圆环 Hero 概览 + 底部 2x2 对称等高数据卡片
- *   - 锁屏系列: accessoryCircular / accessoryRectangular / accessoryInline
+ *   - Large / ExtraLarge: 顶部 Header + 顶部大圆环 Hero 概览 + 底部 2x2 对称等高数据卡片
  * 数据源：https://my.ippure.com/v1/info
  */
 
 export default async function(ctx) {
   const apiUrl = "https://my.ippure.com/v1/info"
-  const markIP = (ctx.env?.MarkIP || "false").toLowerCase() === "true"
+  const markIP = (ctx.env?.MarkIP || ctx.env?.mark_ip || "false").toLowerCase() === "true"
 
   let data
   try {
@@ -60,18 +59,7 @@ export default async function(ctx) {
 
   const family = ctx.widgetFamily || "systemMedium"
 
-  // ── 锁屏小组件 ──
-  if (family === "accessoryCircular") {
-    return renderAccessoryCircular(purity, level)
-  }
-  if (family === "accessoryRectangular") {
-    return renderAccessoryRectangular(displayIP, locShort, purity, level, ipType)
-  }
-  if (family === "accessoryInline") {
-    return renderAccessoryInline(displayIP, purity, level)
-  }
-
-  // ── 主屏幕小组件 ──
+  // ── 主屏幕小组件各尺寸 ──
   if (family === "systemSmall") {
     return renderSystemSmall({
       displayIP,
@@ -86,7 +74,7 @@ export default async function(ctx) {
     })
   }
 
-  if (family === "systemLarge") {
+  if (family === "systemLarge" || family === "systemExtraLarge") {
     return renderSystemLarge({
       displayIP,
       ipVer,
@@ -107,7 +95,7 @@ export default async function(ctx) {
     })
   }
 
-  // 默认：systemMedium 中尺寸（黄金中尺寸，大圆环仪表盘 + 右侧信息流）
+  // 默认：systemMedium 中尺寸
   return renderSystemMedium({
     displayIP,
     ipVer,
@@ -145,9 +133,6 @@ const C = {
 
 /**
  * 主屏幕 Small 小尺寸 (2x2)
- * 精确间距控制（彻底解决弹性 Spacer 塌陷导致上面贴在一起、下面隔几公里的问题）：
- *  - 统一 padding: 14pt
- *  - 4 个模块之间显式指定精确像素间距 (8pt, 11pt, 11pt)
  */
 function renderSystemSmall(d) {
   return {
@@ -214,7 +199,7 @@ function renderSystemSmall(d) {
 
       { type: "spacer", length: 11 },
 
-      // 3. 核心长条状纯净度进度条（与上方位置保留精准 11pt 留白，与下方保留 11pt 留白）
+      // 3. 核心长条状纯净度进度条
       {
         type: "stack",
         direction: "column",
@@ -266,12 +251,7 @@ function renderSystemSmall(d) {
 }
 
 /**
- * 主屏幕 Medium 中尺寸 (2x4，黄金中尺寸仪表盘)
- * 结构：
- *  - Header: 盾牌 + "节点 IP 纯净度" + IPv4/v6 + Spacer + 风险评级 Badge
- *  - Main (左右分栏):
- *    - Left: 核心大圆环仪表 (88x88pt)
- *    - Right: 结构化信息流 (IP 大字、地理位置、ASN 组织、属性标签群)
+ * 主屏幕 Medium 中尺寸 (2x4 黄金仪表盘)
  */
 function renderSystemMedium(d) {
   return {
@@ -333,7 +313,6 @@ function renderSystemMedium(d) {
             flex: 1,
             gap: 3,
             children: [
-              // IP 大字
               {
                 type: "text",
                 text: d.displayIP,
@@ -342,14 +321,13 @@ function renderSystemMedium(d) {
                 maxLines: 1,
                 minScale: 0.65
               },
-              // 归属地
               {
                 type: "stack",
                 direction: "row",
                 alignItems: "center",
                 gap: 4,
                 children: [
-                  { type: "image", src: "sf-symbol:location.fill", color: C.textTertiary, width: 11, height: 11 },
+                  { type: "image", src: "sf-symbol:mappin.and.ellipse", color: C.textTertiary, width: 11, height: 11 },
                   {
                     type: "text",
                     text: d.locFull,
@@ -360,33 +338,30 @@ function renderSystemMedium(d) {
                   }
                 ]
               },
-              // ASN 网络
               {
                 type: "stack",
                 direction: "row",
                 alignItems: "center",
                 gap: 4,
                 children: [
-                  { type: "image", src: "sf-symbol:globe", color: C.textTertiary, width: 11, height: 11 },
+                  { type: "image", src: "sf-symbol:network", color: C.textTertiary, width: 11, height: 11 },
                   {
                     type: "text",
-                    text: d.asnFull,
+                    text: d.asnOrg ? `${d.asnNumber} · ${d.asnOrg}` : d.asnNumber,
                     font: { size: "caption2" },
-                    textColor: C.textSecondary,
+                    textColor: C.textTertiary,
                     maxLines: 1,
                     minScale: 0.7
                   }
                 ]
               },
-              // 底部特性胶囊排
               {
                 type: "stack",
                 direction: "row",
-                alignItems: "center",
                 gap: 5,
                 children: [
-                  createMiniTag(`sf-symbol:${d.ipTypeIcon}`, d.ipType),
-                  createMiniTag("sf-symbol:antenna.radiowaves.left.and.right", d.broadcastText)
+                  createSmallPill(`sf-symbol:${d.ipTypeIcon}`, d.ipType),
+                  createSmallPill("sf-symbol:antenna.radiowaves.left.and.right", d.broadcastText)
                 ]
               }
             ]
@@ -398,7 +373,7 @@ function renderSystemMedium(d) {
 }
 
 /**
- * 主屏幕 Large 大尺寸 (4x4)
+ * 主屏幕 Large 大尺寸 (4x4 完整看板)
  */
 function renderSystemLarge(d) {
   return {
@@ -406,114 +381,106 @@ function renderSystemLarge(d) {
     padding: 16,
     gap: 12,
     children: [
-      // 1. Header
+      // 1. Header 顶栏
       {
         type: "stack",
         direction: "row",
         alignItems: "center",
         gap: 6,
         children: [
-          { type: "image", src: "sf-symbol:shield.checkerboard", color: d.level.color, width: 18, height: 18 },
-          { type: "text", text: "节点 IP 纯净度检测", font: { size: "headline", weight: "bold" }, textColor: C.textPrimary },
+          { type: "image", src: "sf-symbol:shield.lefthalf.filled", color: d.level.color, width: 15, height: 15 },
+          { type: "text", text: "节点 IP 纯净度检测", font: { size: "subheadline", weight: "bold" }, textColor: C.textPrimary },
+          {
+            type: "stack",
+            padding: [2, 5],
+            borderRadius: 4,
+            backgroundColor: C.cardBg,
+            children: [
+              { type: "text", text: d.ipVer, font: { size: 10, weight: "bold" }, textColor: C.textSecondary }
+            ]
+          },
           { type: "spacer" },
           createPillBadge(d.level.text, d.level.color, d.level.badgeBg, d.level.icon)
         ]
       },
 
-      // 2. Hero 主仪表盘概览
+      // 2. Hero 顶部大概览卡片
       {
         type: "stack",
         direction: "row",
         alignItems: "center",
-        gap: 16,
+        gap: 14,
+        padding: 12,
+        borderRadius: 14,
+        backgroundColor: C.cardBg,
+        borderWidth: 0.5,
+        borderColor: C.cardBorder,
         children: [
           {
             type: "image",
-            src: createGaugeRingSvg(d.purity, 96, 9.5, d.level.color, "纯净度"),
-            width: 96,
-            height: 96
+            src: createGaugeRingSvg(d.purity, 78, 7, d.level.color, "纯净度"),
+            width: 78,
+            height: 78
           },
           {
             type: "stack",
             direction: "column",
             flex: 1,
-            gap: 4,
+            gap: 3,
             children: [
               {
-                type: "stack",
-                direction: "row",
-                alignItems: "center",
-                children: [
-                  {
-                    type: "text",
-                    text: d.displayIP,
-                    font: { size: 21, weight: "bold" },
-                    textColor: C.textPrimary,
-                    maxLines: 1,
-                    minScale: 0.6,
-                    flex: 1
-                  },
-                  {
-                    type: "stack",
-                    padding: [2, 6],
-                    borderRadius: 4,
-                    backgroundColor: C.cardBg,
-                    children: [
-                      { type: "text", text: d.ipVer, font: { size: 10, weight: "bold" }, textColor: C.textSecondary }
-                    ]
-                  }
-                ]
+                type: "text",
+                text: d.displayIP,
+                font: { size: 20, weight: "bold" },
+                textColor: C.textPrimary,
+                maxLines: 1,
+                minScale: 0.65
               },
               {
                 type: "text",
-                text: `安全评级: ${d.level.text} (${d.purity} 分)`,
-                font: { size: "footnote", weight: "semibold" },
+                text: `欺诈风险评分: ${d.fraudScore} / 100`,
+                font: { size: "caption1", weight: "medium" },
                 textColor: d.level.color
               },
               {
                 type: "text",
-                text: `欺诈风险分: ${d.fraudScore} (越低越安全)`,
-                font: { size: "caption1" },
-                textColor: C.textTertiary
-              },
-              {
-                type: "text",
-                text: `网络定位: ${d.ipType} · ${d.broadcastText}`,
-                font: { size: "caption1" },
-                textColor: C.textSecondary
+                text: d.locFull,
+                font: { size: "caption2" },
+                textColor: C.textSecondary,
+                maxLines: 1
               }
             ]
           }
         ]
       },
 
-      // 3. 严格等宽等高对称四宫格矩阵 (2x2 Grid)
+      // 3. 2x2 对称等高数据卡片矩阵
       {
         type: "stack",
         direction: "column",
-        gap: 8,
         flex: 1,
+        gap: 8,
         children: [
-          // 第一行（2个等宽高卡片）
+          // 第一行: IP 属性 + 地理位置
           {
             type: "stack",
             direction: "row",
             gap: 8,
             flex: 1,
             children: [
-              createGridCard("sf-symbol:mappin.and.ellipse", "地理位置", d.locLine1, d.locLine2),
-              createGridCard("sf-symbol:building.2.crop.circle", "网络运营商", d.asnNumber, d.asnOrg || "未知组织")
+              createDataCard("sf-symbol:server.rack", "网络类型", d.ipType, d.broadcastText, true),
+              createDataCard("sf-symbol:globe.asia.australia.fill", "所属地区", d.locLine1, d.locLine2, true)
             ]
           },
-          // 第二行（2个等宽高卡片）
+          // 第二行: ASN 网络 + 扩展信息
           {
             type: "stack",
             direction: "row",
             gap: 8,
             flex: 1,
             children: [
-              createGridCard("sf-symbol:antenna.radiowaves.left.and.right", "IP 属性特征", `类型: ${d.ipType}`, `路由: ${d.broadcastText}`),
-              createGridCard("sf-symbol:clock.badge.checkmark", "环境时区", `时区: ${d.timezone || "未知"}`, d.coordinates ? `坐标: ${d.coordinates}` : `状态: ${d.level.text}`)
+              createDataCard("sf-symbol:network", "自治系统 (ASN)", d.asnNumber, d.asnOrg || "未知网络", true),
+              createDataCard("sf-symbol:clock.fill", "时区 / 坐标", d.timezone || "未知时区", d.coordinates || "未知坐标", true)
             ]
           }
         ]
@@ -535,105 +502,6 @@ function renderSystemLarge(d) {
 }
 
 // ══════════════════════════════════════════════════════
-// 🔒 锁屏小组件渲染 (Lock Screen Accessories)
-// ══════════════════════════════════════════════════════
-
-function renderAccessoryCircular(purity, level) {
-  return {
-    type: "widget",
-    padding: 0,
-    children: [
-      { type: "spacer" },
-      {
-        type: "stack",
-        direction: "row",
-        alignItems: "center",
-        children: [
-          { type: "spacer" },
-          {
-            type: "image",
-            src: createLockScreenCircularSvg(purity, 48, 4),
-            width: 48,
-            height: 48
-          },
-          { type: "spacer" }
-        ]
-      },
-      { type: "spacer" }
-    ]
-  }
-}
-
-function renderAccessoryRectangular(displayIP, locShort, purity, level, ipType) {
-  return {
-    type: "widget",
-    padding: [2, 0],
-    children: [
-      {
-        type: "stack",
-        direction: "row",
-        alignItems: "center",
-        gap: 8,
-        children: [
-          {
-            type: "image",
-            src: createLockScreenGaugeSvg(purity, 44, 4),
-            width: 44,
-            height: 44
-          },
-          {
-            type: "stack",
-            direction: "column",
-            flex: 1,
-            gap: 2,
-            children: [
-              {
-                type: "text",
-                text: displayIP,
-                font: { size: "caption1", weight: "bold" },
-                textColor: "#FFFFFF",
-                maxLines: 1,
-                minScale: 0.65
-              },
-              {
-                type: "text",
-                text: locShort,
-                font: { size: "caption2" },
-                textColor: "rgba(255,255,255,0.7)",
-                maxLines: 1,
-                minScale: 0.75
-              },
-              {
-                type: "text",
-                text: `${level.text} · ${ipType}`,
-                font: { size: 10, weight: "medium" },
-                textColor: "rgba(255,255,255,0.85)",
-                maxLines: 1
-              }
-            ]
-          }
-        ]
-      }
-    ]
-  }
-}
-
-function renderAccessoryInline(displayIP, purity, level) {
-  return {
-    type: "widget",
-    children: [
-      {
-        type: "text",
-        text: `${displayIP} · 纯净度 ${purity}% (${level.text})`,
-        font: { size: "caption1", weight: "medium" },
-        maxLines: 1,
-        minScale: 0.6
-      }
-    ]
-  }
-}
-
-// ══════════════════════════════════════════════════════
 // 🛠️ UI 构造辅助函数
 // ══════════════════════════════════════════════════════
 
@@ -642,7 +510,7 @@ function createPillBadge(text, textColor, bgColor, icon) {
   if (icon) {
     children.push({
       type: "image",
-      src: `sf-symbol:${icon}`,
+      src: `sf-symbol:${icon}` ,
       color: textColor,
       width: 10,
       height: 10
@@ -668,8 +536,8 @@ function createPillBadge(text, textColor, bgColor, icon) {
   }
 }
 
-function createMiniTag(iconSrc, text) {
-  return {
+function createSmallPill(iconSrc, text, flexVal) {
+  const item = {
     type: "stack",
     direction: "row",
     alignItems: "center",
@@ -678,45 +546,61 @@ function createMiniTag(iconSrc, text) {
     borderRadius: 4,
     backgroundColor: C.cardBg,
     children: [
-      { type: "image", src: iconSrc, color: C.textTertiary, width: 10, height: 10 },
-      { type: "text", text, font: { size: 10, weight: "medium" }, textColor: C.textSecondary, maxLines: 1 }
+      { type: "image", src: iconSrc, color: C.textSecondary, width: 9, height: 9 },
+      { type: "text", text, font: { size: 10, weight: "medium" }, textColor: C.textSecondary, maxLines: 1, minScale: 0.75 }
     ]
   }
+  if (flexVal) item.flex = flexVal
+  return item
 }
 
-function createSmallPill(iconSrc, text, flex = 1) {
-  return {
+function createDataCard(icon, title, line1, line2, flexVal) {
+  const card = {
     type: "stack",
-    direction: "row",
-    alignItems: "center",
-    gap: 3,
-    padding: [3, 5],
-    borderRadius: 5,
+    direction: "column",
+    gap: 2,
+    padding: [8, 10],
+    borderRadius: 10,
     backgroundColor: C.cardBg,
-    flex,
+    borderWidth: 0.5,
+    borderColor: C.cardBorder,
     children: [
-      { type: "image", src: iconSrc, color: C.textTertiary, width: 10, height: 10 },
+      {
+        type: "stack",
+        direction: "row",
+        alignItems: "center",
+        gap: 3,
+        children: [
+          { type: "image", src: icon, color: C.textTertiary, width: 10, height: 10 },
+          { type: "text", text: title, font: { size: 10, weight: "medium" }, textColor: C.textTertiary, maxLines: 1 }
+        ]
+      },
       {
         type: "text",
-        text,
-        font: { size: 10, weight: "medium" },
+        text: line1 || "--",
+        font: { size: "caption1", weight: "bold" },
+        textColor: C.textPrimary,
+        maxLines: 1,
+        minScale: 0.75
+      },
+      {
+        type: "text",
+        text: line2 || "--",
+        font: { size: 10 },
         textColor: C.textSecondary,
         maxLines: 1,
         minScale: 0.75
       }
     ]
   }
+  if (flexVal) card.flex = 1
+  return card
 }
 
-function createGridCard(iconSrc, title, line1, line2) {
+function renderErrorWidget(family, errorMsg) {
   return {
-    type: "stack",
-    direction: "column",
-    padding: [9, 10],
-    borderRadius: 10,
-    backgroundColor: C.cardBg,
-    gap: 3,
-    flex: 1,
+    type: "widget",
+    padding: 14,
     children: [
       {
         type: "stack",
@@ -724,59 +608,31 @@ function createGridCard(iconSrc, title, line1, line2) {
         alignItems: "center",
         gap: 4,
         children: [
-          { type: "image", src: iconSrc, color: C.textPrimary, width: 12, height: 12 },
-          { type: "text", text: title, font: { size: 12, weight: "semibold" }, textColor: C.textPrimary, maxLines: 1 }
-        ]
-      },
-      {
-        type: "text",
-        text: line1 || "--",
-        font: { size: 11, weight: "regular" },
-        textColor: C.textSecondary,
-        maxLines: 1,
-        minScale: 0.7
-      },
-      {
-        type: "text",
-        text: line2 || "--",
-        font: { size: 11, weight: "regular" },
-        textColor: C.textSecondary,
-        maxLines: 1,
-        minScale: 0.7
-      }
-    ]
-  }
-}
-
-function renderErrorWidget(family, message) {
-  return {
-    type: "widget",
-    padding: 16,
-    gap: 8,
-    children: [
-      {
-        type: "stack",
-        direction: "row",
-        alignItems: "center",
-        gap: 6,
-        children: [
-          { type: "image", src: "sf-symbol:exclamationmark.triangle.fill", color: "#FF3B30", width: 16, height: 16 },
-          { type: "text", text: "IP 纯净度检测", font: { size: "subheadline", weight: "semibold" }, textColor: C.textPrimary }
+          { type: "image", src: "sf-symbol:exclamationmark.triangle.fill", color: "rgb(255,59,48)", width: 13, height: 13 },
+          { type: "text", text: "IP 纯净度检测", font: { size: "caption1", weight: "bold" }, textColor: C.textPrimary }
         ]
       },
       { type: "spacer" },
       {
-        type: "text",
-        text: message,
-        font: { size: "footnote" },
-        textColor: "#FF3B30"
-      }
+        type: "stack",
+        direction: "column",
+        gap: 4,
+        alignItems: "center",
+        padding: 10,
+        borderRadius: 10,
+        backgroundColor: C.cardBg,
+        children: [
+          { type: "text", text: errorMsg, font: { size: "caption1", weight: "medium" }, textColor: "rgb(255,59,48)" },
+          { type: "text", text: "请检查网络连接或稍后重试", font: { size: 10 }, textColor: C.textTertiary }
+        ]
+      },
+      { type: "spacer" }
     ]
   }
 }
 
 // ══════════════════════════════════════════════════════
-// 📊 SVG 矢量图形渲染 (Progress & Gauge)
+// 📊 SVG 绘图辅助函数
 // ══════════════════════════════════════════════════════
 
 function createProgressBarSvg(purity, color) {
@@ -807,45 +663,6 @@ function createGaugeRingSvg(purity, size, strokeWidth, strokeColor, labelText = 
     `<circle cx='${half}' cy='${half}' r='${r}' fill='none' stroke='${strokeColor}' stroke-width='${strokeWidth}' stroke-linecap='round' stroke-dasharray='${dash} ${gap}' transform='rotate(-90 ${half} ${half})'/>` +
     `<text x='${half}' y='${numY}' text-anchor='middle' font-size='${numFontSize}' font-weight='800' font-family='-apple-system, BlinkMacSystemFont, sans-serif' fill='${numColor}'>${purity}</text>` +
     (labelText ? `<text x='${half}' y='${labelY}' text-anchor='middle' font-size='${labelFontSize}' font-weight='600' font-family='-apple-system, BlinkMacSystemFont, sans-serif' fill='${subColor}'>${labelText}</text>` : '') +
-    `</svg>`
-}
-
-function createLockScreenCircularSvg(purity, size, strokeWidth) {
-  const half = size / 2
-  const r = half - strokeWidth / 2
-  const circ = 2 * Math.PI * r
-  const pct = Math.max(0, Math.min(100, purity)) / 100
-  const dash = (circ * pct).toFixed(1)
-  const gap = (circ - dash).toFixed(1)
-
-  const numFontSize = 17
-  const numY = half + 6
-
-  return `data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 ${size} ${size}'>` +
-    `<circle cx='${half}' cy='${half}' r='${r}' fill='none' stroke='rgba(255,255,255,0.25)' stroke-width='${strokeWidth}'/>` +
-    `<circle cx='${half}' cy='${half}' r='${r}' fill='none' stroke='#FFFFFF' stroke-width='${strokeWidth}' stroke-linecap='round' stroke-dasharray='${dash} ${gap}' transform='rotate(-90 ${half} ${half})'/>` +
-    `<text x='${half}' y='${numY}' text-anchor='middle' font-size='${numFontSize}' font-weight='800' font-family='-apple-system, BlinkMacSystemFont, sans-serif' fill='#FFFFFF'>${purity}</text>` +
-    `</svg>`
-}
-
-function createLockScreenGaugeSvg(purity, size, strokeWidth) {
-  const half = size / 2
-  const r = half - strokeWidth / 2
-  const circ = 2 * Math.PI * r
-  const pct = Math.max(0, Math.min(100, purity)) / 100
-  const dash = (circ * pct).toFixed(1)
-  const gap = (circ - dash).toFixed(1)
-
-  const numFontSize = 15
-  const labelFontSize = 7.5
-  const numY = Math.round(half + numFontSize * 0.05)
-  const labelY = Math.round(half + numFontSize * 0.62)
-
-  return `data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 ${size} ${size}'>` +
-    `<circle cx='${half}' cy='${half}' r='${r}' fill='none' stroke='rgba(255,255,255,0.22)' stroke-width='${strokeWidth}'/>` +
-    `<circle cx='${half}' cy='${half}' r='${r}' fill='none' stroke='#FFFFFF' stroke-width='${strokeWidth}' stroke-linecap='round' stroke-dasharray='${dash} ${gap}' transform='rotate(-90 ${half} ${half})'/>` +
-    `<text x='${half}' y='${numY}' text-anchor='middle' font-size='${numFontSize}' font-weight='800' font-family='-apple-system, BlinkMacSystemFont, sans-serif' fill='#FFFFFF'>${purity}</text>` +
-    `<text x='${half}' y='${labelY}' text-anchor='middle' font-size='${labelFontSize}' font-weight='600' font-family='-apple-system, BlinkMacSystemFont, sans-serif' fill='rgba(255,255,255,0.7)'>纯净度</text>` +
     `</svg>`
 }
 
