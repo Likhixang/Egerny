@@ -1,0 +1,38 @@
+name: "Codex2API-Quota"
+description: "Codex2API 额度监控（5小时/7天周额度双窗口、账号状态与集群统计），新式小组件，支持全部主屏与锁屏尺寸"
+
+# 模块可视化配置控件 (Egern 2.16+)
+env_schema:
+  SERVER_URL:
+    name: 服务地址
+    description: "Codex2API 服务地址，如 http://127.0.0.1:8080 或局域网/公网地址"
+    default_value: "http://127.0.0.1:8080"
+  ADMIN_KEY:
+    name: 管理密钥
+    description: "Codex2API Admin Secret / X-Admin-Key（若开启鉴权需填写）"
+    default_value: ""
+  MASK_EMAIL:
+    name: 账号邮箱打码
+    description: "是否对账号和邮箱进行打码隐藏"
+    options:
+      - "false"
+      - "true"
+  FILTER:
+    name: 过滤筛选
+    description: "筛选指定账号名、邮箱关键字或序号（选填）"
+    default_value: ""
+
+scriptings:
+  - generic:
+      name: Codex2API-Quota
+      script_url: https://raw.githubusercontent.com/Likhixang/Egerny/main/js/Codex2API-Quota.js
+      timeout: 20
+      env:
+        SERVER_URL: "http://127.0.0.1:8080"
+        ADMIN_KEY: ""
+        MASK_EMAIL: "false"
+        FILTER: ""
+
+widgets:
+  - name: Codex2API-Quota
+    script_name: Codex2API-Quota
