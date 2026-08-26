@@ -2,21 +2,30 @@ name: "IP-Pure"
 description: "节点 IP 纯净度检测（IPPure），新式小组件，支持小/中/大/锁屏矩形四种尺寸，数据源 my.ippure.com"
 icon: "checkmark.seal.fill"
 
-# 参数替换：Proxy 为检测请求走的策略组（默认直连）
+# 统一参数入口（compat_arguments）：解析期替换到 rules/脚本 env
 compat_arguments:
-  Proxy: "DIRECT"
+  Proxy: "DIRECT"      # 检测请求走的策略组，默认直连
+  MarkIP: "false"      # IP 打码，true/false，默认 false
+compat_arguments_desc: |
+  Proxy: 检测请求走的策略组，默认 DIRECT
+  MarkIP: IP 打码，填 true 或 false，默认 false
 
+# 模块编辑页 UI 控件（Toggle），值写入模块级 env 并覆盖脚本注入值
 env_schema:
   MarkIP:
     name: IP 打码
-    description: "是否对 IP 地址打码显示，填 true 或 false"
-    default_value: "false"
+    description: "是否对 IP 地址打码显示"
+    options:
+      - "true"
+      - "false"
 
 scriptings:
 - generic:
     name: IP-Pure
     script_url: https://raw.githubusercontent.com/Likhixang/Egerny/main/js/IPPure-widget.js
     timeout: 15
+    env:
+      MarkIP: "{{{MarkIP}}}"
 
 widgets:
 - name: IP-Pure
