@@ -2,6 +2,10 @@ name: "IP-Pure"
 description: "节点 IP 纯净度检测（IPPure），新式小组件，支持小/中/大/锁屏矩形四种尺寸，数据源 my.ippure.com"
 icon: "checkmark.seal.fill"
 
+# 参数替换：Proxy 为检测请求走的策略组（默认直连）
+compat_arguments:
+  Proxy: "DIRECT"
+
 env_schema:
   MarkIP:
     name: IP 打码
@@ -21,4 +25,4 @@ widgets:
 rules:
 - domain_suffix:
     match: ippure.com
-    policy: DIRECT
+    policy: "{{{Proxy}}}"
