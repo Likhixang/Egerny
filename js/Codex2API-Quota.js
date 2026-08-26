@@ -453,6 +453,15 @@ export default async function(ctx) {
   }
 }
 
+// ── 设计系统色彩规范 (纯白 #FFFFFF & 纯黑 #151515) ──
+const C = {
+  textPrimary: { light: "#151515", dark: "#FFFFFF" },
+  textSecondary: { light: "#666666", dark: "#AAAAAA" },
+  textTertiary: { light: "#888888", dark: "#888888" },
+  cardBg: { light: "#FFFFFF", dark: "#151515" },
+  cardBorder: { light: "rgba(21, 21, 21, 0.08)", dark: "rgba(255, 255, 255, 0.12)" },
+};
+
 // ── HIG 拟物卡片式布局 ──
 
 function renderSmallWidget(account, updateTime) {
@@ -485,7 +494,7 @@ function renderSmallWidget(account, updateTime) {
             ],
           },
           { type: "spacer" },
-          { type: "text", text: updateTime, font: { size: 10, weight: "medium" }, textColor: "#8E8E93" },
+          { type: "text", text: updateTime, font: { size: 10, weight: "medium" }, textColor: C.textSecondary },
         ],
       },
       {
@@ -493,9 +502,9 @@ function renderSmallWidget(account, updateTime) {
         direction: "column",
         gap: 8,
         padding: 10,
-        backgroundColor: { light: "rgba(0,0,0,0.04)", dark: "rgba(255,255,255,0.08)" },
+        backgroundColor: C.cardBg,
         borderWidth: 0.5,
-        borderColor: { light: "rgba(0,0,0,0.06)", dark: "rgba(255,255,255,0.08)" },
+        borderColor: C.cardBorder,
         borderRadius: 13,
         flex: 1,
         children: [
@@ -509,8 +518,8 @@ function renderSmallWidget(account, updateTime) {
                 direction: "column",
                 gap: 1,
                 children: [
-                  { type: "text", text: "已用", font: { size: 10 }, textColor: "#8E8E93" },
-                  { type: "text", text: `${usedPercent}%`, font: { size: 17, weight: "heavy" }, textColor: { light: "#1C1C1E", dark: "#FFFFFF" } },
+                  { type: "text", text: "已用", font: { size: 10 }, textColor: C.textSecondary },
+                  { type: "text", text: `${usedPercent}%`, font: { size: 17, weight: "heavy" }, textColor: C.textPrimary },
                 ],
               },
               { type: "spacer" },
@@ -520,7 +529,7 @@ function renderSmallWidget(account, updateTime) {
                 alignItems: "end",
                 gap: 1,
                 children: [
-                  { type: "text", text: `剩余 (${account.primaryWindow})`, font: { size: 10 }, textColor: "#8E8E93" },
+                  { type: "text", text: `剩余 (${account.primaryWindow})`, font: { size: 10 }, textColor: C.textSecondary },
                   { type: "text", text: `${remainPercent}%`, font: { size: 17, weight: "heavy" }, textColor: account.statusColor },
                 ],
               },
@@ -532,7 +541,7 @@ function renderSmallWidget(account, updateTime) {
             direction: "row",
             alignItems: "center",
             children: [
-              { type: "text", text: formatSmallResetLabel(account.primaryResetAtMs, account.primaryWindow === "7d"), font: { size: 9 }, textColor: "#8E8E93" },
+              { type: "text", text: formatSmallResetLabel(account.primaryResetAtMs, account.primaryWindow === "7d"), font: { size: 9 }, textColor: C.textSecondary },
               { type: "spacer" },
               { type: "text", text: formatCountdown(account.primaryResetAtMs, account.primaryRemainingFraction), font: { size: 10, weight: "bold" }, textColor: account.statusColor },
             ],
@@ -581,7 +590,7 @@ function renderMediumWidget(accounts, updateStr, maskEmailEnabled) {
               ],
             },
             { type: "spacer" },
-            { type: "text", text: `更新 ${updateStr}`, font: { size: 11, weight: "medium" }, textColor: "#8E8E93" },
+            { type: "text", text: `更新 ${updateStr}`, font: { size: 11, weight: "medium" }, textColor: C.textSecondary },
           ],
         },
         {
@@ -591,7 +600,7 @@ function renderMediumWidget(accounts, updateStr, maskEmailEnabled) {
           children: [
             { type: "text", text: accountLabel, font: { size: 12, weight: "bold" }, maxLines: 1 },
             { type: "spacer" },
-            { type: "text", text: `状态: ${first.healthTier}`, font: { size: 10 }, textColor: "#8E8E93" },
+            { type: "text", text: `状态: ${first.healthTier}`, font: { size: 10 }, textColor: C.textSecondary },
           ],
         },
         {
@@ -599,9 +608,9 @@ function renderMediumWidget(accounts, updateStr, maskEmailEnabled) {
           direction: "column",
           gap: isDual ? 6 : 8,
           padding: [9, 12, 9, 12],
-          backgroundColor: { light: "rgba(0,0,0,0.04)", dark: "rgba(255,255,255,0.08)" },
+          backgroundColor: C.cardBg,
           borderWidth: 0.5,
-          borderColor: { light: "rgba(0,0,0,0.06)", dark: "rgba(255,255,255,0.08)" },
+          borderColor: C.cardBorder,
           borderRadius: 13,
           flex: 1,
           children: isDual ? [
@@ -653,7 +662,7 @@ function renderMediumWidget(accounts, updateStr, maskEmailEnabled) {
                   gap: 4,
                   alignItems: "center",
                   children: [
-                    { type: "text", text: "已用", font: { size: 11 }, textColor: "#8E8E93" },
+                    { type: "text", text: "已用", font: { size: 11 }, textColor: C.textSecondary },
                     { type: "text", text: `${first.primaryWindow === "7d" ? used7d : used5h}%`, font: { size: 15, weight: "heavy" } },
                   ],
                 },
@@ -664,7 +673,7 @@ function renderMediumWidget(accounts, updateStr, maskEmailEnabled) {
                   gap: 4,
                   alignItems: "center",
                   children: [
-                    { type: "text", text: `${first.primaryWindowLabel}剩余`, font: { size: 11 }, textColor: "#8E8E93" },
+                    { type: "text", text: `${first.primaryWindowLabel}剩余`, font: { size: 11 }, textColor: C.textSecondary },
                     { type: "text", text: `${first.primaryWindow === "7d" ? remain7d : remain5h}%`, font: { size: 17, weight: "heavy" }, textColor: first.statusColor },
                   ],
                 },
@@ -676,7 +685,7 @@ function renderMediumWidget(accounts, updateStr, maskEmailEnabled) {
               direction: "row",
               alignItems: "center",
               children: [
-                { type: "text", text: `重置 ${first.primaryResetTimeStr}`, font: { size: 10 }, textColor: "#8E8E93" },
+                { type: "text", text: `重置 ${first.primaryResetTimeStr}`, font: { size: 10 }, textColor: C.textSecondary },
                 { type: "spacer" },
                 { type: "text", text: first.primaryResetCountdownStr, font: { size: 10, weight: "bold" }, textColor: first.statusColor },
               ],
@@ -712,7 +721,7 @@ function renderMediumWidget(accounts, updateStr, maskEmailEnabled) {
             ],
           },
           { type: "spacer" },
-          { type: "text", text: `更新 ${updateStr}`, font: { size: 11, weight: "medium" }, textColor: "#8E8E93" },
+          { type: "text", text: `更新 ${updateStr}`, font: { size: 11, weight: "medium" }, textColor: C.textSecondary },
         ],
       },
       ...topTwo.map((acc) => {
@@ -725,9 +734,9 @@ function renderMediumWidget(accounts, updateStr, maskEmailEnabled) {
           direction: "column",
           gap: 3,
           padding: [7, 10, 7, 10],
-          backgroundColor: { light: "rgba(0,0,0,0.04)", dark: "rgba(255,255,255,0.08)" },
+          backgroundColor: C.cardBg,
           borderWidth: 0.5,
-          borderColor: { light: "rgba(0,0,0,0.06)", dark: "rgba(255,255,255,0.08)" },
+          borderColor: C.cardBorder,
           borderRadius: 11,
           children: [
             {
@@ -751,7 +760,7 @@ function renderMediumWidget(accounts, updateStr, maskEmailEnabled) {
               direction: "row",
               alignItems: "center",
               children: [
-                { type: "text", text: `重置 ${formatSmallResetLabel(acc.primaryResetAtMs, acc.primaryWindow === "7d")}`, font: { size: 9 }, textColor: "#8E8E93" },
+                { type: "text", text: `重置 ${formatSmallResetLabel(acc.primaryResetAtMs, acc.primaryWindow === "7d")}`, font: { size: 9 }, textColor: C.textSecondary },
                 { type: "spacer" },
                 { type: "text", text: acc.primaryResetCountdownStr, font: { size: 9, weight: "semibold" }, textColor: acc.statusColor },
               ],
@@ -803,7 +812,7 @@ function renderLargeWidget(accounts, stats, updateStr, maskEmailEnabled) {
               ],
             },
             { type: "spacer" },
-            { type: "text", text: `更新 ${updateStr}`, font: { size: 12, weight: "medium" }, textColor: "#8E8E93" },
+            { type: "text", text: `更新 ${updateStr}`, font: { size: 12, weight: "medium" }, textColor: C.textSecondary },
           ],
         },
         // 账号标头卡片（横向 100% 满宽布局）
@@ -812,9 +821,9 @@ function renderLargeWidget(accounts, stats, updateStr, maskEmailEnabled) {
           direction: "row",
           alignItems: "center",
           padding: [9, 12, 9, 12],
-          backgroundColor: { light: "rgba(0,0,0,0.04)", dark: "rgba(255,255,255,0.08)" },
+          backgroundColor: C.cardBg,
           borderWidth: 0.5,
-          borderColor: { light: "rgba(0,0,0,0.06)", dark: "rgba(255,255,255,0.08)" },
+          borderColor: C.cardBorder,
           borderRadius: 12,
           children: [
             {
@@ -828,9 +837,9 @@ function renderLargeWidget(accounts, stats, updateStr, maskEmailEnabled) {
                   direction: "row",
                   gap: 8,
                   children: [
-                    { type: "text", text: `调度评分: ${first.dispatchScore}`, font: { size: 10 }, textColor: "#8E8E93" },
-                    { type: "text", text: `状态: ${first.healthTier}`, font: { size: 10 }, textColor: "#8E8E93" },
-                    { type: "text", text: `成功请求: ${first.successRequests}`, font: { size: 10 }, textColor: "#8E8E93" },
+                    { type: "text", text: `调度评分: ${first.dispatchScore}`, font: { size: 10 }, textColor: C.textSecondary },
+                    { type: "text", text: `状态: ${first.healthTier}`, font: { size: 10 }, textColor: C.textSecondary },
+                    { type: "text", text: `成功请求: ${first.successRequests}`, font: { size: 10 }, textColor: C.textSecondary },
                   ],
                 },
               ],
@@ -844,9 +853,9 @@ function renderLargeWidget(accounts, stats, updateStr, maskEmailEnabled) {
           direction: "column",
           gap: 6,
           padding: [10, 12, 10, 12],
-          backgroundColor: { light: "rgba(0,0,0,0.04)", dark: "rgba(255,255,255,0.08)" },
+          backgroundColor: C.cardBg,
           borderWidth: 0.5,
-          borderColor: { light: "rgba(0,0,0,0.06)", dark: "rgba(255,255,255,0.08)" },
+          borderColor: C.cardBorder,
           borderRadius: 12,
           children: [
             {
@@ -865,7 +874,7 @@ function renderLargeWidget(accounts, stats, updateStr, maskEmailEnabled) {
               direction: "row",
               alignItems: "center",
               children: [
-                { type: "text", text: `已使用 ${used5h}% · 重置 ${first.reset5hTimeStr}`, font: { size: 10 }, textColor: "#8E8E93" },
+                { type: "text", text: `已使用 ${used5h}% · 重置 ${first.reset5hTimeStr}`, font: { size: 10 }, textColor: C.textSecondary },
                 { type: "spacer" },
                 { type: "text", text: first.reset5hCountdownStr, font: { size: 10, weight: "bold" }, textColor: getQuotaColor(first.remainingFraction5h) },
               ],
@@ -878,9 +887,9 @@ function renderLargeWidget(accounts, stats, updateStr, maskEmailEnabled) {
           direction: "column",
           gap: 6,
           padding: [10, 12, 10, 12],
-          backgroundColor: { light: "rgba(0,0,0,0.04)", dark: "rgba(255,255,255,0.08)" },
+          backgroundColor: C.cardBg,
           borderWidth: 0.5,
-          borderColor: { light: "rgba(0,0,0,0.06)", dark: "rgba(255,255,255,0.08)" },
+          borderColor: C.cardBorder,
           borderRadius: 12,
           children: [
             {
@@ -899,7 +908,7 @@ function renderLargeWidget(accounts, stats, updateStr, maskEmailEnabled) {
               direction: "row",
               alignItems: "center",
               children: [
-                { type: "text", text: `已使用 ${used7d}% · 重置 ${first.reset7dTimeStr}`, font: { size: 10 }, textColor: "#8E8E93" },
+                { type: "text", text: `已使用 ${used7d}% · 重置 ${first.reset7dTimeStr}`, font: { size: 10 }, textColor: C.textSecondary },
                 { type: "spacer" },
                 { type: "text", text: first.reset7dCountdownStr, font: { size: 10, weight: "bold" }, textColor: getQuotaColor(first.remainingFraction7d) },
               ],
@@ -912,9 +921,9 @@ function renderLargeWidget(accounts, stats, updateStr, maskEmailEnabled) {
           direction: "row",
           alignItems: "center",
           padding: [8, 12, 8, 12],
-          backgroundColor: { light: "rgba(0,0,0,0.04)", dark: "rgba(255,255,255,0.08)" },
+          backgroundColor: C.cardBg,
           borderWidth: 0.5,
-          borderColor: { light: "rgba(0,0,0,0.06)", dark: "rgba(255,255,255,0.08)" },
+          borderColor: C.cardBorder,
           borderRadius: 12,
           children: [
             {
@@ -922,7 +931,7 @@ function renderLargeWidget(accounts, stats, updateStr, maskEmailEnabled) {
               direction: "column",
               gap: 1,
               children: [
-                { type: "text", text: "集群账号", font: { size: 10 }, textColor: "#8E8E93" },
+                { type: "text", text: "集群账号", font: { size: 10 }, textColor: C.textSecondary },
                 { type: "text", text: `${stats.availableAccounts}/${stats.totalAccounts} 可用`, font: { size: 11, weight: "bold" }, textColor: "#34C759" },
               ],
             },
@@ -933,7 +942,7 @@ function renderLargeWidget(accounts, stats, updateStr, maskEmailEnabled) {
               alignItems: "end",
               gap: 1,
               children: [
-                { type: "text", text: "今日调用 / RPM", font: { size: 10 }, textColor: "#8E8E93" },
+                { type: "text", text: "今日调用 / RPM", font: { size: 10 }, textColor: C.textSecondary },
                 { type: "text", text: `${stats.todayRequests} 次 · ${stats.rpm ?? 0}`, font: { size: 11, weight: "bold" } },
               ],
             },
@@ -969,7 +978,7 @@ function renderLargeWidget(accounts, stats, updateStr, maskEmailEnabled) {
               ],
             },
             { type: "spacer" },
-            { type: "text", text: `更新 ${updateStr}`, font: { size: 12, weight: "medium" }, textColor: "#8E8E93" },
+            { type: "text", text: `更新 ${updateStr}`, font: { size: 12, weight: "medium" }, textColor: C.textSecondary },
           ],
         },
         ...accounts.map((acc) => {
@@ -983,9 +992,9 @@ function renderLargeWidget(accounts, stats, updateStr, maskEmailEnabled) {
             direction: "column",
             gap: 8,
             padding: [12, 12, 12, 12],
-            backgroundColor: { light: "rgba(0,0,0,0.04)", dark: "rgba(255,255,255,0.08)" },
+            backgroundColor: C.cardBg,
             borderWidth: 0.5,
-            borderColor: { light: "rgba(0,0,0,0.06)", dark: "rgba(255,255,255,0.08)" },
+            borderColor: C.cardBorder,
             borderRadius: 13,
             flex: 1,
             children: [
@@ -1000,7 +1009,7 @@ function renderLargeWidget(accounts, stats, updateStr, maskEmailEnabled) {
                     gap: 1,
                     children: [
                       { type: "text", text: accountLabel, font: { size: 13, weight: "heavy" }, maxLines: 1 },
-                      { type: "text", text: `状态: ${acc.healthTier} · 评分 ${acc.dispatchScore}`, font: { size: 10 }, textColor: "#8E8E93" },
+                      { type: "text", text: `状态: ${acc.healthTier} · 评分 ${acc.dispatchScore}`, font: { size: 10 }, textColor: C.textSecondary },
                     ],
                   },
                   { type: "spacer" },
@@ -1011,7 +1020,7 @@ function renderLargeWidget(accounts, stats, updateStr, maskEmailEnabled) {
                     gap: 1,
                     children: [
                       { type: "text", text: `${acc.primaryWindowLabel}余 ${remainPercent}%`, font: { size: 15, weight: "heavy" }, textColor: acc.statusColor },
-                      { type: "text", text: `已用 ${usedPercent}%`, font: { size: 10 }, textColor: "#8E8E93" },
+                      { type: "text", text: `已用 ${usedPercent}%`, font: { size: 10 }, textColor: C.textSecondary },
                     ],
                   },
                 ],
@@ -1022,7 +1031,7 @@ function renderLargeWidget(accounts, stats, updateStr, maskEmailEnabled) {
                 direction: "row",
                 alignItems: "center",
                 children: [
-                  { type: "text", text: `重置 ${formatSmallResetLabel(acc.primaryResetAtMs, acc.primaryWindow === "7d")}`, font: { size: 10 }, textColor: "#8E8E93" },
+                  { type: "text", text: `重置 ${formatSmallResetLabel(acc.primaryResetAtMs, acc.primaryWindow === "7d")}`, font: { size: 10 }, textColor: C.textSecondary },
                   { type: "spacer" },
                   { type: "text", text: acc.primaryResetCountdownStr, font: { size: 10, weight: "bold" }, textColor: acc.statusColor },
                 ],
@@ -1035,14 +1044,14 @@ function renderLargeWidget(accounts, stats, updateStr, maskEmailEnabled) {
           direction: "row",
           alignItems: "center",
           padding: [7, 12, 7, 12],
-          backgroundColor: { light: "rgba(0,0,0,0.04)", dark: "rgba(255,255,255,0.08)" },
+          backgroundColor: C.cardBg,
           borderWidth: 0.5,
-          borderColor: { light: "rgba(0,0,0,0.06)", dark: "rgba(255,255,255,0.08)" },
+          borderColor: C.cardBorder,
           borderRadius: 10,
           children: [
             { type: "text", text: `集群: ${stats.availableAccounts}/${stats.totalAccounts} 可用`, font: { size: 10, weight: "bold" }, textColor: "#34C759" },
             { type: "spacer" },
-            { type: "text", text: `今日: ${stats.todayRequests} 次 · RPM: ${stats.rpm ?? 0}`, font: { size: 10 }, textColor: "#8E8E93" },
+            { type: "text", text: `今日: ${stats.todayRequests} 次 · RPM: ${stats.rpm ?? 0}`, font: { size: 10 }, textColor: C.textSecondary },
           ],
         }] : []),
       ],
@@ -1075,7 +1084,7 @@ function renderLargeWidget(accounts, stats, updateStr, maskEmailEnabled) {
             ],
           },
           { type: "spacer" },
-          { type: "text", text: `更新 ${updateStr}`, font: { size: 12, weight: "medium" }, textColor: "#8E8E93" },
+          { type: "text", text: `更新 ${updateStr}`, font: { size: 12, weight: "medium" }, textColor: C.textSecondary },
         ],
       },
       ...topFour.map((acc) => {
@@ -1088,9 +1097,9 @@ function renderLargeWidget(accounts, stats, updateStr, maskEmailEnabled) {
           direction: "column",
           gap: 4,
           padding: [8, 11, 8, 11],
-          backgroundColor: { light: "rgba(0,0,0,0.04)", dark: "rgba(255,255,255,0.08)" },
+          backgroundColor: C.cardBg,
           borderWidth: 0.5,
-          borderColor: { light: "rgba(0,0,0,0.06)", dark: "rgba(255,255,255,0.08)" },
+          borderColor: C.cardBorder,
           borderRadius: 12,
           children: [
             {
@@ -1114,7 +1123,7 @@ function renderLargeWidget(accounts, stats, updateStr, maskEmailEnabled) {
               direction: "row",
               alignItems: "center",
               children: [
-                { type: "text", text: `重置 ${formatSmallResetLabel(acc.primaryResetAtMs, acc.primaryWindow === "7d")}`, font: { size: 9.5 }, textColor: "#8E8E93" },
+                { type: "text", text: `重置 ${formatSmallResetLabel(acc.primaryResetAtMs, acc.primaryWindow === "7d")}`, font: { size: 9.5 }, textColor: C.textSecondary },
                 { type: "spacer" },
                 { type: "text", text: acc.primaryResetCountdownStr, font: { size: 9.5, weight: "bold" }, textColor: acc.statusColor },
               ],
@@ -1127,14 +1136,14 @@ function renderLargeWidget(accounts, stats, updateStr, maskEmailEnabled) {
         direction: "row",
         alignItems: "center",
         padding: [7, 11, 7, 11],
-        backgroundColor: { light: "rgba(0,0,0,0.04)", dark: "rgba(255,255,255,0.08)" },
+        backgroundColor: C.cardBg,
         borderWidth: 0.5,
-        borderColor: { light: "rgba(0,0,0,0.06)", dark: "rgba(255,255,255,0.08)" },
+        borderColor: C.cardBorder,
         borderRadius: 10,
         children: [
-          { type: "text", text: `集群可用: ${stats.availableAccounts}/${stats.totalAccounts}`, font: { size: 10 }, textColor: "#8E8E93" },
+          { type: "text", text: `集群可用: ${stats.availableAccounts}/${stats.totalAccounts}`, font: { size: 10 }, textColor: C.textSecondary },
           { type: "spacer" },
-          { type: "text", text: `今日: ${stats.todayRequests} 次 · RPM: ${stats.rpm ?? 0}`, font: { size: 10 }, textColor: "#8E8E93" },
+          { type: "text", text: `今日: ${stats.todayRequests} 次 · RPM: ${stats.rpm ?? 0}`, font: { size: 10 }, textColor: C.textSecondary },
         ],
       }] : []),
     ],
@@ -1222,7 +1231,7 @@ function renderErrorWidget(family, error, updateTime) {
             ],
           },
           { type: "spacer" },
-          { type: "text", text: updateTime, font: { size: 10 }, textColor: "#8E8E93" },
+          { type: "text", text: updateTime, font: { size: 10 }, textColor: C.textSecondary },
         ],
       },
       {
@@ -1230,12 +1239,12 @@ function renderErrorWidget(family, error, updateTime) {
         direction: "column",
         gap: 4,
         padding: 8,
-        backgroundColor: { light: "rgba(0,0,0,0.04)", dark: "rgba(255,255,255,0.08)" },
+        backgroundColor: C.cardBg,
         borderRadius: 10,
         children: [
           { type: "text", text: "连接异常", font: { size: 12, weight: "bold" }, textColor: "#FF3B30" },
-          { type: "text", text: String(error).slice(0, 60), font: { size: 10 }, textColor: "#8E8E93", maxLines: 2 },
-          { type: "text", text: "请在模块 Env 检查 SERVER_URL 与 Key", font: { size: 9 }, textColor: "#8E8E93" },
+          { type: "text", text: String(error).slice(0, 60), font: { size: 10 }, textColor: C.textSecondary, maxLines: 2 },
+          { type: "text", text: "请在模块 Env 检查 SERVER_URL 与 Key", font: { size: 9 }, textColor: C.textSecondary },
         ],
       },
     ],

@@ -90,7 +90,7 @@ function getBadgeConfig(provider, name) {
     return { text: "DEEPSEEK", svg: BRAND_ICONS.deepseek, bg: "#4D6BFE", color: "#FFFFFF" };
   }
   if (n.includes("GROK") || p.includes("GROK")) {
-    return { text: "GROK", svg: BRAND_ICONS.grok, bg: "#333333", color: "#FFFFFF" };
+    return { text: "GROK", svg: BRAND_ICONS.grok, bg: "#151515", color: "#FFFFFF" };
   }
   if (n.includes("PLUS") || n.includes("CODEX") || p.includes("OPENAI") || n.includes("GPT")) {
     return { text: "OPENAI", svg: BRAND_ICONS.openai, bg: "#10A37F", color: "#FFFFFF" };
@@ -425,6 +425,15 @@ export default async function(ctx) {
   }
 }
 
+// ── 设计系统色彩规范 (纯白 #FFFFFF & 纯黑 #151515) ──
+const C = {
+  textPrimary: { light: "#151515", dark: "#FFFFFF" },
+  textSecondary: { light: "#666666", dark: "#AAAAAA" },
+  textTertiary: { light: "#888888", dark: "#888888" },
+  cardBg: { light: "#FFFFFF", dark: "#151515" },
+  cardBorder: { light: "rgba(21, 21, 21, 0.08)", dark: "rgba(255, 255, 255, 0.12)" },
+};
+
 // ── HIG 拟物卡片式布局 ──
 
 function renderSmallWidget(model, updateTime) {
@@ -458,7 +467,7 @@ function renderSmallWidget(model, updateTime) {
             ],
           },
           { type: "spacer" },
-          { type: "text", text: updateTime, font: { size: 10, weight: "medium" }, textColor: { light: "#8E8E93", dark: "#8E8E93" } },
+          { type: "text", text: updateTime, font: { size: 10, weight: "medium" }, textColor: C.textTertiary },
         ],
       },
       {
@@ -466,9 +475,9 @@ function renderSmallWidget(model, updateTime) {
         direction: "column",
         gap: 8,
         padding: 10,
-        backgroundColor: { light: "rgba(0,0,0,0.04)", dark: "rgba(255,255,255,0.08)" },
+        backgroundColor: C.cardBg,
         borderWidth: 0.5,
-        borderColor: { light: "rgba(0,0,0,0.06)", dark: "rgba(255,255,255,0.08)" },
+        borderColor: C.cardBorder,
         borderRadius: 13,
         flex: 1,
         children: [
@@ -482,8 +491,8 @@ function renderSmallWidget(model, updateTime) {
                 direction: "column",
                 gap: 1,
                 children: [
-                  { type: "text", text: "已用", font: { size: 10 }, textColor: "#8E8E93" },
-                  { type: "text", text: `${usedPercent}%`, font: { size: 17, weight: "heavy" }, textColor: { light: "#1C1C1E", dark: "#FFFFFF" } },
+                  { type: "text", text: "已用", font: { size: 10 }, textColor: C.textSecondary },
+                  { type: "text", text: `${usedPercent}%`, font: { size: 17, weight: "heavy" }, textColor: C.textPrimary },
                 ],
               },
               { type: "spacer" },
@@ -493,7 +502,7 @@ function renderSmallWidget(model, updateTime) {
                 alignItems: "end",
                 gap: 1,
                 children: [
-                  { type: "text", text: "剩余 (5h)", font: { size: 10 }, textColor: "#8E8E93" },
+                  { type: "text", text: "剩余 (5h)", font: { size: 10 }, textColor: C.textSecondary },
                   { type: "text", text: `${remainPercent}%`, font: { size: 17, weight: "heavy" }, textColor: model.statusColor },
                 ],
               },
@@ -505,7 +514,7 @@ function renderSmallWidget(model, updateTime) {
             direction: "row",
             alignItems: "center",
             children: [
-              { type: "text", text: `重置 ${resetTime}`, font: { size: 9 }, textColor: "#8E8E93" },
+              { type: "text", text: `重置 ${resetTime}`, font: { size: 9 }, textColor: C.textSecondary },
               { type: "spacer" },
               { type: "text", text: formatCountdown(model.resetAtMs, model.remainingFraction), font: { size: 10, weight: "bold" }, textColor: model.statusColor },
             ],
@@ -551,7 +560,7 @@ function renderMediumWidget(models, updateStr, maskEmailEnabled) {
               ],
             },
             { type: "spacer" },
-            { type: "text", text: `更新 ${updateStr}`, font: { size: 11, weight: "medium" }, textColor: "#8E8E93" },
+            { type: "text", text: `更新 ${updateStr}`, font: { size: 11, weight: "medium" }, textColor: C.textSecondary },
           ],
         },
         {
@@ -559,9 +568,9 @@ function renderMediumWidget(models, updateStr, maskEmailEnabled) {
           direction: "column",
           gap: 6,
           padding: [9, 12, 9, 12],
-          backgroundColor: { light: "rgba(0,0,0,0.04)", dark: "rgba(255,255,255,0.08)" },
+          backgroundColor: C.cardBg,
           borderWidth: 0.5,
-          borderColor: { light: "rgba(0,0,0,0.06)", dark: "rgba(255,255,255,0.08)" },
+          borderColor: C.cardBorder,
           borderRadius: 13,
           flex: 1,
           children: [
@@ -577,8 +586,8 @@ function renderMediumWidget(models, updateStr, maskEmailEnabled) {
                   gap: 4,
                   alignItems: "center",
                   children: [
-                    { type: "text", text: "已用", font: { size: 11 }, textColor: "#8E8E93" },
-                    { type: "text", text: `${usedPercent}%`, font: { size: 15, weight: "heavy" }, textColor: { light: "#1C1C1E", dark: "#FFFFFF" } },
+                    { type: "text", text: "已用", font: { size: 11 }, textColor: C.textSecondary },
+                    { type: "text", text: `${usedPercent}%`, font: { size: 15, weight: "heavy" }, textColor: C.textPrimary },
                   ],
                 },
                 { type: "spacer" },
@@ -588,7 +597,7 @@ function renderMediumWidget(models, updateStr, maskEmailEnabled) {
                   gap: 4,
                   alignItems: "center",
                   children: [
-                    { type: "text", text: "5h 剩余", font: { size: 11 }, textColor: "#8E8E93" },
+                    { type: "text", text: "5h 剩余", font: { size: 11 }, textColor: C.textSecondary },
                     { type: "text", text: `${remainPercent}%`, font: { size: 17, weight: "heavy" }, textColor: firstModel.statusColor },
                   ],
                 },
@@ -600,7 +609,7 @@ function renderMediumWidget(models, updateStr, maskEmailEnabled) {
               direction: "row",
               alignItems: "center",
               children: [
-                { type: "text", text: `重置 ${firstModel.resetTimeStr}`, font: { size: 10 }, textColor: "#8E8E93" },
+                { type: "text", text: `重置 ${firstModel.resetTimeStr}`, font: { size: 10 }, textColor: C.textSecondary },
                 { type: "spacer" },
                 { type: "text", text: `恢复倒计时 ${firstModel.resetCountdownStr}`, font: { size: 10, weight: "bold" }, textColor: firstModel.statusColor },
               ],
@@ -636,7 +645,7 @@ function renderMediumWidget(models, updateStr, maskEmailEnabled) {
             ],
           },
           { type: "spacer" },
-          { type: "text", text: `更新 ${updateStr}`, font: { size: 11, weight: "medium" }, textColor: "#8E8E93" },
+          { type: "text", text: `更新 ${updateStr}`, font: { size: 11, weight: "medium" }, textColor: C.textSecondary },
         ],
       },
       ...topTwo.map((m) => {
@@ -650,9 +659,9 @@ function renderMediumWidget(models, updateStr, maskEmailEnabled) {
           direction: "column",
           gap: 3,
           padding: [7, 10, 7, 10],
-          backgroundColor: { light: "rgba(0,0,0,0.04)", dark: "rgba(255,255,255,0.08)" },
+          backgroundColor: C.cardBg,
           borderWidth: 0.5,
-          borderColor: { light: "rgba(0,0,0,0.06)", dark: "rgba(255,255,255,0.08)" },
+          borderColor: C.cardBorder,
           borderRadius: 11,
           children: [
             {
@@ -677,7 +686,7 @@ function renderMediumWidget(models, updateStr, maskEmailEnabled) {
               direction: "row",
               alignItems: "center",
               children: [
-                { type: "text", text: `重置 ${m.resetTimeStr}`, font: { size: 9 }, textColor: "#8E8E93" },
+                { type: "text", text: `重置 ${m.resetTimeStr}`, font: { size: 9 }, textColor: C.textSecondary },
                 { type: "spacer" },
                 { type: "text", text: m.resetCountdownStr, font: { size: 9, weight: "semibold" }, textColor: m.statusColor },
               ],
@@ -729,7 +738,7 @@ function renderLargeWidget(models, updateStr, maskEmailEnabled) {
               ],
             },
             { type: "spacer" },
-            { type: "text", text: `更新 ${updateStr}`, font: { size: 12, weight: "medium" }, textColor: "#8E8E93" },
+            { type: "text", text: `更新 ${updateStr}`, font: { size: 12, weight: "medium" }, textColor: C.textSecondary },
           ],
         },
         // 核心卡片容器
@@ -738,9 +747,9 @@ function renderLargeWidget(models, updateStr, maskEmailEnabled) {
           direction: "column",
           gap: 12,
           padding: [14, 14, 14, 14],
-          backgroundColor: { light: "rgba(0,0,0,0.04)", dark: "rgba(255,255,255,0.08)" },
+          backgroundColor: C.cardBg,
           borderWidth: 0.5,
-          borderColor: { light: "rgba(0,0,0,0.06)", dark: "rgba(255,255,255,0.08)" },
+          borderColor: C.cardBorder,
           borderRadius: 14,
           children: [
             {
@@ -749,7 +758,7 @@ function renderLargeWidget(models, updateStr, maskEmailEnabled) {
               gap: 2,
               children: [
                 { type: "text", text: accountText, font: { size: 17, weight: "heavy" }, maxLines: 1 },
-                { type: "text", text: `${firstModel.provider} 5小时滚动配额`, font: { size: 11 }, textColor: "#8E8E93" },
+                { type: "text", text: `${firstModel.provider} 5小时滚动配额`, font: { size: 11 }, textColor: C.textSecondary },
               ],
             },
             // 大数字仪表
@@ -763,8 +772,8 @@ function renderLargeWidget(models, updateStr, maskEmailEnabled) {
                   direction: "column",
                   gap: 2,
                   children: [
-                    { type: "text", text: "已使用比例", font: { size: 11 }, textColor: "#8E8E93" },
-                    { type: "text", text: `${usedPercent}%`, font: { size: 22, weight: "heavy" }, textColor: { light: "#1C1C1E", dark: "#FFFFFF" } },
+                    { type: "text", text: "已使用比例", font: { size: 11 }, textColor: C.textSecondary },
+                    { type: "text", text: `${usedPercent}%`, font: { size: 22, weight: "heavy" }, textColor: C.textPrimary },
                   ],
                 },
                 { type: "spacer" },
@@ -774,7 +783,7 @@ function renderLargeWidget(models, updateStr, maskEmailEnabled) {
                   alignItems: "end",
                   gap: 2,
                   children: [
-                    { type: "text", text: "5h 剩余配额", font: { size: 11 }, textColor: "#8E8E93" },
+                    { type: "text", text: "5h 剩余配额", font: { size: 11 }, textColor: C.textSecondary },
                     { type: "text", text: `${remainPercent}%`, font: { size: 22, weight: "heavy" }, textColor: firstModel.statusColor },
                   ],
                 },
@@ -788,7 +797,7 @@ function renderLargeWidget(models, updateStr, maskEmailEnabled) {
               direction: "row",
               alignItems: "center",
               children: [
-                { type: "text", text: `重置时间 ${firstModel.resetTimeStr}`, font: { size: 11 }, textColor: "#8E8E93" },
+                { type: "text", text: `重置时间 ${firstModel.resetTimeStr}`, font: { size: 11 }, textColor: C.textSecondary },
                 { type: "spacer" },
                 {
                   type: "stack",
@@ -796,7 +805,7 @@ function renderLargeWidget(models, updateStr, maskEmailEnabled) {
                   gap: 3,
                   alignItems: "center",
                   children: [
-                    { type: "text", text: "恢复倒计时", font: { size: 11 }, textColor: "#8E8E93" },
+                    { type: "text", text: "恢复倒计时", font: { size: 11 }, textColor: C.textSecondary },
                     { type: "text", text: firstModel.resetCountdownStr, font: { size: 11, weight: "bold" }, textColor: firstModel.statusColor },
                   ],
                 },
@@ -815,13 +824,13 @@ function renderLargeWidget(models, updateStr, maskEmailEnabled) {
               direction: "column",
               gap: 4,
               padding: [10, 12, 10, 12],
-              backgroundColor: { light: "rgba(0,0,0,0.04)", dark: "rgba(255,255,255,0.08)" },
+              backgroundColor: C.cardBg,
               borderWidth: 0.5,
-              borderColor: { light: "rgba(0,0,0,0.06)", dark: "rgba(255,255,255,0.08)" },
+              borderColor: C.cardBorder,
               borderRadius: 12,
               flex: 1,
               children: [
-                { type: "text", text: "配额重置机制", font: { size: 11 }, textColor: "#8E8E93" },
+                { type: "text", text: "配额重置机制", font: { size: 11 }, textColor: C.textSecondary },
                 { type: "text", text: "5小时滚动恢复", font: { size: 14, weight: "bold" } },
               ],
             },
@@ -830,13 +839,13 @@ function renderLargeWidget(models, updateStr, maskEmailEnabled) {
               direction: "column",
               gap: 4,
               padding: [10, 12, 10, 12],
-              backgroundColor: { light: "rgba(0,0,0,0.04)", dark: "rgba(255,255,255,0.08)" },
+              backgroundColor: C.cardBg,
               borderWidth: 0.5,
-              borderColor: { light: "rgba(0,0,0,0.06)", dark: "rgba(255,255,255,0.08)" },
+              borderColor: C.cardBorder,
               borderRadius: 12,
               flex: 1,
               children: [
-                { type: "text", text: "当前配额状态", font: { size: 11 }, textColor: "#8E8E93" },
+                { type: "text", text: "当前配额状态", font: { size: 11 }, textColor: C.textSecondary },
                 { type: "text", text: statusDesc, font: { size: 14, weight: "bold" }, textColor: firstModel.statusColor },
               ],
             },
@@ -872,7 +881,7 @@ function renderLargeWidget(models, updateStr, maskEmailEnabled) {
               ],
             },
             { type: "spacer" },
-            { type: "text", text: `更新 ${updateStr}`, font: { size: 12, weight: "medium" }, textColor: "#8E8E93" },
+            { type: "text", text: `更新 ${updateStr}`, font: { size: 12, weight: "medium" }, textColor: C.textSecondary },
           ],
         },
         ...models.map((m) => {
@@ -886,9 +895,9 @@ function renderLargeWidget(models, updateStr, maskEmailEnabled) {
             direction: "column",
             gap: 10,
             padding: [14, 14, 14, 14],
-            backgroundColor: { light: "rgba(0,0,0,0.04)", dark: "rgba(255,255,255,0.08)" },
+            backgroundColor: C.cardBg,
             borderWidth: 0.5,
-            borderColor: { light: "rgba(0,0,0,0.06)", dark: "rgba(255,255,255,0.08)" },
+            borderColor: C.cardBorder,
             borderRadius: 14,
             flex: 1,
             children: [
@@ -903,7 +912,7 @@ function renderLargeWidget(models, updateStr, maskEmailEnabled) {
                     gap: 1,
                     children: [
                       { type: "text", text: accountText, font: { size: 14, weight: "heavy" }, maxLines: 1 },
-                      { type: "text", text: `${m.provider} 5小时滚动配额`, font: { size: 10 }, textColor: "#8E8E93" },
+                      { type: "text", text: `${m.provider} 5小时滚动配额`, font: { size: 10 }, textColor: C.textSecondary },
                     ],
                   },
                   { type: "spacer" },
@@ -914,7 +923,7 @@ function renderLargeWidget(models, updateStr, maskEmailEnabled) {
                     gap: 1,
                     children: [
                       { type: "text", text: `剩余 ${remainPercent}%`, font: { size: 16, weight: "heavy" }, textColor: m.statusColor },
-                      { type: "text", text: `已用 ${usedPercent}%`, font: { size: 10 }, textColor: "#8E8E93" },
+                      { type: "text", text: `已用 ${usedPercent}%`, font: { size: 10 }, textColor: C.textSecondary },
                     ],
                   },
                 ],
@@ -925,7 +934,7 @@ function renderLargeWidget(models, updateStr, maskEmailEnabled) {
                 direction: "row",
                 alignItems: "center",
                 children: [
-                  { type: "text", text: `重置 ${m.resetTimeStr}`, font: { size: 10 }, textColor: "#8E8E93" },
+                  { type: "text", text: `重置 ${m.resetTimeStr}`, font: { size: 10 }, textColor: C.textSecondary },
                   { type: "spacer" },
                   {
                     type: "stack",
@@ -933,7 +942,7 @@ function renderLargeWidget(models, updateStr, maskEmailEnabled) {
                     gap: 2,
                     alignItems: "center",
                     children: [
-                      { type: "text", text: "恢复倒计时", font: { size: 10 }, textColor: "#8E8E93" },
+                      { type: "text", text: "恢复倒计时", font: { size: 10 }, textColor: C.textSecondary },
                       { type: "text", text: m.resetCountdownStr, font: { size: 10, weight: "bold" }, textColor: m.statusColor },
                     ],
                   },
@@ -972,7 +981,7 @@ function renderLargeWidget(models, updateStr, maskEmailEnabled) {
             ],
           },
           { type: "spacer" },
-          { type: "text", text: `更新 ${updateStr}`, font: { size: 12, weight: "medium" }, textColor: "#8E8E93" },
+          { type: "text", text: `更新 ${updateStr}`, font: { size: 12, weight: "medium" }, textColor: C.textSecondary },
         ],
       },
       ...topFour.map((m) => {
@@ -986,9 +995,9 @@ function renderLargeWidget(models, updateStr, maskEmailEnabled) {
           direction: "column",
           gap: 4,
           padding: [8, 11, 8, 11],
-          backgroundColor: { light: "rgba(0,0,0,0.04)", dark: "rgba(255,255,255,0.08)" },
+          backgroundColor: C.cardBg,
           borderWidth: 0.5,
-          borderColor: { light: "rgba(0,0,0,0.06)", dark: "rgba(255,255,255,0.08)" },
+          borderColor: C.cardBorder,
           borderRadius: 12,
           children: [
             {
@@ -1013,7 +1022,7 @@ function renderLargeWidget(models, updateStr, maskEmailEnabled) {
               direction: "row",
               alignItems: "center",
               children: [
-                { type: "text", text: `重置 ${m.resetTimeStr}`, font: { size: 9.5 }, textColor: "#8E8E93" },
+                { type: "text", text: `重置 ${m.resetTimeStr}`, font: { size: 9.5 }, textColor: C.textSecondary },
                 { type: "spacer" },
                 { type: "text", text: m.resetCountdownStr, font: { size: 9.5, weight: "bold" }, textColor: m.statusColor },
               ],
@@ -1106,7 +1115,7 @@ function renderErrorWidget(family, error, updateTime) {
             ],
           },
           { type: "spacer" },
-          { type: "text", text: updateTime, font: { size: 10 }, textColor: "#8E8E93" },
+          { type: "text", text: updateTime, font: { size: 10 }, textColor: C.textSecondary },
         ],
       },
       {
@@ -1114,12 +1123,12 @@ function renderErrorWidget(family, error, updateTime) {
         direction: "column",
         gap: 4,
         padding: 8,
-        backgroundColor: { light: "rgba(0,0,0,0.04)", dark: "rgba(255,255,255,0.08)" },
+        backgroundColor: C.cardBg,
         borderRadius: 10,
         children: [
           { type: "text", text: "连接异常", font: { size: 12, weight: "bold" }, textColor: "#FF3B30" },
-          { type: "text", text: String(error).slice(0, 60), font: { size: 10 }, textColor: "#8E8E93", maxLines: 2 },
-          { type: "text", text: "请在模块 Env 检查 SERVER_URL 与 Key", font: { size: 9 }, textColor: "#8E8E93" },
+          { type: "text", text: String(error).slice(0, 60), font: { size: 10 }, textColor: C.textSecondary, maxLines: 2 },
+          { type: "text", text: "请在模块 Env 检查 SERVER_URL 与 Key", font: { size: 9 }, textColor: C.textSecondary },
         ],
       },
     ],
