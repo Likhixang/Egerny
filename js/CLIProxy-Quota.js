@@ -12,6 +12,7 @@
 
 // ── 官方精细矢量徽标 (Lobe Icons 官方 SVG 提取) ──
 const BRAND_ICONS = {
+  cliproxy: "data:image/svg+xml,%3Csvg%20viewBox%3D%220%200%2024%2024%22%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%3E%3Cpath%20d%3D%22M4%205h16a2%202%200%200%201%202%202v2a2%202%200%200%201-2%202H4a2%202%200%200%201-2-2V7a2%202%200%200%201%202-2zm0%208h16a2%202%200%200%201%202%202v2a2%202%200%200%201-2%202H4a2%202%200%200%201-2-2v-2a2%202%200%200%201%202-2zm2-5h2v2H6V8zm0%208h2v2H6v-2zm12-8h-2v2h2V8zm0%208h-2v2h2v-2z%22%20fill%3D%22%23FFFFFF%22/%3E%3C/svg%3E",
   antigravity: "data:image/svg+xml,%3Csvg%20viewBox%3D%220%200%2024%2024%22%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%3E%3Cpath%20d%3D%22M21.751%2022.607c1.34%201.005%203.35.335%201.508-1.508C17.73%2015.74%2018.904%201%2012.037%201%205.17%201%206.342%2015.74.815%2021.1c-2.01%202.009.167%202.511%201.507%201.506%205.192-3.517%204.857-9.714%209.715-9.714%204.857%200%204.522%206.197%209.714%209.715z%22%20fill%3D%22%23FFFFFF%22/%3E%3C/svg%3E",
   gemini: "data:image/svg+xml,%3Csvg%20viewBox%3D%220%200%2024%2024%22%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%3E%3Cpath%20d%3D%22M20.616%2010.835a14.147%2014.147%200%2001-4.45-3.001%2014.111%2014.111%200%2001-3.678-6.452.503.503%200%2000-.975%200%2014.134%2014.134%200%2001-3.679%206.452%2014.155%2014.155%200%2001-4.45%203.001c-.65.28-1.318.505-2.002.678a.502.502%200%20000%20.975c.684.172%201.35.397%202.002.677a14.147%2014.147%200%20014.45%203.001%2014.112%2014.112%200%20013.679%206.453.502.502%200%2000.975%200c.172-.685.397-1.351.677-2.003a14.145%2014.145%200%20013.001-4.45%2014.113%2014.113%200%20016.453-3.678.503.503%200%20000-.975%2013.245%2013.245%200%2001-2.003-.678z%22%20fill%3D%22%23FFFFFF%22/%3E%3C/svg%3E",
   claude: "data:image/svg+xml,%3Csvg%20viewBox%3D%220%200%2024%2024%22%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%3E%3Cpath%20d%3D%22M4.709%2015.955l4.72-2.647.08-.23-.08-.128H9.2l-.79-.048-2.698-.073-2.339-.097-2.266-.122-.571-.121L0%2011.784l.055-.352.48-.321.686.06%201.52.103%202.278.158%201.652.097%202.449.255h.389l.055-.157-.134-.098-.103-.097-2.358-1.596-2.552-1.688-1.336-.972-.724-.491-.364-.462-.158-1.008.656-.722.881.06.225.061.893.686%201.908%201.476%202.491%201.833.365.304.145-.103.019-.073-.164-.274-1.355-2.446-1.446-2.49-.644-1.032-.17-.619a2.97%202.97%200%2001-.104-.729L6.283.134%206.696%200l.996.134.42.364.62%201.414%201.002%202.229%201.555%203.03.456.898.243.832.091.255h.158V9.01l.128-1.706.237-2.095.23-2.695.08-.76.376-.91.747-.492.584.28.48.685-.067.444-.286%201.851-.559%202.903-.364%201.942h.212l.243-.242.985-1.306%201.652-2.064.73-.82.85-.904.547-.431h1.033l.76%201.129-.34%201.166-1.064%201.347-.881%201.142-1.264%201.7-.79%201.36.073.11.188-.02%202.856-.606%201.543-.28%201.841-.315.833.388.091.395-.328.807-1.969.486-2.309.462-3.439.813-.042.03.049.061%201.549.146.662.036h1.622l3.02.225.79.522.474.638-.079.485-1.215.62-1.64-.389-3.829-.91-1.312-.329h-.182v.11l1.093%201.068%202.006%201.81%202.509%202.33.127.578-.322.455-.34-.049-2.205-1.657-.851-.747-1.926-1.62h-.128v.17l.444.649%202.345%203.521.122%201.08-.17.353-.608.213-.668-.122-1.374-1.925-1.415-2.167-1.143-1.943-.14.08-.674%207.254-.316.37-.729.28-.607-.461-.322-.747.322-1.476.389-1.924.315-1.53.286-1.9.17-.632-.012-.042-.14.018-1.434%201.967-2.18%202.945-1.726%201.845-.414.164-.717-.37.067-.662.401-.589%202.388-3.036%201.44-1.882.93-1.086-.006-.158h-.055L4.132%2018.56l-1.13.146-.487-.456.061-.746.231-.243%201.908-1.312-.006.006z%22%20fill%3D%22%23FFFFFF%22/%3E%3C/svg%3E",
@@ -75,6 +76,20 @@ function maskEmail(str, enabled) {
   } else {
     return `${name.slice(0, 2)}***${name.slice(-2)}${domain}`;
   }
+}
+
+function getHeaderBadge(models) {
+  if (!models || models.length === 0) {
+    return { text: "CLIPROXY", svg: BRAND_ICONS.cliproxy, bg: "#007AFF" };
+  }
+  if (models.length === 1) {
+    return getBadgeConfig(models[0].provider, models[0].name);
+  }
+  return {
+    text: `CLIPROXY · ${models.length} 账号`,
+    svg: BRAND_ICONS.cliproxy,
+    bg: "#007AFF",
+  };
 }
 
 function getBadgeConfig(provider, name) {
@@ -533,9 +548,10 @@ function renderSmallWidget(model, updateTime) {
 function renderMediumWidget(models, updateStr, maskEmailEnabled) {
   const isSingle = models.length === 1;
   const firstModel = models[0];
-  const badge = getBadgeConfig(firstModel?.provider || "GOOGLE", firstModel?.name || "");
+  const headerBadge = getHeaderBadge(models);
 
   if (isSingle && firstModel) {
+    const badge = getBadgeConfig(firstModel.provider, firstModel.name);
     const usedPercent = Math.round((1 - firstModel.remainingFraction) * 100);
     const remainPercent = Math.round(firstModel.remainingFraction * 100);
     const accountText = maskEmail(firstModel.account && firstModel.account !== "默认账号" ? firstModel.account : firstModel.name, maskEmailEnabled);
@@ -644,11 +660,11 @@ function renderMediumWidget(models, updateStr, maskEmailEnabled) {
             alignItems: "center",
             gap: 5,
             padding: [3, 9, 3, 9],
-            backgroundColor: badge.bg,
+            backgroundColor: headerBadge.bg,
             borderRadius: 10,
             children: [
-              { type: "image", src: badge.svg, width: 13, height: 13 },
-              { type: "text", text: badge.text, font: { size: 11, weight: "heavy" }, textColor: "#FFFFFF" },
+              { type: "image", src: headerBadge.svg, width: 13, height: 13 },
+              { type: "text", text: headerBadge.text, font: { size: 11, weight: "heavy" }, textColor: "#FFFFFF" },
             ],
           },
           { type: "spacer" },
@@ -675,9 +691,22 @@ function renderMediumWidget(models, updateStr, maskEmailEnabled) {
               type: "stack",
               direction: "row",
               alignItems: "center",
+              gap: 5,
               children: [
-                { type: "image", src: mBadge.svg, width: 11, height: 11 },
-                { type: "text", text: ` ${accountText}`, font: { size: 11, weight: "bold" }, maxLines: 1 },
+                {
+                  type: "stack",
+                  direction: "row",
+                  alignItems: "center",
+                  gap: 3,
+                  padding: [2, 5],
+                  backgroundColor: mBadge.bg,
+                  borderRadius: 5,
+                  children: [
+                    { type: "image", src: mBadge.svg, width: 9, height: 9 },
+                    { type: "text", text: mBadge.text, font: { size: 8.5, weight: "heavy" }, textColor: "#FFFFFF" },
+                  ],
+                },
+                { type: "text", text: accountText, font: { size: 11, weight: "bold" }, maxLines: 1 },
                 { type: "spacer" },
                 {
                   type: "text",
@@ -710,10 +739,11 @@ function renderLargeWidget(models, updateStr, maskEmailEnabled) {
   const isSingle = models.length === 1;
   const isDual = models.length === 2;
   const firstModel = models[0];
-  const badge = getBadgeConfig(firstModel?.provider || "GOOGLE", firstModel?.name || "");
+  const headerBadge = getHeaderBadge(models);
 
   // 1. 单账号专属旗舰看板（大字仪表盘 + 底部重置机制与配额状态双卡片）
   if (isSingle && firstModel) {
+    const badge = getBadgeConfig(firstModel.provider, firstModel.name);
     const usedPercent = Math.round((1 - firstModel.remainingFraction) * 100);
     const remainPercent = Math.round(firstModel.remainingFraction * 100);
     const accountText = maskEmail(firstModel.account && firstModel.account !== "默认账号" ? firstModel.account : firstModel.name, maskEmailEnabled);
@@ -882,11 +912,11 @@ function renderLargeWidget(models, updateStr, maskEmailEnabled) {
               alignItems: "center",
               gap: 5,
               padding: [3.5, 10, 3.5, 10],
-              backgroundColor: badge.bg,
+              backgroundColor: headerBadge.bg,
               borderRadius: 11,
               children: [
-                { type: "image", src: badge.svg, width: 14, height: 14 },
-                { type: "text", text: badge.text, font: { size: 12, weight: "heavy" }, textColor: "#FFFFFF" },
+                { type: "image", src: headerBadge.svg, width: 14, height: 14 },
+                { type: "text", text: headerBadge.text, font: { size: 12, weight: "heavy" }, textColor: "#FFFFFF" },
               ],
             },
             { type: "spacer" },
@@ -894,6 +924,7 @@ function renderLargeWidget(models, updateStr, maskEmailEnabled) {
           ],
         },
         ...models.map((m) => {
+          const mBadge = getBadgeConfig(m.provider, m.name);
           const usedPercent = Math.round((1 - m.remainingFraction) * 100);
           const remainPercent = Math.round(m.remainingFraction * 100);
           const accountText = maskEmail(m.account && m.account !== "默认账号" ? m.account : m.name, maskEmailEnabled);
@@ -917,11 +948,32 @@ function renderLargeWidget(models, updateStr, maskEmailEnabled) {
                 children: [
                   {
                     type: "stack",
-                    direction: "column",
-                    gap: 1,
+                    direction: "row",
+                    alignItems: "center",
+                    gap: 6,
                     children: [
-                      { type: "text", text: accountText, font: { size: 14, weight: "heavy" }, maxLines: 1 },
-                      { type: "text", text: `${m.provider} 5小时滚动配额`, font: { size: 10 }, textColor: C.textSecondary },
+                      {
+                        type: "stack",
+                        direction: "row",
+                        alignItems: "center",
+                        gap: 3,
+                        padding: [2.5, 7],
+                        backgroundColor: mBadge.bg,
+                        borderRadius: 6,
+                        children: [
+                          { type: "image", src: mBadge.svg, width: 10, height: 10 },
+                          { type: "text", text: mBadge.text, font: { size: 9.5, weight: "heavy" }, textColor: "#FFFFFF" },
+                        ],
+                      },
+                      {
+                        type: "stack",
+                        direction: "column",
+                        gap: 1,
+                        children: [
+                          { type: "text", text: accountText, font: { size: 13.5, weight: "heavy" }, maxLines: 1 },
+                          { type: "text", text: `${m.provider} 5小时滚动配额`, font: { size: 9.5 }, textColor: C.textSecondary },
+                        ],
+                      },
                     ],
                   },
                   { type: "spacer" },
@@ -983,11 +1035,11 @@ function renderLargeWidget(models, updateStr, maskEmailEnabled) {
             alignItems: "center",
             gap: 5,
             padding: [3.5, 10, 3.5, 10],
-            backgroundColor: badge.bg,
+            backgroundColor: headerBadge.bg,
             borderRadius: 11,
             children: [
-              { type: "image", src: badge.svg, width: 14, height: 14 },
-              { type: "text", text: badge.text, font: { size: 12, weight: "heavy" }, textColor: "#FFFFFF" },
+              { type: "image", src: headerBadge.svg, width: 14, height: 14 },
+              { type: "text", text: headerBadge.text, font: { size: 12, weight: "heavy" }, textColor: "#FFFFFF" },
             ],
           },
           { type: "spacer" },
@@ -1014,14 +1066,27 @@ function renderLargeWidget(models, updateStr, maskEmailEnabled) {
               type: "stack",
               direction: "row",
               alignItems: "center",
+              gap: 5,
               children: [
-                { type: "image", src: mBadge.svg, width: 12, height: 12 },
-                { type: "text", text: `  ${accountText}`, font: { size: 12, weight: "bold" }, maxLines: 1 },
+                {
+                  type: "stack",
+                  direction: "row",
+                  alignItems: "center",
+                  gap: 3,
+                  padding: [2, 5],
+                  backgroundColor: mBadge.bg,
+                  borderRadius: 5,
+                  children: [
+                    { type: "image", src: mBadge.svg, width: 9, height: 9 },
+                    { type: "text", text: mBadge.text, font: { size: 8.5, weight: "heavy" }, textColor: "#FFFFFF" },
+                  ],
+                },
+                { type: "text", text: accountText, font: { size: 11.5, weight: "bold" }, maxLines: 1 },
                 { type: "spacer" },
                 {
                   type: "text",
                   text: `余 ${remainPercent}%`,
-                  font: { size: 12, weight: "heavy" },
+                  font: { size: 11.5, weight: "heavy" },
                   textColor: m.statusColor,
                 },
               ],

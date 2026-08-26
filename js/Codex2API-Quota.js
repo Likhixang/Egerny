@@ -92,9 +92,39 @@ function maskEmail(str, enabled) {
   }
 }
 
-function getPlanBadge(plan, windowType) {
-  const p = (plan || "pro").toLowerCase();
-  const winLabel = windowType === "7d" ? "7D" : "5H";
+function getHeaderBadge(accounts) {
+  if (!accounts || accounts.length === 0) {
+    return { text: "CODEX2API", svg: BRAND_ICONS.codex2api, bg: "#10A37F" };
+  }
+  if (accounts.length === 1) {
+    return getAccountBadge(accounts[0]);
+  }
+  return {
+    text: `CODEX2API · ${accounts.length} 账号`,
+    svg: BRAND_ICONS.codex2api,
+    bg: "#10A37F",
+  };
+}
+
+function getAccountBadge(acc) {
+  const p = (acc?.planType || acc?.plan || acc?.provider || "").toLowerCase();
+  const n = (acc?.name || "").toLowerCase();
+  const winLabel = acc?.primaryWindow === "7d" ? "7D" : "5H";
+
+  if (n.includes("grok") || p.includes("grok")) {
+    return {
+      text: `GROK · ${winLabel}`,
+      svg: BRAND_ICONS.grok,
+      bg: "#151515",
+    };
+  }
+  if (n.includes("claude") || p.includes("claude")) {
+    return {
+      text: `CLAUDE · ${winLabel}`,
+      svg: BRAND_ICONS.claude,
+      bg: "#D97706",
+    };
+  }
   if (p.includes("team")) {
     return {
       text: `TEAM · ${winLabel}`,
@@ -469,7 +499,7 @@ const C = {
 function renderSmallWidget(account, updateTime) {
   const usedPercent = Math.round((1 - account.primaryRemainingFraction) * 100);
   const remainPercent = Math.round(account.primaryRemainingFraction * 100);
-  const badge = getPlanBadge(account.planType, account.primaryWindow);
+  const badge = getAccountBadge(account);
   const progressSvg = createProgressBarSvg(account.primaryRemainingFraction, account.statusColor, 6);
 
   return {
@@ -558,7 +588,8 @@ function renderSmallWidget(account, updateTime) {
 function renderMediumWidget(accounts, updateStr, maskEmailEnabled) {
   const isSingle = accounts.length === 1;
   const first = accounts[0];
-  const badge = getPlanBadge(first.planType, first.primaryWindow);
+  const headerBadge = getHeaderBadge(accounts);
+  const badge = getAccountBadge(first);
 
   if (isSingle) {
     const isDual = first.has5h && first.has7d;
@@ -730,6 +761,7 @@ function renderMediumWidget(accounts, updateStr, maskEmailEnabled) {
         ],
       },
       ...topTwo.map((acc) => {
+        const accBadge = getAccountBadge(acc);
         const remainPercent = Math.round(acc.primaryRemainingFraction * 100);
         const accountLabel = maskEmail(acc.email || acc.name, maskEmailEnabled);
         const progressSvg = createProgressBarSvg(acc.primaryRemainingFraction, acc.statusColor, 5);
@@ -748,7 +780,21 @@ function renderMediumWidget(accounts, updateStr, maskEmailEnabled) {
               type: "stack",
               direction: "row",
               alignItems: "center",
+              gap: 5,
               children: [
+                {
+                  type: "stack",
+                  direction: "row",
+                  alignItems: "center",
+                  gap: 3,
+                  padding: [2, 5],
+                  backgroundColor: accBadge.bg,
+                  borderRadius: 5,
+                  children: [
+                    { type: "image", src: accBadge.svg, width: 9, height: 9 },
+                    { type: "text", text: accBadge.text, font: { size: 8.5, weight: "heavy" }, textColor: "#FFFFFF" },
+                  ],
+                },
                 { type: "text", text: accountLabel, font: { size: 11, weight: "bold" }, maxLines: 1 },
                 { type: "spacer" },
                 {
@@ -782,7 +828,8 @@ function renderLargeWidget(accounts, stats, updateStr, maskEmailEnabled) {
   const isSingle = accounts.length === 1;
   const isDual = accounts.length === 2;
   const first = accounts[0];
-  const badge = getPlanBadge(first.planType, first.primaryWindow);
+  const headerBadge = getHeaderBadge(accounts);
+  const badge = getAccountBadge(first);
 
   // 1. 单账号专属旗舰看板（满宽账号标头 + 5h大卡片 + 7d大卡片 + 底部集群状态汇总）
   if (isSingle) {
@@ -810,11 +857,11 @@ function renderLargeWidget(accounts, stats, updateStr, maskEmailEnabled) {
               alignItems: "center",
               gap: 5,
               padding: [3.5, 10, 3.5, 10],
-              backgroundColor: badge.bg,
+              backgroundColor: headerBadge.bg,
               borderRadius: 11,
               children: [
-                { type: "image", src: badge.svg, width: 14, height: 14 },
-                { type: "text", text: badge.text, font: { size: 12, weight: "heavy" }, textColor: "#FFFFFF" },
+                { type: "image", src: headerBadge.svg, width: 14, height: 14 },
+                { type: "text", text: headerBadge.text, font: { size: 12, weight: "heavy" }, textColor: "#FFFFFF" },
               ],
             },
             { type: "spacer" },
@@ -977,11 +1024,11 @@ function renderLargeWidget(accounts, stats, updateStr, maskEmailEnabled) {
               alignItems: "center",
               gap: 5,
               padding: [3.5, 10, 3.5, 10],
-              backgroundColor: badge.bg,
+              backgroundColor: headerBadge.bg,
               borderRadius: 11,
               children: [
-                { type: "image", src: badge.svg, width: 14, height: 14 },
-                { type: "text", text: badge.text, font: { size: 12, weight: "heavy" }, textColor: "#FFFFFF" },
+                { type: "image", src: headerBadge.svg, width: 14, height: 14 },
+                { type: "text", text: headerBadge.text, font: { size: 12, weight: "heavy" }, textColor: "#FFFFFF" },
               ],
             },
             { type: "spacer" },
@@ -989,6 +1036,7 @@ function renderLargeWidget(accounts, stats, updateStr, maskEmailEnabled) {
           ],
         },
         ...accounts.map((acc) => {
+          const accBadge = getAccountBadge(acc);
           const usedPercent = Math.round((1 - acc.primaryRemainingFraction) * 100);
           const remainPercent = Math.round(acc.primaryRemainingFraction * 100);
           const accountLabel = maskEmail(acc.email || acc.name, maskEmailEnabled);
@@ -1012,11 +1060,32 @@ function renderLargeWidget(accounts, stats, updateStr, maskEmailEnabled) {
                 children: [
                   {
                     type: "stack",
-                    direction: "column",
-                    gap: 1,
+                    direction: "row",
+                    alignItems: "center",
+                    gap: 6,
                     children: [
-                      { type: "text", text: accountLabel, font: { size: 13, weight: "heavy" }, maxLines: 1 },
-                      { type: "text", text: `状态: ${acc.healthTier} · 评分 ${acc.dispatchScore}`, font: { size: 10 }, textColor: C.textSecondary },
+                      {
+                        type: "stack",
+                        direction: "row",
+                        alignItems: "center",
+                        gap: 3,
+                        padding: [2.5, 6],
+                        backgroundColor: accBadge.bg,
+                        borderRadius: 5,
+                        children: [
+                          { type: "image", src: accBadge.svg, width: 9, height: 9 },
+                          { type: "text", text: accBadge.text, font: { size: 8.5, weight: "heavy" }, textColor: "#FFFFFF" },
+                        ],
+                      },
+                      {
+                        type: "stack",
+                        direction: "column",
+                        gap: 1,
+                        children: [
+                          { type: "text", text: accountLabel, font: { size: 13, weight: "heavy" }, maxLines: 1 },
+                          { type: "text", text: `状态: ${acc.healthTier} · 评分 ${acc.dispatchScore}`, font: { size: 9.5 }, textColor: C.textSecondary },
+                        ],
+                      },
                     ],
                   },
                   { type: "spacer" },
@@ -1084,11 +1153,11 @@ function renderLargeWidget(accounts, stats, updateStr, maskEmailEnabled) {
             alignItems: "center",
             gap: 5,
             padding: [3.5, 10, 3.5, 10],
-            backgroundColor: badge.bg,
+            backgroundColor: headerBadge.bg,
             borderRadius: 11,
             children: [
-              { type: "image", src: badge.svg, width: 14, height: 14 },
-              { type: "text", text: badge.text, font: { size: 12, weight: "heavy" }, textColor: "#FFFFFF" },
+              { type: "image", src: headerBadge.svg, width: 14, height: 14 },
+              { type: "text", text: headerBadge.text, font: { size: 12, weight: "heavy" }, textColor: "#FFFFFF" },
             ],
           },
           { type: "spacer" },
@@ -1096,6 +1165,7 @@ function renderLargeWidget(accounts, stats, updateStr, maskEmailEnabled) {
         ],
       },
       ...topFour.map((acc) => {
+        const accBadge = getAccountBadge(acc);
         const remainPercent = Math.round(acc.primaryRemainingFraction * 100);
         const accountLabel = maskEmail(acc.email || acc.name, maskEmailEnabled);
         const progressSvg = createProgressBarSvg(acc.primaryRemainingFraction, acc.statusColor, 5.5);
@@ -1114,13 +1184,27 @@ function renderLargeWidget(accounts, stats, updateStr, maskEmailEnabled) {
               type: "stack",
               direction: "row",
               alignItems: "center",
+              gap: 5,
               children: [
-                { type: "text", text: accountLabel, font: { size: 12, weight: "bold" }, maxLines: 1 },
+                {
+                  type: "stack",
+                  direction: "row",
+                  alignItems: "center",
+                  gap: 3,
+                  padding: [2, 5],
+                  backgroundColor: accBadge.bg,
+                  borderRadius: 5,
+                  children: [
+                    { type: "image", src: accBadge.svg, width: 9, height: 9 },
+                    { type: "text", text: accBadge.text, font: { size: 8.5, weight: "heavy" }, textColor: "#FFFFFF" },
+                  ],
+                },
+                { type: "text", text: accountLabel, font: { size: 11.5, weight: "bold" }, maxLines: 1 },
                 { type: "spacer" },
                 {
                   type: "text",
-                  text: `${acc.primaryWindowLabel}余 ${remainPercent}%`,
-                  font: { size: 12, weight: "heavy" },
+                  text: `余 ${remainPercent}%`,
+                  font: { size: 11.5, weight: "heavy" },
                   textColor: acc.statusColor,
                 },
               ],
