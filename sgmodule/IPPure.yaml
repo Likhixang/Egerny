@@ -1,5 +1,5 @@
 name: "IP-Pure"
-description: "节点 IP 纯净度检测（IPPure），新式小组件，支持小/中/大/锁屏矩形四种尺寸，数据源 my.ippure.com"
+description: "节点 IP 纯净度检测（IPPure），新式小组件，支持全部主屏与锁屏尺寸，数据源 my.ippure.com"
 icon: "checkmark.seal.fill"
 
 # 统一参数入口（compat_arguments）：解析期替换到 rules/脚本 env
