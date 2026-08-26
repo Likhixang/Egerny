@@ -198,6 +198,14 @@ function parseAccountItem(acc) {
   let secondaryLabel = "5小时滚动";
   let isSecondarySpark = false;
 
+  // Small 小组件专属主力推荐展示
+  let smallLabel = "周全额度";
+  let smallFraction = fullFraction;
+  let smallUsedPercent = fullUsedPercent;
+  let smallResetAtMs = fullResetAtMs;
+  let smallResetCountdownStr = fullResetCountdownStr;
+  let smallIsWeekly = true;
+
   if (isFree) {
     fullQuotaWindow = "30d";
     fullQuotaLabel = "月全额度";
@@ -207,6 +215,14 @@ function parseAccountItem(acc) {
     fullResetTimeStr = has7d ? reset7dTimeStr : reset5hTimeStr;
     fullResetCountdownStr = has7d ? reset7dCountdownStr : reset5hCountdownStr;
     secondaryLabel = "短期额度";
+
+    // 非 Pro 账号在 Small 小组件优先展示短期/5h滚动限制（最容易触发限额的窗口）
+    smallLabel = has5h ? "短期额度 (5H)" : "月全额度";
+    smallFraction = has5h ? remainingFraction5h : fullFraction;
+    smallUsedPercent = has5h ? usage5h : fullUsedPercent;
+    smallResetAtMs = has5h ? reset5hAtMs : fullResetAtMs;
+    smallResetCountdownStr = has5h ? reset5hCountdownStr : fullResetCountdownStr;
+    smallIsWeekly = !has5h;
   } else if (isPro) {
     fullQuotaWindow = "7d";
     fullQuotaLabel = "周全额度";
@@ -217,6 +233,14 @@ function parseAccountItem(acc) {
     fullResetCountdownStr = reset7dCountdownStr;
     secondaryLabel = "Spark 5小时";
     isSecondarySpark = true;
+
+    // Pro 账号在 Small 小组件展示其唯一的真正核心：周全额度
+    smallLabel = "周全额度 (7D)";
+    smallFraction = fullFraction;
+    smallUsedPercent = fullUsedPercent;
+    smallResetAtMs = fullResetAtMs;
+    smallResetCountdownStr = fullResetCountdownStr;
+    smallIsWeekly = true;
   } else if (has7d && has5h) {
     fullQuotaWindow = "7d";
     fullQuotaLabel = "周全额度";
@@ -226,6 +250,14 @@ function parseAccountItem(acc) {
     fullResetTimeStr = reset7dTimeStr;
     fullResetCountdownStr = reset7dCountdownStr;
     secondaryLabel = "5小时滚动";
+
+    // 非 Pro 账号 (Plus/Team等) 在 Small 小组件展示 5小时滚动短期额度
+    smallLabel = "5h 滚动额度";
+    smallFraction = remainingFraction5h;
+    smallUsedPercent = usage5h;
+    smallResetAtMs = reset5hAtMs;
+    smallResetCountdownStr = reset5hCountdownStr;
+    smallIsWeekly = false;
   } else if (has7d) {
     fullQuotaWindow = "7d";
     fullQuotaLabel = "周全额度";
@@ -235,6 +267,13 @@ function parseAccountItem(acc) {
     fullResetTimeStr = reset7dTimeStr;
     fullResetCountdownStr = reset7dCountdownStr;
     secondaryLabel = "5小时滚动";
+
+    smallLabel = "周全额度 (7D)";
+    smallFraction = fullFraction;
+    smallUsedPercent = fullUsedPercent;
+    smallResetAtMs = fullResetAtMs;
+    smallResetCountdownStr = fullResetCountdownStr;
+    smallIsWeekly = true;
   } else {
     fullQuotaWindow = "5h";
     fullQuotaLabel = "5小时全额度";
@@ -244,6 +283,13 @@ function parseAccountItem(acc) {
     fullResetTimeStr = reset5hTimeStr;
     fullResetCountdownStr = reset5hCountdownStr;
     secondaryLabel = "5小时滚动";
+
+    smallLabel = "5小时全额度";
+    smallFraction = fullFraction;
+    smallUsedPercent = fullUsedPercent;
+    smallResetAtMs = fullResetAtMs;
+    smallResetCountdownStr = fullResetCountdownStr;
+    smallIsWeekly = false;
   }
 
   const primaryRemainingFraction = fullFraction;
@@ -284,6 +330,12 @@ function parseAccountItem(acc) {
     fullResetCountdownStr,
     secondaryLabel,
     isSecondarySpark,
+    smallLabel,
+    smallFraction,
+    smallUsedPercent,
+    smallResetAtMs,
+    smallResetCountdownStr,
+    smallIsWeekly,
     primaryRemainingFraction,
     primaryResetAtMs,
     primaryResetTimeStr,
@@ -573,17 +625,17 @@ function createMicroBadge(badge) {
 }
 
 function renderSmallWidget(account, updateTime) {
-  // 小尺寸小组件：只展示「全额度」，绝不展示次要的 5h/Spark 额度
-  const fullFraction = account.fullFraction;
-  const usedPercent = account.fullUsedPercent !== null ? Math.round(account.fullUsedPercent) : Math.round((1 - fullFraction) * 100);
-  const remainPercent = Math.round(fullFraction * 100);
-  const statusColor = getQuotaColor(fullFraction);
-  const resetAtMs = account.fullResetAtMs;
-  const resetCountdownStr = account.fullResetCountdownStr;
+  // 小尺寸小组件：Pro 账号展示周全额度；非 Pro 账号展示 5小时滚动短期额度
+  const fraction = account.smallFraction !== undefined ? account.smallFraction : account.primaryRemainingFraction;
+  const usedPercent = account.smallUsedPercent !== null && account.smallUsedPercent !== undefined ? Math.round(account.smallUsedPercent) : Math.round((1 - fraction) * 100);
+  const remainPercent = Math.round(fraction * 100);
+  const statusColor = getQuotaColor(fraction);
+  const resetAtMs = account.smallResetAtMs !== undefined ? account.smallResetAtMs : account.primaryResetAtMs;
+  const resetCountdownStr = account.smallResetCountdownStr || account.primaryResetCountdownStr;
   const accBadge = getAccountBadge(account);
-  const progressSvg = createProgressBarSvg(fullFraction, statusColor, 6);
+  const progressSvg = createProgressBarSvg(fraction, statusColor, 6);
   const accountLabel = maskEmail(account.email || account.name, true);
-  const windowTag = account.fullQuotaLabel;
+  const windowTag = account.smallLabel || account.primaryWindowLabel;
 
   return {
     type: "widget",
@@ -661,7 +713,7 @@ function renderSmallWidget(account, updateTime) {
             direction: "row",
             alignItems: "center",
             children: [
-              { type: "text", text: `重置 ${formatSmallResetLabel(resetAtMs, account.fullQuotaWindow !== "5h")}`, font: { size: 9 }, textColor: C.textSecondary },
+              { type: "text", text: `重置 ${formatSmallResetLabel(resetAtMs, Boolean(account.smallIsWeekly))}`, font: { size: 9 }, textColor: C.textSecondary },
               { type: "spacer" },
               { type: "text", text: resetCountdownStr, font: { size: 9.5, weight: "bold" }, textColor: statusColor },
             ],

@@ -572,8 +572,9 @@ export default async function(ctx) {
   } else if (family === "accessoryInline") {
     return renderAccessoryInline(models[0]);
   } else if (family === "systemSmall") {
-    const fullQuotaModels = models.filter((m) => m.isFullQuota !== false);
-    const targetModel = fullQuotaModels.length > 0 ? fullQuotaModels[0] : models[0];
+    // Small 小组件：非 Pro 优先展示 5小时滚动限制；Pro 展示周全额度；Antigravity/Claude 展示 5h 配额
+    const shortModels = models.filter((m) => m.window === "5h" && !m.isSpark);
+    const targetModel = shortModels.length > 0 ? shortModels[0] : models[0];
     return renderSmallWidget(targetModel, updateTimeStr);
   } else if (family === "systemLarge" || family === "systemExtraLarge") {
     return renderLargeWidget(models, updateDateStr, maskEmailEnabled);
@@ -612,7 +613,7 @@ function createMicroBadge(badge) {
 }
 
 function renderSmallWidget(model, updateTime) {
-  // 小尺寸小组件：只展示「全额度」，不展示 Spark 额度
+  // 小尺寸小组件：Pro 展示周全额度；非 Pro 展示 5小时滚动短期额度
   const isWeekly = model.window === "7d";
   const usedPercent = Math.round((1 - model.remainingFraction) * 100);
   const remainPercent = Math.round(model.remainingFraction * 100);
@@ -620,7 +621,7 @@ function renderSmallWidget(model, updateTime) {
   const resetTime = isWeekly ? (model.resetAtMs ? formatShortDate(model.resetAtMs) : "--/--") : formatTimeOnly(model.resetAtMs);
   const progressSvg = createProgressBarSvg(model.remainingFraction, model.statusColor, 6);
   const accountText = maskEmail(model.account && model.account !== "默认账号" ? model.account : model.name, true);
-  const windowTag = isWeekly ? "全额度 (7D)" : "全额度 (5H)";
+  const windowTag = isWeekly ? "周全额度 (7D)" : (model.isSpark ? "Spark 5小时" : "5h 滚动额度");
 
   return {
     type: "widget",
