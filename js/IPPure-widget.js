@@ -1,7 +1,7 @@
 /*
  * IPPure 节点 IP 纯净度 — Egern 新式小组件
  * 设计系统：Apple HIG 现代化自适应排版
- *   - Small: 顶部 Header + 大字 IP/归属 + 纯净度水平长条进度条 + 底部双属性胶囊
+ *   - Small: 上下两段式平衡布局（上：网络身份，下：纯净度仪表+特征胶囊）
  *   - Medium: 经典宽屏仪表盘（左侧大圆环仪表 + 右侧结构化信息流）
  *   - Large: 顶部 Header + 顶部大圆环 Hero 概览 + 底部 2x2 对称等高数据卡片
  *   - 锁屏系列: accessoryCircular / accessoryRectangular / accessoryInline
@@ -145,46 +145,44 @@ const C = {
 
 /**
  * 主屏幕 Small 小尺寸 (2x2)
- * 精致长条状纯净度与卡片流：
- *  - Header: 盾牌+标题 + 右侧协议药丸
- *  - Hero: 大字 IP + 详细地理位置
- *  - Meter: 纯净度% + 评级状态 + 精美水平长条进度条
- *  - Footer: 双迷你胶囊卡片（ASN 编号 | 原生/数据中心）
+ * 上下两段式对称平衡排版（彻底解决字堆积在上部与间距不均的问题）：
+ *  - 上半段（网络身份）：Header + 大字 IP + 详细归属
+ *  - 中央：单一弹性 Spacer（自然呼吸走廊）
+ *  - 下半段（纯净度与特征）：纯净度%与评级 + 水平进度条 + 双属性胶囊
  */
 function renderSystemSmall(d) {
   return {
     type: "widget",
     padding: 13,
-    gap: 5,
     children: [
-      // 1. 顶部 Header
-      {
-        type: "stack",
-        direction: "row",
-        alignItems: "center",
-        gap: 4,
-        children: [
-          { type: "image", src: "sf-symbol:shield.lefthalf.filled", color: d.level.color, width: 13, height: 13 },
-          { type: "text", text: "IP 纯净度", font: { size: "caption1", weight: "bold" }, textColor: C.textPrimary },
-          { type: "spacer" },
-          {
-            type: "stack",
-            padding: [2, 5],
-            borderRadius: 4,
-            backgroundColor: C.cardBg,
-            children: [
-              { type: "text", text: d.ipVer, font: { size: 9, weight: "bold" }, textColor: C.textSecondary }
-            ]
-          }
-        ]
-      },
-
-      // 2. Hero 主区域 (大字 IP + 详细位置)
+      // ── 1. 上半部分：网络身份区块 ──
       {
         type: "stack",
         direction: "column",
-        gap: 2,
+        gap: 3,
         children: [
+          // 顶栏 Header
+          {
+            type: "stack",
+            direction: "row",
+            alignItems: "center",
+            gap: 4,
+            children: [
+              { type: "image", src: "sf-symbol:shield.lefthalf.filled", color: d.level.color, width: 13, height: 13 },
+              { type: "text", text: "IP 纯净度", font: { size: "caption1", weight: "bold" }, textColor: C.textPrimary },
+              { type: "spacer" },
+              {
+                type: "stack",
+                padding: [2, 5],
+                borderRadius: 4,
+                backgroundColor: C.cardBg,
+                children: [
+                  { type: "text", text: d.ipVer, font: { size: 9, weight: "bold" }, textColor: C.textSecondary }
+                ]
+              }
+            ]
+          },
+          // IP 大字
           {
             type: "text",
             text: d.displayIP,
@@ -193,6 +191,7 @@ function renderSystemSmall(d) {
             maxLines: 1,
             minScale: 0.65
           },
+          // 归属地
           {
             type: "stack",
             direction: "row",
@@ -213,14 +212,16 @@ function renderSystemSmall(d) {
         ]
       },
 
+      // ── 2. 中央弹性呼吸走廊（连接上下两大平衡区块）──
       { type: "spacer" },
 
-      // 3. 核心长条状纯净度进度条 (Horizontal Meter)
+      // ── 3. 下半部分：纯净度与特征区块 ──
       {
         type: "stack",
         direction: "column",
-        gap: 4,
+        gap: 5,
         children: [
+          // 纯净度标签与状态
           {
             type: "stack",
             direction: "row",
@@ -241,25 +242,23 @@ function renderSystemSmall(d) {
               }
             ]
           },
+          // 水平进度条
           {
             type: "image",
             src: createProgressBarSvg(d.purity, d.level.color),
             height: 5,
             resizable: true
+          },
+          // 底部双胶囊
+          {
+            type: "stack",
+            direction: "row",
+            gap: 5,
+            children: [
+              createSmallPill("sf-symbol:network", d.asnNumber, 1),
+              createSmallPill(`sf-symbol:${d.ipTypeIcon}`, d.ipType, 1)
+            ]
           }
-        ]
-      },
-
-      { type: "spacer" },
-
-      // 4. 底部双属性胶囊
-      {
-        type: "stack",
-        direction: "row",
-        gap: 5,
-        children: [
-          createSmallPill("sf-symbol:network", d.asnNumber, 1),
-          createSmallPill(`sf-symbol:${d.ipTypeIcon}`, d.ipType, 1)
         ]
       }
     ]
@@ -780,18 +779,12 @@ function renderErrorWidget(family, message) {
 // 📊 SVG 矢量图形渲染 (Progress & Gauge)
 // ══════════════════════════════════════════════════════
 
-/**
- * 水平长条状细进度条 (Small 尺寸专用)
- */
 function createProgressBarSvg(purity, color) {
   const pct = Math.max(0, Math.min(100, purity))
   const trackColor = "rgba(128,128,128,0.18)"
   return `data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 5'><rect width='100' height='5' rx='2.5' fill='${trackColor}'/><rect width='${pct}' height='5' rx='2.5' fill='${color}'/></svg>`
 }
 
-/**
- * 经典大圆环仪表 (Medium & Large 尺寸)
- */
 function createGaugeRingSvg(purity, size, strokeWidth, strokeColor, labelText = "纯净度") {
   const half = size / 2
   const r = half - strokeWidth / 2
