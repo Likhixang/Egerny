@@ -1,0 +1,24 @@
+name: "IP-Pure"
+description: "节点 IP 纯净度检测（IPPure），新式小组件，支持小/中/大/锁屏矩形四种尺寸，数据源 my.ippure.com"
+icon: "checkmark.seal.fill"
+
+env_schema:
+  MarkIP:
+    name: IP 打码
+    description: "是否对 IP 地址打码显示，填 true 或 false"
+    default_value: "false"
+
+scriptings:
+- generic:
+    name: IP-Pure
+    script_url: https://raw.githubusercontent.com/Likhixang/Egerny/main/js/IPPure-widget.js
+    timeout: 15
+
+widgets:
+- name: IP-Pure
+  script_name: IP-Pure
+
+rules:
+- domain_suffix:
+    match: ippure.com
+    policy: DIRECT
