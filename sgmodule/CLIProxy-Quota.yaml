@@ -15,8 +15,8 @@ env_schema:
     name: 账号邮箱打码
     description: "是否对账号和邮箱进行打码隐藏"
     options:
-      - "false"
       - "true"
+      - "false"
   FILTER:
     name: 过滤筛选
     description: "筛选指定模型、账号关键字或序号（选填）"

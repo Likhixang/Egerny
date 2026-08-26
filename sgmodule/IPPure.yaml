@@ -13,8 +13,8 @@ env_schema:
     name: IP 打码
     description: "是否对 IP 地址打码显示"
     options:
-      - "false"
       - "true"
+      - "false"
 
 scriptings:
   - generic:

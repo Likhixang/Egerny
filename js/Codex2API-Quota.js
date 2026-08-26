@@ -2,9 +2,9 @@
  * Codex2API Quota 额度监控 — Egern 新式小组件
  * 核心设计系统：
  *   - 官方 OpenAI / Codex 精细品牌矢量徽标
- *   - 纯正 Apple HIG 拟物磨砂玻璃卡片
+ *   - 纯正 Apple HIG 拟物磨砂玻璃卡片（满宽 100% 呼吸感）
  *   - 大组件 (systemLarge) 智能三阶自适应：
- *       1. 单账号：账号健康状态标头 + 5h滚动卡片 + 7d周额度卡片 + 底部集群状态汇总
+ *       1. 单账号：满宽账号健康标头 + 5h滚动大卡片 + 7d周额度大卡片 + 底部集群状态汇总
  *       2. 双账号：上下两块全高平衡大卡片 + 底部集群状态汇总
  *       3. 多账号：4 账号高密度看板列表 + 底部集群状态汇总
  *   - 适配全部主屏与锁屏尺寸 (systemSmall, systemMedium, systemLarge, accessory*)
@@ -770,7 +770,7 @@ function renderLargeWidget(accounts, stats, updateStr, maskEmailEnabled) {
   const first = accounts[0];
   const badge = getPlanBadge(first.planType, first.primaryWindow);
 
-  // 1. 单账号专属旗舰看板（账号标头 + 5h卡片 + 7d卡片 + 底部集群状态汇总）
+  // 1. 单账号专属旗舰看板（满宽账号标头 + 5h大卡片 + 7d大卡片 + 底部集群状态汇总）
   if (isSingle) {
     const used5h = first.usagePercent5h !== null ? Math.round(first.usagePercent5h) : Math.round((1 - first.remainingFraction5h) * 100);
     const remain5h = Math.round(first.remainingFraction5h * 100);
@@ -806,28 +806,36 @@ function renderLargeWidget(accounts, stats, updateStr, maskEmailEnabled) {
             { type: "text", text: `更新 ${updateStr}`, font: { size: 12, weight: "medium" }, textColor: "#8E8E93" },
           ],
         },
-        // 账号标头与评分卡片
+        // 账号标头卡片（横向 100% 满宽布局）
         {
           type: "stack",
-          direction: "column",
-          gap: 3,
-          padding: [8, 12, 8, 12],
+          direction: "row",
+          alignItems: "center",
+          padding: [9, 12, 9, 12],
           backgroundColor: { light: "rgba(0,0,0,0.04)", dark: "rgba(255,255,255,0.08)" },
           borderWidth: 0.5,
           borderColor: { light: "rgba(0,0,0,0.06)", dark: "rgba(255,255,255,0.08)" },
           borderRadius: 12,
           children: [
-            { type: "text", text: accountLabel, font: { size: 15, weight: "heavy" }, maxLines: 1 },
             {
               type: "stack",
-              direction: "row",
-              gap: 8,
+              direction: "column",
+              gap: 3,
               children: [
-                { type: "text", text: `调度评分: ${first.dispatchScore}`, font: { size: 10 }, textColor: "#8E8E93" },
-                { type: "text", text: `状态: ${first.healthTier}`, font: { size: 10 }, textColor: "#8E8E93" },
-                { type: "text", text: `成功请求: ${first.successRequests}`, font: { size: 10 }, textColor: "#8E8E93" },
+                { type: "text", text: accountLabel, font: { size: 15, weight: "heavy" }, maxLines: 1 },
+                {
+                  type: "stack",
+                  direction: "row",
+                  gap: 8,
+                  children: [
+                    { type: "text", text: `调度评分: ${first.dispatchScore}`, font: { size: 10 }, textColor: "#8E8E93" },
+                    { type: "text", text: `状态: ${first.healthTier}`, font: { size: 10 }, textColor: "#8E8E93" },
+                    { type: "text", text: `成功请求: ${first.successRequests}`, font: { size: 10 }, textColor: "#8E8E93" },
+                  ],
+                },
               ],
             },
+            { type: "spacer" },
           ],
         },
         // 5小时卡片
