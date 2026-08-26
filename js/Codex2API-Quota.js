@@ -112,38 +112,44 @@ function getHeaderBadge(accounts) {
 function getAccountBadge(acc) {
   const p = (acc?.planType || acc?.plan || acc?.provider || "").toLowerCase();
   const n = (acc?.name || "").toLowerCase();
-  const winLabel = acc?.primaryWindow === "7d" ? "7D" : "5H";
 
   if (n.includes("grok") || p.includes("grok")) {
     return {
-      text: `GROK · ${winLabel}`,
+      text: "GROK",
       svg: BRAND_ICONS.grok,
       bg: "#151515",
     };
   }
   if (n.includes("claude") || p.includes("claude")) {
     return {
-      text: `CLAUDE · ${winLabel}`,
+      text: "CLAUDE",
       svg: BRAND_ICONS.claude,
       bg: "#D97706",
     };
   }
   if (p.includes("team")) {
     return {
-      text: `TEAM · ${winLabel}`,
+      text: "TEAM",
       svg: BRAND_ICONS.openai,
       bg: "#AF52DE",
     };
   }
+  if (p.includes("plus")) {
+    return {
+      text: "PLUS",
+      svg: BRAND_ICONS.openai,
+      bg: "#10A37F",
+    };
+  }
   if (p.includes("enterprise") || p.includes("ent")) {
     return {
-      text: `ENT · ${winLabel}`,
+      text: "ENTERPRISE",
       svg: BRAND_ICONS.openai,
       bg: "#5856D6",
     };
   }
   return {
-    text: `PRO · ${winLabel}`,
+    text: "PRO",
     svg: BRAND_ICONS.openai,
     bg: "#10A37F",
   };
