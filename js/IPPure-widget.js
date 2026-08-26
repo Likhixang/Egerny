@@ -1,10 +1,10 @@
 /*
  * IPPure 节点 IP 纯净度 — Egern 新式小组件
- * 规范设计：遵循 Apple iOS Human Interface Guidelines 规范
- * 特性：
- *   - 卡片式层次布局（Card-in-Card / Substack 胶囊设计）
+ * 设计理念：
+ *   - 经典仪表盘大圆环（Hero Circular Progress Gauge）直观展现 IP 纯净度
+ *   - 严格遵循 Apple iOS Human Interface Guidelines 规范
  *   - 优雅的自适应语义配色（Light / Dark 自适应）
- *   - 完整支持所有尺寸：systemSmall / systemMedium / systemLarge / accessoryCircular / accessoryRectangular / accessoryInline
+ *   - 支持全尺寸：systemSmall / systemMedium / systemLarge / accessoryCircular / accessoryRectangular / accessoryInline
  *   - 环境变量：MarkIP = true 时对 IP 地址脱敏显示
  * 数据源：https://my.ippure.com/v1/info
  */
@@ -25,7 +25,7 @@ export default async function(ctx) {
     return renderErrorWidget(ctx.widgetFamily, "数据解析异常")
   }
 
-  // ── 数据解析与字段规范化 ──
+  // ── 基础数据规范化 ──
   const ip = data.ip || "N/A"
   const isIPv6 = ip.includes(":")
   const ipVer = isIPv6 ? "IPv6" : "IPv4"
@@ -51,7 +51,6 @@ export default async function(ctx) {
   const country = data.country || ""
   const countryCode = data.countryCode || ""
 
-  // 位置简写与全写
   const locShort = [city, countryCode].filter(Boolean).join(", ") || country || "未知位置"
   const locFull = [city, region, country].filter(Boolean).join(", ") || country || "未知位置"
   const timezone = data.timezone || ""
@@ -102,7 +101,7 @@ export default async function(ctx) {
     })
   }
 
-  // 默认：systemMedium 中尺寸（最核心高频尺寸）
+  // 默认：systemMedium 中尺寸（黄金中尺寸，大圆环仪表盘 + 右侧信息流）
   return renderSystemMedium({
     displayIP,
     ipVer,
@@ -112,6 +111,8 @@ export default async function(ctx) {
     fraudScore,
     level,
     asnFull,
+    asnNumber,
+    asnOrg,
     ipType,
     ipTypeIcon,
     broadcastText
@@ -123,102 +124,90 @@ export default async function(ctx) {
 // ══════════════════════════════════════════════════════
 
 const C = {
-  // 文本色彩
   textPrimary: { light: "#1C1C1E", dark: "#FFFFFF" },
   textSecondary: { light: "#6E6E73", dark: "#98989D" },
   textTertiary: { light: "#8E8E93", dark: "#636366" },
 
-  // 容器卡片背景与描边
   cardBg: { light: "rgba(0, 0, 0, 0.04)", dark: "rgba(255, 255, 255, 0.08)" },
-  cardBgHover: { light: "rgba(0, 0, 0, 0.07)", dark: "rgba(255, 255, 255, 0.12)" },
-  cardBorder: { light: "rgba(0, 0, 0, 0.04)", dark: "rgba(255, 255, 255, 0.06)" },
-
-  // 分割线
-  separator: { light: "rgba(60, 60, 67, 0.12)", dark: "rgba(255, 255, 255, 0.12)" },
-
-  // 强调与辅助色
-  accentBlue: "#007AFF",
-  accentPurple: "#AF52DE"
+  cardBgSecondary: { light: "rgba(0, 0, 0, 0.025)", dark: "rgba(255, 255, 255, 0.05)" },
+  cardBorder: { light: "rgba(0, 0, 0, 0.04)", dark: "rgba(255, 255, 255, 0.06)" }
 }
 
 // ══════════════════════════════════════════════════════
-// 📐 小组件尺寸渲染实现
+// 📐 各尺寸小组件渲染
 // ══════════════════════════════════════════════════════
 
 /**
  * 主屏幕 Small 小尺寸 (2x2)
  * 结构：
- *  - Header: 图标 + 模块名 + 纯净度胶囊
- *  - Hero: IP 大字 + 地理归属
- *  - Spacer
- *  - Cards: 2 列迷你信息卡 (ASN 编号 | 原生/机房)
+ *  - Header: 图标 + "IP PURE" + 风险指示点
+ *  - Center: 精美大圆环仪表（直径 80pt，中心大纯净度数字 + "纯净度"标签）
+ *  - Footer: IP 归属 + 网络类型
  */
 function renderSystemSmall(d) {
   return {
     type: "widget",
-    padding: 14,
-    gap: 4,
+    padding: 12,
+    gap: 2,
     children: [
       // 1. Header
       {
         type: "stack",
         direction: "row",
         alignItems: "center",
-        gap: 5,
+        gap: 4,
         children: [
-          { type: "image", src: "sf-symbol:shield.fill", color: C.textTertiary, width: 13, height: 13 },
-          { type: "text", text: "IP PURE", font: { size: 11, weight: "bold" }, textColor: C.textSecondary },
+          { type: "image", src: "sf-symbol:shield.fill", color: d.level.color, width: 12, height: 12 },
+          { type: "text", text: "IP 纯净度", font: { size: 11, weight: "bold" }, textColor: C.textPrimary },
           { type: "spacer" },
-          createPillBadge(`${d.purity}%`, d.level.color, d.level.badgeBg, d.level.icon)
+          createMiniPill(d.level.text, d.level.color, d.level.badgeBg)
         ]
       },
 
-      { type: "spacer", length: 4 },
+      { type: "spacer" },
 
-      // 2. Main Hero (IP + 地点)
+      // 2. 居中大圆环仪表
       {
         type: "stack",
         direction: "column",
-        gap: 2,
+        alignItems: "center",
         children: [
           {
-            type: "text",
-            text: d.displayIP,
-            font: { size: 16, weight: "bold" },
-            textColor: C.textPrimary,
-            maxLines: 1,
-            minScale: 0.65
-          },
-          {
-            type: "stack",
-            direction: "row",
-            alignItems: "center",
-            gap: 4,
-            children: [
-              { type: "image", src: "sf-symbol:mappin.and.ellipse", color: C.textTertiary, width: 11, height: 11 },
-              {
-                type: "text",
-                text: d.locShort,
-                font: { size: "caption2", weight: "medium" },
-                textColor: C.textSecondary,
-                maxLines: 1,
-                minScale: 0.75
-              }
-            ]
+            type: "image",
+            src: createGaugeRingSvg(d.purity, 78, 7.5, d.level.color, "纯净度"),
+            width: 78,
+            height: 78
           }
         ]
       },
 
       { type: "spacer" },
 
-      // 3. Footer Cards: ASN 与 IP 类型
+      // 3. 底部信息行 (IP 与类型)
       {
         type: "stack",
         direction: "row",
-        gap: 6,
+        alignItems: "center",
+        padding: [3, 6],
+        borderRadius: 6,
+        backgroundColor: C.cardBg,
         children: [
-          createInfoPill("sf-symbol:network", d.asnNumber, 1),
-          createInfoPill(`sf-symbol:${d.ipTypeIcon}`, d.ipType, 1)
+          {
+            type: "text",
+            text: d.displayIP,
+            font: { size: 10, weight: "bold" },
+            textColor: C.textPrimary,
+            maxLines: 1,
+            minScale: 0.65,
+            flex: 1
+          },
+          {
+            type: "text",
+            text: d.ipType,
+            font: { size: 9, weight: "medium" },
+            textColor: C.textSecondary,
+            maxLines: 1
+          }
         ]
       }
     ]
@@ -226,18 +215,18 @@ function renderSystemSmall(d) {
 }
 
 /**
- * 主屏幕 Medium 中尺寸 (2x4，主力黄金尺寸)
+ * 主屏幕 Medium 中尺寸 (2x4，黄金中尺寸仪表盘)
  * 结构：
- *  - Header: 图标 + "节点 IP 纯净度" + IP协议标签 + 弹性 Spacer + 纯净度等级 Badge
- *  - Hero: IP 地址 (大字 Title3) + 位置详情 (Caption1)
- *  - Spacer
- *  - Grid: 3 个精致数据胶囊卡片 (类型 | ASN组织 | 风险评估)
+ *  - Header: 盾牌 + "节点 IP 纯净度" + IPv4/v6 + Spacer + 风险评级 Badge
+ *  - Main (左右分栏):
+ *    - Left: 核心大圆环仪表 (90x90pt，大数字 + 纯净度)
+ *    - Right: 结构化信息流 (IP 大字、地理位置、ASN 组织、属性标签群)
  */
 function renderSystemMedium(d) {
   return {
     type: "widget",
     padding: 14,
-    gap: 8,
+    gap: 6,
     children: [
       // 1. Header 顶栏
       {
@@ -246,8 +235,8 @@ function renderSystemMedium(d) {
         alignItems: "center",
         gap: 6,
         children: [
-          { type: "image", src: "sf-symbol:shield.lefthalf.filled", color: d.level.color, width: 15, height: 15 },
-          { type: "text", text: "节点 IP 纯净度", font: { size: "footnote", weight: "semibold" }, textColor: C.textPrimary },
+          { type: "image", src: "sf-symbol:shield.lefthalf.filled", color: d.level.color, width: 14, height: 14 },
+          { type: "text", text: "节点 IP 纯净度", font: { size: "footnote", weight: "bold" }, textColor: C.textPrimary },
           {
             type: "stack",
             padding: [2, 5],
@@ -258,58 +247,99 @@ function renderSystemMedium(d) {
             ]
           },
           { type: "spacer" },
-          createPillBadge(`${d.level.text} · 纯净度 ${d.purity}%`, d.level.color, d.level.badgeBg, d.level.icon)
-        ]
-      },
-
-      // 2. Hero 主区域 (大字 IP + 详细地理位置)
-      {
-        type: "stack",
-        direction: "column",
-        gap: 2,
-        children: [
-          {
-            type: "text",
-            text: d.displayIP,
-            font: { size: 21, weight: "bold" },
-            textColor: C.textPrimary,
-            maxLines: 1,
-            minScale: 0.65
-          },
-          {
-            type: "stack",
-            direction: "row",
-            alignItems: "center",
-            gap: 4,
-            children: [
-              { type: "image", src: "sf-symbol:location.fill", color: C.textTertiary, width: 11, height: 11 },
-              {
-                type: "text",
-                text: d.locFull,
-                font: { size: "caption1" },
-                textColor: C.textSecondary,
-                maxLines: 1,
-                minScale: 0.75
-              }
-            ]
-          }
+          createPillBadge(`${d.level.text} · 欺诈分 ${d.fraudScore}`, d.level.color, d.level.badgeBg, d.level.icon)
         ]
       },
 
       { type: "spacer" },
 
-      // 3. 底部 3 列结构化数据卡片
+      // 2. Main 左右分栏核心区
       {
         type: "stack",
         direction: "row",
-        gap: 6,
+        alignItems: "center",
+        gap: 14,
         children: [
-          // 卡片 1: IP 类型
-          createDataCard(`sf-symbol:${d.ipTypeIcon}`, d.ipType, 1),
-          // 卡片 2: ASN 网络组织
-          createDataCard("sf-symbol:globe", d.asnFull, 1.4),
-          // 卡片 3: 风险与广播
-          createDataCard("sf-symbol:bolt.shield.fill", `欺诈分 ${d.fraudScore} · ${d.broadcastText}`, 1.2)
+          // 左侧：经典大圆环仪表盘
+          {
+            type: "stack",
+            direction: "column",
+            alignItems: "center",
+            children: [
+              {
+                type: "image",
+                src: createGaugeRingSvg(d.purity, 88, 8, d.level.color, "纯净度"),
+                width: 88,
+                height: 88
+              }
+            ]
+          },
+
+          // 右侧：结构化详情信息
+          {
+            type: "stack",
+            direction: "column",
+            flex: 1,
+            gap: 4,
+            children: [
+              // IP 大字
+              {
+                type: "text",
+                text: d.displayIP,
+                font: { size: 19, weight: "bold" },
+                textColor: C.textPrimary,
+                maxLines: 1,
+                minScale: 0.65
+              },
+              // 归属地
+              {
+                type: "stack",
+                direction: "row",
+                alignItems: "center",
+                gap: 4,
+                children: [
+                  { type: "image", src: "sf-symbol:location.fill", color: C.textTertiary, width: 11, height: 11 },
+                  {
+                    type: "text",
+                    text: d.locFull,
+                    font: { size: "caption1" },
+                    textColor: C.textSecondary,
+                    maxLines: 1,
+                    minScale: 0.75
+                  }
+                ]
+              },
+              // ASN 网络
+              {
+                type: "stack",
+                direction: "row",
+                alignItems: "center",
+                gap: 4,
+                children: [
+                  { type: "image", src: "sf-symbol:globe", color: C.textTertiary, width: 11, height: 11 },
+                  {
+                    type: "text",
+                    text: d.asnFull,
+                    font: { size: "caption2" },
+                    textColor: C.textSecondary,
+                    maxLines: 1,
+                    minScale: 0.7
+                  }
+                ]
+              },
+              // 底部特性胶囊排
+              {
+                type: "stack",
+                direction: "row",
+                alignItems: "center",
+                gap: 5,
+                children: [
+                  createMiniTag(`sf-symbol:${d.ipTypeIcon}`, d.ipType),
+                  createMiniTag("sf-symbol:antenna.radiowaves.left.and.right", d.broadcastText)
+                ]
+              }
+            ]
+          }
         ]
       }
     ]
@@ -320,8 +350,8 @@ function renderSystemMedium(d) {
  * 主屏幕 Large 大尺寸 (4x4)
  * 结构：
  *  - Header
- *  - Hero 卡片：大号 IP、协议、纯净度进度条与评分
- *  - 4 宫格网格矩阵 (地理位置、网络组织、属性特征、安全风险)
+ *  - Hero 面板：左侧 108pt 超大圆环仪表 + 右侧核心分析
+ *  - 4 宫格网格矩阵 (地理归属、运营商、IP 属性、环境时区)
  *  - Footer: 刷新时间与来源
  */
 function renderSystemLarge(d) {
@@ -340,59 +370,77 @@ function renderSystemLarge(d) {
           { type: "image", src: "sf-symbol:shield.checkerboard", color: d.level.color, width: 18, height: 18 },
           { type: "text", text: "节点 IP 纯净度检测", font: { size: "headline", weight: "bold" }, textColor: C.textPrimary },
           { type: "spacer" },
-          createPillBadge(`${d.level.text}`, d.level.color, d.level.badgeBg, d.level.icon)
+          createPillBadge(d.level.text, d.level.color, d.level.badgeBg, d.level.icon)
         ]
       },
 
-      // 2. Hero 主面板卡片
+      // 2. Hero 主仪表盘卡片
       {
         type: "stack",
-        direction: "column",
+        direction: "row",
+        alignItems: "center",
+        gap: 16,
         padding: 12,
         borderRadius: 12,
         backgroundColor: C.cardBg,
-        gap: 8,
         children: [
-          {
-            type: "stack",
-            direction: "row",
-            alignItems: "center",
-            children: [
-              {
-                type: "text",
-                text: d.displayIP,
-                font: { size: 24, weight: "bold" },
-                textColor: C.textPrimary,
-                maxLines: 1,
-                minScale: 0.6,
-                flex: 1
-              },
-              {
-                type: "stack",
-                padding: [3, 8],
-                borderRadius: 6,
-                backgroundColor: C.cardBgHover,
-                children: [
-                  { type: "text", text: d.ipVer, font: { size: 12, weight: "bold" }, textColor: C.textSecondary }
-                ]
-              }
-            ]
-          },
-          // 纯净度水平进度条
+          // 左侧：超大圆环仪表
           {
             type: "image",
-            src: createProgressBarSvg(d.purity, d.level.color),
-            height: 6,
-            resizable: true
+            src: createGaugeRingSvg(d.purity, 104, 10, d.level.color, "纯净度"),
+            width: 104,
+            height: 104
           },
+          // 右侧：核心概要
           {
             type: "stack",
-            direction: "row",
-            alignItems: "center",
+            direction: "column",
+            flex: 1,
+            gap: 5,
             children: [
-              { type: "text", text: `纯净度评分: ${d.purity} / 100`, font: { size: "caption1", weight: "semibold" }, textColor: d.level.color },
-              { type: "spacer" },
-              { type: "text", text: `欺诈风险分: ${d.fraudScore}`, font: { size: "caption1" }, textColor: C.textTertiary }
+              {
+                type: "stack",
+                direction: "row",
+                alignItems: "center",
+                children: [
+                  {
+                    type: "text",
+                    text: d.displayIP,
+                    font: { size: 20, weight: "bold" },
+                    textColor: C.textPrimary,
+                    maxLines: 1,
+                    minScale: 0.6,
+                    flex: 1
+                  },
+                  {
+                    type: "stack",
+                    padding: [2, 6],
+                    borderRadius: 4,
+                    backgroundColor: C.cardBgSecondary,
+                    children: [
+                      { type: "text", text: d.ipVer, font: { size: 11, weight: "bold" }, textColor: C.textSecondary }
+                    ]
+                  }
+                ]
+              },
+              {
+                type: "text",
+                text: `安全评级: ${d.level.text} (${d.purity} 分)`,
+                font: { size: "footnote", weight: "semibold" },
+                textColor: d.level.color
+              },
+              {
+                type: "text",
+                text: `欺诈风险评分: ${d.fraudScore} (越低越安全)`,
+                font: { size: "caption1" },
+                textColor: C.textTertiary
+              },
+              {
+                type: "text",
+                text: `网络定位: ${d.ipType} · ${d.broadcastText}`,
+                font: { size: "caption1" },
+                textColor: C.textSecondary
+              }
             ]
           }
         ]
@@ -405,7 +453,6 @@ function renderSystemLarge(d) {
         gap: 8,
         flex: 1,
         children: [
-          // 第一行两张卡片
           {
             type: "stack",
             direction: "row",
@@ -423,7 +470,6 @@ function renderSystemLarge(d) {
               ])
             ]
           },
-          // 第二行两张卡片
           {
             type: "stack",
             direction: "row",
@@ -436,7 +482,7 @@ function renderSystemLarge(d) {
               ]),
               createGridCard("sf-symbol:clock.badge.checkmark", "环境时区", [
                 `时区: ${d.timezone || "未知"}`,
-                `检测结果: ${d.level.text}`
+                `检测状态: ${d.level.text}`
               ])
             ]
           }
@@ -462,17 +508,13 @@ function renderSystemLarge(d) {
 // 🔒 锁屏小组件渲染 (Lock Screen Accessories)
 // ══════════════════════════════════════════════════════
 
-/**
- * 锁屏圆形 (accessoryCircular)
- * 极简 SVG 环形进度圈 + 纯净度分数值
- */
 function renderAccessoryCircular(purity, level) {
   return {
     type: "widget",
     children: [
       {
         type: "image",
-        src: createCircularRingSvg(purity, 46, 4),
+        src: createGaugeRingSvg(purity, 46, 4.5, "#FFFFFF", "PURE", true),
         width: 46,
         height: 46
       }
@@ -480,10 +522,6 @@ function renderAccessoryCircular(purity, level) {
   }
 }
 
-/**
- * 锁屏矩形 (accessoryRectangular)
- * 3 行结构化信息
- */
 function renderAccessoryRectangular(displayIP, locShort, purity, level, ipType) {
   return {
     type: "widget",
@@ -523,9 +561,6 @@ function renderAccessoryRectangular(displayIP, locShort, purity, level, ipType) 
   }
 }
 
-/**
- * 锁屏单行 (accessoryInline)
- */
 function renderAccessoryInline(displayIP, purity, level) {
   return {
     type: "widget",
@@ -542,12 +577,9 @@ function renderAccessoryInline(displayIP, purity, level) {
 }
 
 // ══════════════════════════════════════════════════════
-// 🛠️ 组件与辅助构造函数 (Reusable UI Builders)
+// 🛠️ UI 构造辅助函数
 // ══════════════════════════════════════════════════════
 
-/**
- * 创建胶囊徽章 Badge
- */
 function createPillBadge(text, textColor, bgColor, icon) {
   const children = []
   if (icon) {
@@ -579,63 +611,34 @@ function createPillBadge(text, textColor, bgColor, icon) {
   }
 }
 
-/**
- * 创建单行迷你信息卡 (Small 尺寸底部)
- */
-function createInfoPill(iconSrc, text, flex = 1) {
+function createMiniPill(text, textColor, bgColor) {
   return {
     type: "stack",
-    direction: "row",
-    alignItems: "center",
-    gap: 4,
-    padding: [4, 6],
-    borderRadius: 6,
-    backgroundColor: C.cardBg,
-    flex,
+    padding: [2, 5],
+    borderRadius: 5,
+    backgroundColor: bgColor,
     children: [
-      { type: "image", src: iconSrc, color: C.textTertiary, width: 11, height: 11 },
-      {
-        type: "text",
-        text,
-        font: { size: 10, weight: "medium" },
-        textColor: C.textSecondary,
-        maxLines: 1,
-        minScale: 0.75
-      }
+      { type: "text", text, font: { size: 9, weight: "bold" }, textColor, maxLines: 1 }
     ]
   }
 }
 
-/**
- * 创建数据卡片 (Medium 尺寸底部 3 列)
- */
-function createDataCard(iconSrc, text, flex = 1) {
+function createMiniTag(iconSrc, text) {
   return {
     type: "stack",
     direction: "row",
     alignItems: "center",
-    gap: 4,
-    padding: [6, 7],
-    borderRadius: 8,
+    gap: 3,
+    padding: [2, 6],
+    borderRadius: 4,
     backgroundColor: C.cardBg,
-    flex,
     children: [
-      { type: "image", src: iconSrc, color: C.textTertiary, width: 12, height: 12 },
-      {
-        type: "text",
-        text,
-        font: { size: 11, weight: "medium" },
-        textColor: C.textSecondary,
-        maxLines: 1,
-        minScale: 0.7
-      }
+      { type: "image", src: iconSrc, color: C.textTertiary, width: 10, height: 10 },
+      { type: "text", text, font: { size: 10, weight: "medium" }, textColor: C.textSecondary, maxLines: 1 }
     ]
   }
 }
 
-/**
- * 创建四宫格卡片 (Large 尺寸矩阵)
- */
 function createGridCard(iconSrc, title, lines) {
   const lineChildren = lines
     .filter(Boolean)
@@ -672,9 +675,6 @@ function createGridCard(iconSrc, title, lines) {
   }
 }
 
-/**
- * 错误降级小组件
- */
 function renderErrorWidget(family, message) {
   return {
     type: "widget",
@@ -703,38 +703,45 @@ function renderErrorWidget(family, message) {
 }
 
 // ══════════════════════════════════════════════════════
-// 📊 SVG 矢量图形渲染 (Progress & Ring)
+// 📊 SVG 经典大圆环仪表 (High-Precision Circular Gauge)
 // ══════════════════════════════════════════════════════
 
 /**
- * 大尺寸水平细进度条
+ * 绘制高质感居中环形进度圈
+ * 采用 Apple 级几何比例，文字使用 baseline 绝对对齐
  */
-function createProgressBarSvg(purity, color) {
-  const pct = Math.max(0, Math.min(100, purity))
-  const trackColor = "rgba(128,128,128,0.2)"
-  return `data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 4'><rect width='100' height='4' rx='2' fill='${trackColor}'/><rect width='${pct}' height='4' rx='2' fill='${color}'/></svg>`
-}
-
-/**
- * 锁屏圆形极简圆环
- */
-function createCircularRingSvg(purity, size, strokeWidth) {
+function createGaugeRingSvg(purity, size, strokeWidth, strokeColor, labelText = "纯净度", isLockScreen = false) {
   const half = size / 2
   const r = half - strokeWidth / 2
   const circ = 2 * Math.PI * r
   const pct = Math.max(0, Math.min(100, purity)) / 100
   const dash = (circ * pct).toFixed(1)
   const gap = (circ - dash).toFixed(1)
-  const fontSize = 15
-  const textY = half + fontSize * 0.35
-  const track = "rgba(255,255,255,0.2)"
-  const color = "#FFFFFF"
 
-  return `data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 ${size} ${size}'><circle cx='${half}' cy='${half}' r='${r}' fill='none' stroke='${track}' stroke-width='${strokeWidth}'/><circle cx='${half}' cy='${half}' r='${r}' fill='none' stroke='${color}' stroke-width='${strokeWidth}' stroke-linecap='round' stroke-dasharray='${dash} ${gap}' transform='rotate(-90 ${half} ${half})'/><text x='${half}' y='${textY}' text-anchor='middle' font-size='${fontSize}' font-weight='bold' fill='${color}'>${purity}</text></svg>`
+  // 字体与排版参数
+  const numFontSize = Math.round(size * 0.32)
+  const labelFontSize = Math.round(size * 0.13)
+  const numY = Math.round(half - size * 0.03)
+  const labelY = Math.round(half + size * 0.23)
+
+  const trackColor = isLockScreen ? "rgba(255,255,255,0.2)" : "rgba(128,128,128,0.18)"
+  const numColor = isLockScreen ? "#FFFFFF" : strokeColor
+  const subColor = isLockScreen ? "rgba(255,255,255,0.7)" : "rgba(128,128,128,0.85)"
+
+  return `data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 ${size} ${size}'>` +
+    // 底轨 Track
+    `<circle cx='${half}' cy='${half}' r='${r}' fill='none' stroke='${trackColor}' stroke-width='${strokeWidth}'/>` +
+    // 进度弧线 Progress Arc (顺时针，从顶部 12 点钟开始)
+    `<circle cx='${half}' cy='${half}' r='${r}' fill='none' stroke='${strokeColor}' stroke-width='${strokeWidth}' stroke-linecap='round' stroke-dasharray='${dash} ${gap}' transform='rotate(-90 ${half} ${half})'/>` +
+    // 中心大数字
+    `<text x='${half}' y='${numY}' text-anchor='middle' dominant-baseline='central' font-size='${numFontSize}' font-weight='800' font-family='-apple-system, system-ui, sans-serif' fill='${numColor}'>${purity}</text>` +
+    // 下方小标签
+    `<text x='${half}' y='${labelY}' text-anchor='middle' dominant-baseline='central' font-size='${labelFontSize}' font-weight='600' font-family='-apple-system, system-ui, sans-serif' fill='${subColor}'>${labelText}</text>` +
+    `</svg>`
 }
 
 // ══════════════════════════════════════════════════════
-// 🚦 风险分级与脱敏工具
+// 🚦 风险评级与 IP 工具
 // ══════════════════════════════════════════════════════
 
 function getRiskLevel(fraudScore) {
