@@ -1,5 +1,5 @@
 name: "Codex2API-Quota"
-description: "Codex2API 额度监控（5小时/7天周额度双窗口、账号状态与集群统计），新式小组件，支持全部主屏与锁屏尺寸"
+description: "Codex2API 配额监控（5小时/7天周额度双窗口、账号状态与集群统计），新式小组件，支持全部主屏与锁屏尺寸"
 
 # 模块可视化配置控件 (Egern 2.16+)
 env_schema:
