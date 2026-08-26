@@ -1,15 +1,11 @@
 /*
  * IPPure 节点 IP 纯净度 — Egern 新式小组件
- * 设计理念：
- *   - 经典仪表盘大圆环（Hero Circular Progress Gauge）直观展现 IP 纯净度
- *   - 严格遵循 Apple iOS Human Interface Guidelines 规范
- *   - 优雅的自适应语义配色（Light / Dark 自适应）
- *   - 最小号小组件（systemSmall）：顶部两侧标题与风险胶囊 + 中间居中精致大圆环
- *   - 中号小组件（systemMedium）：经典仪表盘分栏（左侧大圆环 + 右侧结构化信息流）
- *   - 大号小组件（systemLarge）：仪表盘 Hero 面板 + 严丝合缝等宽高对称四宫格矩阵
- *   - 锁屏圆形（accessoryCircular）：正中 48pt 高清微仪表，数值醒目居中
- *   - 锁屏矩形（accessoryRectangular）：左侧 44pt 微圆环仪表 + 右侧大字 IP 与归属地
- *   - 环境变量：MarkIP = true 时对 IP 地址脱敏显示
+ * 设计系统：Apple HIG 统一通透风格
+ *   - 全尺寸设计语言严谨统一（无突兀的局部大遮罩嵌套）
+ *   - Small: 顶部 Header + 正中纯粹大圆环仪表
+ *   - Medium: 顶部 Header + 左侧大圆环仪表 + 右侧核心信息流
+ *   - Large: 顶部 Header + 顶部大圆环 Hero 概览 + 底部 2x2 对称等高数据卡片
+ *   - 锁屏系列: accessoryCircular / accessoryRectangular / accessoryInline
  * 数据源：https://my.ippure.com/v1/info
  */
 
@@ -97,6 +93,7 @@ export default async function(ctx) {
       asnNumber,
       asnOrg,
       ipType,
+      ipTypeIcon,
       broadcastText,
       timezone,
       coordinates,
@@ -144,14 +141,14 @@ const C = {
  * 主屏幕 Small 小尺寸 (2x2)
  * 结构：
  *  - Header: 左侧盾牌+标题，右侧风险评级胶囊
- *  - Center: 居中精致大圆环仪表 (86x86pt)，绝对对称不偏心
+ *  - Center: 居中通透大圆环仪表 (86x86pt)，绝对对称
  */
 function renderSystemSmall(d) {
   return {
     type: "widget",
     padding: 12,
     children: [
-      // 1. 顶部 Header 行（左右两侧分布）
+      // 1. 顶部 Header 行
       {
         type: "stack",
         direction: "row",
@@ -325,7 +322,7 @@ function renderSystemMedium(d) {
  * 主屏幕 Large 大尺寸 (4x4)
  * 结构：
  *  - Header 顶栏
- *  - Hero 主仪表盘卡片
+ *  - Hero 主仪表盘概览（通透无突兀大灰底嵌套，与 Small/Medium 统一）
  *  - 严丝合缝等宽高对称四宫格矩阵（2x2 Grid）
  *  - Footer 底部来源与时间
  */
@@ -333,7 +330,7 @@ function renderSystemLarge(d) {
   return {
     type: "widget",
     padding: 16,
-    gap: 10,
+    gap: 12,
     children: [
       // 1. Header
       {
@@ -349,21 +346,18 @@ function renderSystemLarge(d) {
         ]
       },
 
-      // 2. Hero 主仪表盘卡片
+      // 2. Hero 主仪表盘概览（去除突兀的大灰底遮罩，全尺寸语言统一）
       {
         type: "stack",
         direction: "row",
         alignItems: "center",
         gap: 16,
-        padding: 12,
-        borderRadius: 12,
-        backgroundColor: C.cardBg,
         children: [
           {
             type: "image",
-            src: createGaugeRingSvg(d.purity, 98, 9.5, d.level.color, "纯净度"),
-            width: 98,
-            height: 98
+            src: createGaugeRingSvg(d.purity, 96, 9.5, d.level.color, "纯净度"),
+            width: 96,
+            height: 96
           },
           {
             type: "stack",
@@ -379,7 +373,7 @@ function renderSystemLarge(d) {
                   {
                     type: "text",
                     text: d.displayIP,
-                    font: { size: 20, weight: "bold" },
+                    font: { size: 21, weight: "bold" },
                     textColor: C.textPrimary,
                     maxLines: 1,
                     minScale: 0.6,
@@ -389,9 +383,9 @@ function renderSystemLarge(d) {
                     type: "stack",
                     padding: [2, 6],
                     borderRadius: 4,
-                    backgroundColor: C.cardBgSecondary,
+                    backgroundColor: C.cardBg,
                     children: [
-                      { type: "text", text: d.ipVer, font: { size: 11, weight: "bold" }, textColor: C.textSecondary }
+                      { type: "text", text: d.ipVer, font: { size: 10, weight: "bold" }, textColor: C.textSecondary }
                     ]
                   }
                 ]
@@ -404,7 +398,7 @@ function renderSystemLarge(d) {
               },
               {
                 type: "text",
-                text: `欺诈风险评分: ${d.fraudScore} (越低越安全)`,
+                text: `欺诈风险分: ${d.fraudScore} (越低越安全)`,
                 font: { size: "caption1" },
                 textColor: C.textTertiary
               },
@@ -472,7 +466,6 @@ function renderSystemLarge(d) {
 
 /**
  * 锁屏圆形 (accessoryCircular)
- * 48x48 正中微型高亮圆环仪表，纯净度数字清晰醒目
  */
 function renderAccessoryCircular(purity, level) {
   return {
@@ -502,7 +495,6 @@ function renderAccessoryCircular(purity, level) {
 
 /**
  * 锁屏矩形 (accessoryRectangular)
- * 经典左侧微圆环仪表 + 右侧大字 IP 与归属地，视觉饱满有重心
  */
 function renderAccessoryRectangular(displayIP, locShort, purity, level, ipType) {
   return {
@@ -515,21 +507,18 @@ function renderAccessoryRectangular(displayIP, locShort, purity, level, ipType) 
         alignItems: "center",
         gap: 8,
         children: [
-          // 左侧：44pt 微圆环仪表
           {
             type: "image",
             src: createLockScreenGaugeSvg(purity, 44, 4),
             width: 44,
             height: 44
           },
-          // 右侧：紧凑 3 行信息
           {
             type: "stack",
             direction: "column",
             flex: 1,
             gap: 2,
             children: [
-              // 行 1: IP 大字
               {
                 type: "text",
                 text: displayIP,
@@ -538,7 +527,6 @@ function renderAccessoryRectangular(displayIP, locShort, purity, level, ipType) 
                 maxLines: 1,
                 minScale: 0.65
               },
-              // 行 2: 归属地
               {
                 type: "text",
                 text: locShort,
@@ -547,7 +535,6 @@ function renderAccessoryRectangular(displayIP, locShort, purity, level, ipType) 
                 maxLines: 1,
                 minScale: 0.75
               },
-              // 行 3: 安全状态 · 类型
               {
                 type: "text",
                 text: `${level.text} · ${ipType}`,
@@ -644,9 +631,6 @@ function createMiniTag(iconSrc, text) {
   }
 }
 
-/**
- * 创建严格统一结构（1行标题 + 2行文本）的对称网格卡片
- */
 function createGridCard(iconSrc, title, line1, line2) {
   return {
     type: "stack",
@@ -718,9 +702,6 @@ function renderErrorWidget(family, message) {
 // 📊 SVG 矢量图形渲染 (Gauges & Rings)
 // ══════════════════════════════════════════════════════
 
-/**
- * 主屏幕大圆环仪表
- */
 function createGaugeRingSvg(purity, size, strokeWidth, strokeColor, labelText = "纯净度") {
   const half = size / 2
   const r = half - strokeWidth / 2
@@ -746,9 +727,6 @@ function createGaugeRingSvg(purity, size, strokeWidth, strokeColor, labelText = 
     `</svg>`
 }
 
-/**
- * 锁屏圆形极简微型仪表（48pt）
- */
 function createLockScreenCircularSvg(purity, size, strokeWidth) {
   const half = size / 2
   const r = half - strokeWidth / 2
@@ -767,9 +745,6 @@ function createLockScreenCircularSvg(purity, size, strokeWidth) {
     `</svg>`
 }
 
-/**
- * 锁屏矩形微圆环仪表（44pt）
- */
 function createLockScreenGaugeSvg(purity, size, strokeWidth) {
   const half = size / 2
   const r = half - strokeWidth / 2
