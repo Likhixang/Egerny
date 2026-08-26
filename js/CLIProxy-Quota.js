@@ -180,13 +180,11 @@ async function syncCLIProxyQuotaData(ctx) {
       const accountLabel = file.email || (file.name || "").replace(/\.json$/, "");
 
       // 1. Google / Gemini / Antigravity
-      if (
-        fileTypeLower.includes("antigravity") ||
-        fileTypeLower.includes("gemini") ||
-        fileNameLower.includes("antigravity") ||
-        fileNameLower.includes("gemini") ||
-        fileNameLower.includes("cloudcode")
-      ) {
+      const isAntigravity = fileTypeLower.includes("antigravity") || fileNameLower.includes("antigravity");
+      const isGeminiOAuth = fileTypeLower.includes("gemini") || fileNameLower.includes("gemini") || fileNameLower.includes("cloudcode");
+
+      if (isAntigravity || isGeminiOAuth) {
+        const detectedProvider = isAntigravity ? "Antigravity" : "Gemini";
         try {
           const projectId = file.project_id || file.projectId || "";
           const reqBody = {
@@ -227,7 +225,7 @@ async function syncCLIProxyQuotaData(ctx) {
                   id: `antigravity-${authIndex}-${groupName}`,
                   name: groupName,
                   shortName: groupName,
-                  provider: "Gemini",
+                  provider: detectedProvider,
                   account: accountLabel,
                   remainingFraction,
                   resetAtMs,
