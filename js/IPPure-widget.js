@@ -4,8 +4,8 @@
  *   - 经典仪表盘大圆环（Hero Circular Progress Gauge）直观展现 IP 纯净度
  *   - 严格遵循 Apple iOS Human Interface Guidelines 规范
  *   - 优雅的自适应语义配色（Light / Dark 自适应）
- *   - 最小号小组件（systemSmall）纯粹呈现大圆环，绝对居中无多余元素
- *   - 中号小组件（systemMedium）经典仪表盘分栏：左侧大圆环 + 右侧结构化信息流
+ *   - 最小号小组件（systemSmall）：顶部两侧标题与风险胶囊 + 中间居中精致大圆环
+ *   - 中号小组件（systemMedium）：经典仪表盘分栏（左侧大圆环 + 右侧结构化信息流）
  *   - 环境变量：MarkIP = true 时对 IP 地址脱敏显示
  * 数据源：https://my.ippure.com/v1/info
  */
@@ -134,14 +134,32 @@ const C = {
 
 /**
  * 主屏幕 Small 小尺寸 (2x2)
- * 极致纯粹：仅保留一个大圆环仪表，上下左右绝对居中
+ * 结构：
+ *  - Header: 左侧盾牌+标题，右侧风险评级胶囊
+ *  - Center: 居中精致大圆环仪表 (86x86pt)，绝对对称不偏心
  */
 function renderSystemSmall(d) {
   return {
     type: "widget",
-    padding: 0,
+    padding: 12,
     children: [
+      // 1. 顶部 Header 行（左右两侧分布）
+      {
+        type: "stack",
+        direction: "row",
+        alignItems: "center",
+        gap: 4,
+        children: [
+          { type: "image", src: "sf-symbol:shield.fill", color: d.level.color, width: 12, height: 12 },
+          { type: "text", text: "IP 纯净度", font: { size: "caption1", weight: "bold" }, textColor: C.textPrimary },
+          { type: "spacer" },
+          createMiniPill(d.level.text, d.level.color, d.level.badgeBg)
+        ]
+      },
+
       { type: "spacer" },
+
+      // 2. 居中大圆环仪表
       {
         type: "stack",
         direction: "row",
@@ -150,13 +168,14 @@ function renderSystemSmall(d) {
           { type: "spacer" },
           {
             type: "image",
-            src: createGaugeRingSvg(d.purity, 114, 10, d.level.color, "纯净度"),
-            width: 114,
-            height: 114
+            src: createGaugeRingSvg(d.purity, 86, 8, d.level.color, "纯净度"),
+            width: 86,
+            height: 86
           },
           { type: "spacer" }
         ]
       },
+
       { type: "spacer" }
     ]
   }
@@ -549,6 +568,18 @@ function createPillBadge(text, textColor, bgColor, icon) {
     borderRadius: 6,
     backgroundColor: bgColor,
     children
+  }
+}
+
+function createMiniPill(text, textColor, bgColor) {
+  return {
+    type: "stack",
+    padding: [2, 5],
+    borderRadius: 5,
+    backgroundColor: bgColor,
+    children: [
+      { type: "text", text, font: { size: 9, weight: "bold" }, textColor, maxLines: 1 }
+    ]
   }
 }
 
