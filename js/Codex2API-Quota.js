@@ -736,52 +736,59 @@ function renderMediumWidget(accounts, updateStr, maskEmailEnabled) {
           borderRadius: 13,
           flex: 1,
           children: isDual ? [
-            // 双窗口模式 (5h + 7d)
+            // 双窗口模式 (7D + 5H / Spark 5H)
             {
               type: "stack",
               direction: "row",
               alignItems: "center",
-              gap: 5,
               children: [
-                createMicroBadge(accBadge),
-                { type: "text", text: accountLabel, font: { size: 12, weight: "bold" }, maxLines: 1 },
+                {
+                  type: "stack",
+                  direction: "row",
+                  alignItems: "center",
+                  gap: 5,
+                  children: [
+                    createMicroBadge(accBadge),
+                    { type: "text", text: accountLabel, font: { size: 11.5, weight: "bold" }, maxLines: 1 },
+                  ],
+                },
                 { type: "spacer" },
                 { type: "text", text: `评分 ${first.dispatchScore}`, font: { size: 10 }, textColor: C.textSecondary },
               ],
             },
-            // 全额度进度 (周全额度 / 月全额度)
+            // 7D 全额度进度条
             {
               type: "stack",
               direction: "column",
-              gap: 2,
+              gap: 3,
               children: [
                 {
                   type: "stack",
                   direction: "row",
                   alignItems: "center",
                   children: [
-                    { type: "text", text: `${first.fullQuotaLabel} 剩余 ${remain7d}%`, font: { size: 11, weight: "bold" }, textColor: getQuotaColor(first.remainingFraction7d) },
+                    { type: "text", text: first.fullQuotaLabel, font: { size: 10.5, weight: "bold" }, textColor: C.textPrimary },
                     { type: "spacer" },
-                    { type: "text", text: `重置 ${first.reset7dTimeStr}`, font: { size: 9.5 }, textColor: C.textSecondary },
+                    { type: "text", text: `余 ${remain7d}% · 重置 ${first.reset7dTimeStr}`, font: { size: 9.5, weight: "semibold" }, textColor: getQuotaColor(first.remainingFraction7d) },
                   ],
                 },
                 { type: "image", src: createProgressBarSvg(first.remainingFraction7d, getQuotaColor(first.remainingFraction7d), 4.5), height: 4.5 },
               ],
             },
-            // 次级进度 (Pro显示Spark 5小时，其他显示5小时滚动)
+            // 次级额度进度条 (Spark 5H / 5H)
             {
               type: "stack",
               direction: "column",
-              gap: 2,
+              gap: 3,
               children: [
                 {
                   type: "stack",
                   direction: "row",
                   alignItems: "center",
                   children: [
-                    { type: "text", text: `${first.secondaryLabel} 剩余 ${remain5h}%`, font: { size: 11, weight: "bold" }, textColor: getQuotaColor(first.remainingFraction5h) },
+                    { type: "text", text: first.secondaryLabel, font: { size: 10.5, weight: "bold" }, textColor: C.textPrimary },
                     { type: "spacer" },
-                    { type: "text", text: `重置 ${first.reset5hTimeStr}`, font: { size: 9.5 }, textColor: C.textSecondary },
+                    { type: "text", text: `余 ${remain5h}% · 重置 ${first.reset5hTimeStr}`, font: { size: 9.5, weight: "semibold" }, textColor: getQuotaColor(first.remainingFraction5h) },
                   ],
                 },
                 { type: "image", src: createProgressBarSvg(first.remainingFraction5h, getQuotaColor(first.remainingFraction5h), 4.5), height: 4.5 },
