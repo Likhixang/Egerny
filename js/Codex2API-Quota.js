@@ -697,12 +697,12 @@ function renderMediumWidget(accounts, updateStr, maskEmailEnabled) {
     const accountLabel = maskEmail(first.email || first.name, maskEmailEnabled);
 
     if (isDual) {
-      // 单账号双配额经典三行式架构（与CLIProxy完全对齐，左右均分独立三行式排版）
+      // 单账号双配额双卡片看板（上卡片: 7D 全额度条；下卡片: Spark 5H/5H 滚动条；每张卡片拥有一根满宽独立进度条）
       return {
         type: "widget",
         backgroundColor: C.widgetBg,
         padding: [12, 14, 12, 14],
-        gap: 8,
+        gap: 7,
         children: [
           // 顶部 Header (Codex2API 官方 Logo)
           {
@@ -726,19 +726,17 @@ function renderMediumWidget(accounts, updateStr, maskEmailEnabled) {
               { type: "text", text: `更新 ${updateStr}`, font: { size: 11, weight: "medium" }, textColor: C.textSecondary },
             ],
           },
-          // 核心卡片容器
+          // 1. 7D 独立配额卡片（第一根进度条）
           {
             type: "stack",
             direction: "column",
-            gap: 6,
-            padding: [9, 12, 9, 12],
+            gap: 3,
+            padding: [7, 10, 7, 10],
             backgroundColor: C.cardBg,
             borderWidth: 0.5,
             borderColor: C.cardBorder,
-            borderRadius: 13,
-            flex: 1,
+            borderRadius: 11,
             children: [
-              // 1. 账号标头行
               {
                 type: "stack",
                 direction: "row",
@@ -751,14 +749,42 @@ function renderMediumWidget(accounts, updateStr, maskEmailEnabled) {
                     gap: 5,
                     children: [
                       createMicroBadge(accBadge),
-                      { type: "text", text: accountLabel, font: { size: 12, weight: "bold" }, maxLines: 1 },
+                      { type: "text", text: accountLabel, font: { size: 11, weight: "bold" }, maxLines: 1 },
                     ],
                   },
                   { type: "spacer" },
-                  { type: "text", text: `评分 ${first.dispatchScore}`, font: { size: 10 }, textColor: C.textSecondary },
+                  {
+                    type: "text",
+                    text: `${first.fullQuotaLabel} ${remain7d}%`,
+                    font: { size: 11, weight: "heavy" },
+                    textColor: getQuotaColor(first.remainingFraction7d),
+                  },
                 ],
               },
-              // 2. 配额数值行（左已用 / 右剩余）
+              { type: "image", src: createProgressBarSvg(first.remainingFraction7d, getQuotaColor(first.remainingFraction7d), 5), height: 5 },
+              {
+                type: "stack",
+                direction: "row",
+                alignItems: "center",
+                children: [
+                  { type: "text", text: `重置 ${first.reset7dTimeStr}`, font: { size: 9 }, textColor: C.textSecondary },
+                  { type: "spacer" },
+                  { type: "text", text: first.reset7dCountdownStr, font: { size: 9, weight: "semibold" }, textColor: getQuotaColor(first.remainingFraction7d) },
+                ],
+              },
+            ],
+          },
+          // 2. 次级配额独立卡片（第二根进度条：Spark 5H / 5H）
+          {
+            type: "stack",
+            direction: "column",
+            gap: 3,
+            padding: [7, 10, 7, 10],
+            backgroundColor: C.cardBg,
+            borderWidth: 0.5,
+            borderColor: C.cardBorder,
+            borderRadius: 11,
+            children: [
               {
                 type: "stack",
                 direction: "row",
@@ -767,37 +793,31 @@ function renderMediumWidget(accounts, updateStr, maskEmailEnabled) {
                   {
                     type: "stack",
                     direction: "row",
-                    gap: 4,
                     alignItems: "center",
+                    gap: 5,
                     children: [
-                      { type: "text", text: `${first.fullQuotaLabel} 已用`, font: { size: 11 }, textColor: C.textSecondary },
-                      { type: "text", text: `${used7d}%`, font: { size: 15, weight: "heavy" }, textColor: C.textPrimary },
+                      createMicroBadge(accBadge),
+                      { type: "text", text: accountLabel, font: { size: 11, weight: "bold" }, maxLines: 1 },
                     ],
                   },
                   { type: "spacer" },
                   {
-                    type: "stack",
-                    direction: "row",
-                    gap: 4,
-                    alignItems: "center",
-                    children: [
-                      { type: "text", text: `${first.secondaryLabel} 剩余`, font: { size: 11 }, textColor: C.textSecondary },
-                      { type: "text", text: `${remain5h}%`, font: { size: 17, weight: "heavy" }, textColor: getQuotaColor(first.remainingFraction5h) },
-                    ],
+                    type: "text",
+                    text: `${first.secondaryLabel} ${remain5h}%`,
+                    font: { size: 11, weight: "heavy" },
+                    textColor: getQuotaColor(first.remainingFraction5h),
                   },
                 ],
               },
-              // 3. 独立进度条（满宽居中，绝不坍塌）
-              { type: "image", src: createProgressBarSvg(first.remainingFraction7d, getQuotaColor(first.remainingFraction7d), 6), height: 6 },
-              // 4. 重置机制与恢复倒计时行（左右对称）
+              { type: "image", src: createProgressBarSvg(first.remainingFraction5h, getQuotaColor(first.remainingFraction5h), 5), height: 5 },
               {
                 type: "stack",
                 direction: "row",
                 alignItems: "center",
                 children: [
-                  { type: "text", text: `重置 ${first.reset7dTimeStr}`, font: { size: 10 }, textColor: C.textSecondary },
+                  { type: "text", text: `重置 ${first.reset5hTimeStr}`, font: { size: 9 }, textColor: C.textSecondary },
                   { type: "spacer" },
-                  { type: "text", text: `恢复倒计时 ${first.reset7dCountdownStr}`, font: { size: 10, weight: "bold" }, textColor: getQuotaColor(first.remainingFraction7d) },
+                  { type: "text", text: first.reset5hCountdownStr, font: { size: 9, weight: "semibold" }, textColor: getQuotaColor(first.remainingFraction5h) },
                 ],
               },
             ],
@@ -936,9 +956,11 @@ function renderMediumWidget(accounts, updateStr, maskEmailEnabled) {
       },
       ...topTwo.map((acc) => {
         const accBadge = getAccountBadge(acc);
-        const remainPercent = Math.round(acc.primaryRemainingFraction * 100);
+        const fraction = acc.smallFraction !== undefined ? acc.smallFraction : acc.primaryRemainingFraction;
+        const remainPercent = Math.round(fraction * 100);
         const accountLabel = maskEmail(acc.email || acc.name, maskEmailEnabled);
-        const progressSvg = createProgressBarSvg(acc.primaryRemainingFraction, acc.statusColor, 5);
+        const progressSvg = createProgressBarSvg(fraction, acc.statusColor, 5);
+        const label = acc.smallLabel || acc.primaryWindowLabel;
 
         return {
           type: "stack",
@@ -954,16 +976,23 @@ function renderMediumWidget(accounts, updateStr, maskEmailEnabled) {
               type: "stack",
               direction: "row",
               alignItems: "center",
-              gap: 5,
               children: [
-                createMicroBadge(accBadge),
-                { type: "text", text: accountLabel, font: { size: 11, weight: "bold" }, maxLines: 1 },
+                {
+                  type: "stack",
+                  direction: "row",
+                  alignItems: "center",
+                  gap: 5,
+                  children: [
+                    createMicroBadge(accBadge),
+                    { type: "text", text: accountLabel, font: { size: 11, weight: "bold" }, maxLines: 1 },
+                  ],
+                },
                 { type: "spacer" },
                 {
                   type: "text",
-                  text: `${acc.primaryWindowLabel}余 ${remainPercent}%`,
+                  text: `${label} ${remainPercent}%`,
                   font: { size: 11, weight: "heavy" },
-                  textColor: acc.statusColor,
+                  textColor: getQuotaColor(fraction),
                 },
               ],
             },
@@ -973,9 +1002,9 @@ function renderMediumWidget(accounts, updateStr, maskEmailEnabled) {
               direction: "row",
               alignItems: "center",
               children: [
-                { type: "text", text: `重置 ${formatSmallResetLabel(acc.primaryResetAtMs, acc.primaryWindow === "7d")}`, font: { size: 9 }, textColor: C.textSecondary },
+                { type: "text", text: `重置 ${formatSmallResetLabel(acc.smallResetAtMs || acc.primaryResetAtMs, Boolean(acc.smallIsWeekly))}`, font: { size: 9 }, textColor: C.textSecondary },
                 { type: "spacer" },
-                { type: "text", text: acc.primaryResetCountdownStr, font: { size: 9, weight: "semibold" }, textColor: acc.statusColor },
+                { type: "text", text: acc.smallResetCountdownStr || acc.primaryResetCountdownStr, font: { size: 9, weight: "semibold" }, textColor: getQuotaColor(fraction) },
               ],
             },
           ],
