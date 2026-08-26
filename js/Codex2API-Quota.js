@@ -516,11 +516,18 @@ function createMicroBadge(badge) {
 }
 
 function renderSmallWidget(account, updateTime) {
-  const usedPercent = Math.round((1 - account.primaryRemainingFraction) * 100);
-  const remainPercent = Math.round(account.primaryRemainingFraction * 100);
+  // 小尺寸小组件：只展示「全额度」，不展示 Spark 5h 额度
+  const isWeekly = account.has7d;
+  const fullFraction = isWeekly ? account.remainingFraction7d : account.remainingFraction5h;
+  const usedPercent = isWeekly ? (account.usagePercent7d !== null ? Math.round(account.usagePercent7d) : Math.round((1 - fullFraction) * 100)) : (account.usagePercent5h !== null ? Math.round(account.usagePercent5h) : Math.round((1 - fullFraction) * 100));
+  const remainPercent = Math.round(fullFraction * 100);
+  const statusColor = getQuotaColor(fullFraction);
+  const resetAtMs = isWeekly ? account.reset7dAtMs : account.reset5hAtMs;
+  const resetCountdownStr = isWeekly ? account.reset7dCountdownStr : account.reset5hCountdownStr;
   const accBadge = getAccountBadge(account);
-  const progressSvg = createProgressBarSvg(account.primaryRemainingFraction, account.statusColor, 6);
+  const progressSvg = createProgressBarSvg(fullFraction, statusColor, 6);
   const accountLabel = maskEmail(account.email || account.name, true);
+  const windowTag = isWeekly ? "全额度 (7D)" : "全额度 (5H)";
 
   return {
     type: "widget",
@@ -553,7 +560,7 @@ function renderSmallWidget(account, updateTime) {
         borderRadius: 13,
         flex: 1,
         children: [
-          // 账号前微型徽标色条
+          // 账号前微型徽标色条 + 全额度标识
           {
             type: "stack",
             direction: "row",
@@ -586,8 +593,8 @@ function renderSmallWidget(account, updateTime) {
                 gap: 3,
                 alignItems: "baseline",
                 children: [
-                  { type: "text", text: `剩余 (${account.primaryWindow})`, font: { size: 10 }, textColor: C.textSecondary },
-                  { type: "text", text: `${remainPercent}%`, font: { size: 16, weight: "heavy" }, textColor: account.statusColor },
+                  { type: "text", text: windowTag, font: { size: 9.5, weight: "bold" }, textColor: C.textSecondary },
+                  { type: "text", text: `${remainPercent}%`, font: { size: 16, weight: "heavy" }, textColor: statusColor },
                 ],
               },
             ],
@@ -598,9 +605,9 @@ function renderSmallWidget(account, updateTime) {
             direction: "row",
             alignItems: "center",
             children: [
-              { type: "text", text: formatSmallResetLabel(account.primaryResetAtMs, account.primaryWindow === "7d"), font: { size: 9 }, textColor: C.textSecondary },
+              { type: "text", text: `重置 ${formatSmallResetLabel(resetAtMs, isWeekly)}`, font: { size: 9 }, textColor: C.textSecondary },
               { type: "spacer" },
-              { type: "text", text: formatCountdown(account.primaryResetAtMs, account.primaryRemainingFraction), font: { size: 9.5, weight: "bold" }, textColor: account.statusColor },
+              { type: "text", text: resetCountdownStr, font: { size: 9.5, weight: "bold" }, textColor: statusColor },
             ],
           },
         ],
@@ -686,7 +693,7 @@ function renderMediumWidget(accounts, updateStr, maskEmailEnabled) {
                   direction: "row",
                   alignItems: "center",
                   children: [
-                    { type: "text", text: `5h 剩余 ${remain5h}%`, font: { size: 11, weight: "bold" }, textColor: getQuotaColor(first.remainingFraction5h) },
+                    { type: "text", text: `Spark 5h 剩余 ${remain5h}%`, font: { size: 11, weight: "bold" }, textColor: getQuotaColor(first.remainingFraction5h) },
                     { type: "spacer" },
                     { type: "text", text: `重置 ${first.reset5hTimeStr}`, font: { size: 9.5 }, textColor: C.textSecondary },
                   ],
@@ -705,7 +712,7 @@ function renderMediumWidget(accounts, updateStr, maskEmailEnabled) {
                   direction: "row",
                   alignItems: "center",
                   children: [
-                    { type: "text", text: `周额度 剩余 ${remain7d}%`, font: { size: 11, weight: "bold" }, textColor: getQuotaColor(first.remainingFraction7d) },
+                    { type: "text", text: `全额度 剩余 ${remain7d}%`, font: { size: 11, weight: "bold" }, textColor: getQuotaColor(first.remainingFraction7d) },
                     { type: "spacer" },
                     { type: "text", text: `重置 ${first.reset7dTimeStr}`, font: { size: 9.5 }, textColor: C.textSecondary },
                   ],
@@ -953,7 +960,7 @@ function renderLargeWidget(accounts, stats, updateStr, maskEmailEnabled) {
               direction: "row",
               alignItems: "center",
               children: [
-                { type: "text", text: "5小时滚动额度", font: { size: 12, weight: "bold" } },
+                { type: "text", text: "Spark 额度 (5小时快速恢复)", font: { size: 12, weight: "bold" } },
                 { type: "spacer" },
                 { type: "text", text: `剩余 ${remain5h}%`, font: { size: 13, weight: "heavy" }, textColor: getQuotaColor(first.remainingFraction5h) },
               ],
@@ -987,7 +994,7 @@ function renderLargeWidget(accounts, stats, updateStr, maskEmailEnabled) {
               direction: "row",
               alignItems: "center",
               children: [
-                { type: "text", text: "7天周期额度", font: { size: 12, weight: "bold" } },
+                { type: "text", text: "全额度 (7天周期)", font: { size: 12, weight: "bold" } },
                 { type: "spacer" },
                 { type: "text", text: `剩余 ${remain7d}%`, font: { size: 13, weight: "heavy" }, textColor: getQuotaColor(first.remainingFraction7d) },
               ],

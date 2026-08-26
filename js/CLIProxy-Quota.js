@@ -286,6 +286,97 @@ async function syncCLIProxyQuotaData(ctx) {
                 shortName: "Sonnet",
                 provider: "Claude",
                 account: accountLabel,
+                window: "5h",
+                isFullQuota: true,
+                isSpark: false,
+                remainingFraction,
+                resetAtMs,
+                resetTimeStr,
+                resetCountdownStr,
+                statusColor: getQuotaColor(remainingFraction),
+              });
+            }
+          }
+        } catch (e) {}
+      }
+
+      // 3. OpenAI / Codex (ChatGPT wham/usage)
+      if (
+        fileTypeLower.includes("codex") ||
+        fileTypeLower.includes("openai") ||
+        fileNameLower.includes("codex") ||
+        fileNameLower.includes("openai")
+      ) {
+        try {
+          const reqBody = {
+            authIndex,
+            method: "GET",
+            url: "https://chatgpt.com/backend-api/wham/usage",
+            header: {
+              Authorization: "Bearer $TOKEN$",
+              "Content-Type": "application/json",
+              "User-Agent": "codex_cli_rs/0.76.0 (Debian 13.0.0; x86_64) WindowsTerminal",
+            },
+          };
+          const res = await fetchPostWithTimeout(ctx, `${baseUrl}/v0/management/api-call`, reqBody, { headers }, 4000);
+          if (res && res.status === 200) {
+            const data = await res.json();
+            const body = typeof data.body === "string" ? JSON.parse(data.body) : data.body || {};
+            const rateLimit = body.rate_limit || body.rateLimit || {};
+            const primary = rateLimit.primary_window || rateLimit.primaryWindow;
+            const secondary = rateLimit.secondary_window || rateLimit.secondaryWindow;
+
+            if (primary) {
+              const usedPercent = Number(primary.used_percent ?? primary.usedPercent ?? 0);
+              const remainingFraction = Math.max(0, Math.min(1, 1 - usedPercent / 100));
+              let resetAtMs = null;
+              if (primary.reset_at) {
+                resetAtMs = typeof primary.reset_at === "number" ? primary.reset_at * 1000 : new Date(primary.reset_at).getTime();
+              } else if (primary.reset_after_seconds) {
+                resetAtMs = Date.now() + primary.reset_after_seconds * 1000;
+              }
+              const isWeekly = primary.window_seconds ? primary.window_seconds >= 86400 * 2 : true;
+              const resetTimeStr = resetAtMs ? (isWeekly ? formatShortDate(resetAtMs) : formatTimeOnly(resetAtMs)) : "--:--";
+              const resetCountdownStr = formatCountdown(resetAtMs, remainingFraction);
+
+              modelList.push({
+                id: `codex-${authIndex}-primary`,
+                name: isWeekly ? "Codex 全额度 (7天)" : "Codex 全额度 (5小时)",
+                shortName: isWeekly ? "全额度(7D)" : "全额度(5H)",
+                provider: "Codex",
+                account: accountLabel,
+                window: isWeekly ? "7d" : "5h",
+                isFullQuota: true,
+                isSpark: false,
+                remainingFraction,
+                resetAtMs,
+                resetTimeStr,
+                resetCountdownStr,
+                statusColor: getQuotaColor(remainingFraction),
+              });
+            }
+
+            if (secondary) {
+              const usedPercent = Number(secondary.used_percent ?? secondary.usedPercent ?? 0);
+              const remainingFraction = Math.max(0, Math.min(1, 1 - usedPercent / 100));
+              let resetAtMs = null;
+              if (secondary.reset_at) {
+                resetAtMs = typeof secondary.reset_at === "number" ? secondary.reset_at * 1000 : new Date(secondary.reset_at).getTime();
+              } else if (secondary.reset_after_seconds) {
+                resetAtMs = Date.now() + secondary.reset_after_seconds * 1000;
+              }
+              const resetTimeStr = resetAtMs ? formatTimeOnly(resetAtMs) : "--:--";
+              const resetCountdownStr = formatCountdown(resetAtMs, remainingFraction);
+
+              modelList.push({
+                id: `codex-${authIndex}-spark`,
+                name: "Spark 额度 (5小时)",
+                shortName: "Spark(5H)",
+                provider: "Codex",
+                account: accountLabel,
+                window: "5h",
+                isFullQuota: false,
+                isSpark: true,
                 remainingFraction,
                 resetAtMs,
                 resetTimeStr,
@@ -437,7 +528,9 @@ export default async function(ctx) {
   } else if (family === "accessoryInline") {
     return renderAccessoryInline(models[0]);
   } else if (family === "systemSmall") {
-    return renderSmallWidget(models[0], updateTimeStr);
+    const fullQuotaModels = models.filter((m) => m.isFullQuota !== false);
+    const targetModel = fullQuotaModels.length > 0 ? fullQuotaModels[0] : models[0];
+    return renderSmallWidget(targetModel, updateTimeStr);
   } else if (family === "systemLarge" || family === "systemExtraLarge") {
     return renderLargeWidget(models, updateDateStr, maskEmailEnabled);
   } else {
@@ -475,12 +568,15 @@ function createMicroBadge(badge) {
 }
 
 function renderSmallWidget(model, updateTime) {
+  // 小尺寸小组件：只展示「全额度」，不展示 Spark 额度
+  const isWeekly = model.window === "7d";
   const usedPercent = Math.round((1 - model.remainingFraction) * 100);
   const remainPercent = Math.round(model.remainingFraction * 100);
   const mBadge = getBadgeConfig(model.provider, model.name);
-  const resetTime = formatTimeOnly(model.resetAtMs);
+  const resetTime = isWeekly ? (model.resetAtMs ? formatShortDate(model.resetAtMs) : "--/--") : formatTimeOnly(model.resetAtMs);
   const progressSvg = createProgressBarSvg(model.remainingFraction, model.statusColor, 6);
   const accountText = maskEmail(model.account && model.account !== "默认账号" ? model.account : model.name, true);
+  const windowTag = isWeekly ? "全额度 (7D)" : "全额度 (5H)";
 
   return {
     type: "widget",
@@ -546,7 +642,7 @@ function renderSmallWidget(model, updateTime) {
                 gap: 3,
                 alignItems: "baseline",
                 children: [
-                  { type: "text", text: "剩余", font: { size: 10 }, textColor: C.textSecondary },
+                  { type: "text", text: windowTag, font: { size: 9.5, weight: "bold" }, textColor: C.textSecondary },
                   { type: "text", text: `${remainPercent}%`, font: { size: 16, weight: "heavy" }, textColor: model.statusColor },
                 ],
               },
@@ -560,7 +656,7 @@ function renderSmallWidget(model, updateTime) {
             children: [
               { type: "text", text: `重置 ${resetTime}`, font: { size: 9 }, textColor: C.textSecondary },
               { type: "spacer" },
-              { type: "text", text: formatCountdown(model.resetAtMs, model.remainingFraction), font: { size: 9.5, weight: "bold" }, textColor: model.statusColor },
+              { type: "text", text: model.resetCountdownStr, font: { size: 9.5, weight: "bold" }, textColor: model.statusColor },
             ],
           },
         ],
