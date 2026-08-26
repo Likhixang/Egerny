@@ -188,18 +188,18 @@ function parseAccountItem(acc) {
   const isFree = planType.includes("free") || planType.includes("guest");
 
   let fullQuotaWindow = "7d";
-  let fullQuotaLabel = "周全额度";
+  let fullQuotaLabel = "7D";
   let fullFraction = remainingFraction7d;
   let fullUsedPercent = usage7d;
   let fullResetAtMs = reset7dAtMs;
   let fullResetTimeStr = reset7dTimeStr;
   let fullResetCountdownStr = reset7dCountdownStr;
 
-  let secondaryLabel = "5小时滚动";
+  let secondaryLabel = "5H";
   let isSecondarySpark = false;
 
-  // Small 小组件专属主力推荐展示
-  let smallLabel = "周全额度";
+  // Small 小组件专属推荐展示
+  let smallLabel = "7D";
   let smallFraction = fullFraction;
   let smallUsedPercent = fullUsedPercent;
   let smallResetAtMs = fullResetAtMs;
@@ -208,16 +208,15 @@ function parseAccountItem(acc) {
 
   if (isFree) {
     fullQuotaWindow = "30d";
-    fullQuotaLabel = "月全额度";
+    fullQuotaLabel = "30D";
     fullFraction = has7d ? remainingFraction7d : remainingFraction5h;
     fullUsedPercent = has7d ? usage7d : usage5h;
     fullResetAtMs = has7d ? reset7dAtMs : reset5hAtMs;
     fullResetTimeStr = has7d ? reset7dTimeStr : reset5hTimeStr;
     fullResetCountdownStr = has7d ? reset7dCountdownStr : reset5hCountdownStr;
-    secondaryLabel = "短期额度";
+    secondaryLabel = "5H";
 
-    // 非 Pro 账号在 Small 小组件优先展示短期/5h滚动限制（最容易触发限额的窗口）
-    smallLabel = has5h ? "短期额度 (5H)" : "月全额度";
+    smallLabel = has5h ? "5H" : "30D";
     smallFraction = has5h ? remainingFraction5h : fullFraction;
     smallUsedPercent = has5h ? usage5h : fullUsedPercent;
     smallResetAtMs = has5h ? reset5hAtMs : fullResetAtMs;
@@ -225,17 +224,16 @@ function parseAccountItem(acc) {
     smallIsWeekly = !has5h;
   } else if (isPro) {
     fullQuotaWindow = "7d";
-    fullQuotaLabel = "周全额度";
+    fullQuotaLabel = "7D";
     fullFraction = has7d ? remainingFraction7d : (usage7d !== null ? remainingFraction7d : 1.0);
     fullUsedPercent = has7d ? usage7d : 0;
     fullResetAtMs = reset7dAtMs;
     fullResetTimeStr = reset7dTimeStr;
     fullResetCountdownStr = reset7dCountdownStr;
-    secondaryLabel = "Spark 5小时";
+    secondaryLabel = "Spark 5H";
     isSecondarySpark = true;
 
-    // Pro 账号在 Small 小组件展示其唯一的真正核心：周全额度
-    smallLabel = "周全额度 (7D)";
+    smallLabel = "7D";
     smallFraction = fullFraction;
     smallUsedPercent = fullUsedPercent;
     smallResetAtMs = fullResetAtMs;
@@ -243,16 +241,16 @@ function parseAccountItem(acc) {
     smallIsWeekly = true;
   } else if (has7d && has5h) {
     fullQuotaWindow = "7d";
-    fullQuotaLabel = "周全额度";
+    fullQuotaLabel = "7D";
     fullFraction = remainingFraction7d;
     fullUsedPercent = usage7d;
     fullResetAtMs = reset7dAtMs;
     fullResetTimeStr = reset7dTimeStr;
     fullResetCountdownStr = reset7dCountdownStr;
-    secondaryLabel = "5小时滚动";
+    secondaryLabel = "5H";
 
-    // 非 Pro 账号 (Plus/Team等) 在 Small 小组件展示 5小时滚动短期额度
-    smallLabel = "5h 滚动额度";
+    // 非 Pro 账号 (Plus/Team等) 在 Small 小组件展示 5H
+    smallLabel = "5H";
     smallFraction = remainingFraction5h;
     smallUsedPercent = usage5h;
     smallResetAtMs = reset5hAtMs;
@@ -260,15 +258,15 @@ function parseAccountItem(acc) {
     smallIsWeekly = false;
   } else if (has7d) {
     fullQuotaWindow = "7d";
-    fullQuotaLabel = "周全额度";
+    fullQuotaLabel = "7D";
     fullFraction = remainingFraction7d;
     fullUsedPercent = usage7d;
     fullResetAtMs = reset7dAtMs;
     fullResetTimeStr = reset7dTimeStr;
     fullResetCountdownStr = reset7dCountdownStr;
-    secondaryLabel = "5小时滚动";
+    secondaryLabel = "5H";
 
-    smallLabel = "周全额度 (7D)";
+    smallLabel = "7D";
     smallFraction = fullFraction;
     smallUsedPercent = fullUsedPercent;
     smallResetAtMs = fullResetAtMs;
@@ -276,15 +274,15 @@ function parseAccountItem(acc) {
     smallIsWeekly = true;
   } else {
     fullQuotaWindow = "5h";
-    fullQuotaLabel = "5小时全额度";
+    fullQuotaLabel = "5H";
     fullFraction = remainingFraction5h;
     fullUsedPercent = usage5h;
     fullResetAtMs = reset5hAtMs;
     fullResetTimeStr = reset5hTimeStr;
     fullResetCountdownStr = reset5hCountdownStr;
-    secondaryLabel = "5小时滚动";
+    secondaryLabel = "5H";
 
-    smallLabel = "5小时全额度";
+    smallLabel = "5H";
     smallFraction = fullFraction;
     smallUsedPercent = fullUsedPercent;
     smallResetAtMs = fullResetAtMs;
@@ -1068,7 +1066,7 @@ function renderLargeWidget(accounts, stats, updateStr, maskEmailEnabled) {
               direction: "row",
               alignItems: "center",
               children: [
-                { type: "text", text: `${first.fullQuotaLabel} (主要限制)`, font: { size: 12, weight: "bold" } },
+                { type: "text", text: first.fullQuotaLabel, font: { size: 12, weight: "bold" } },
                 { type: "spacer" },
                 { type: "text", text: `剩余 ${remain7d}%`, font: { size: 13, weight: "heavy" }, textColor: getQuotaColor(first.remainingFraction7d) },
               ],
@@ -1102,7 +1100,7 @@ function renderLargeWidget(accounts, stats, updateStr, maskEmailEnabled) {
               direction: "row",
               alignItems: "center",
               children: [
-                { type: "text", text: `${first.secondaryLabel} (短期限制)`, font: { size: 12, weight: "bold" } },
+                { type: "text", text: first.secondaryLabel, font: { size: 12, weight: "bold" } },
                 { type: "spacer" },
                 { type: "text", text: `剩余 ${remain5h}%`, font: { size: 13, weight: "heavy" }, textColor: getQuotaColor(first.remainingFraction5h) },
               ],

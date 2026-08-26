@@ -347,8 +347,8 @@ async function syncCLIProxyQuotaData(ctx) {
 
               modelList.push({
                 id: `codex-${authIndex}-primary`,
-                name: isWeekly ? "Codex 周全额度" : "Codex 5h滚动额度",
-                shortName: isWeekly ? "周全额度" : "5h滚动",
+                name: isWeekly ? "Codex 7D" : "Codex 5H",
+                shortName: isWeekly ? "7D" : "5H",
                 provider: "Codex",
                 account: accountLabel,
                 window: isWeekly ? "7d" : "5h",
@@ -379,8 +379,8 @@ async function syncCLIProxyQuotaData(ctx) {
 
               modelList.push({
                 id: `codex-${authIndex}-secondary`,
-                name: isWeekly ? "Codex 周全额度" : "Codex 5h滚动额度",
-                shortName: isWeekly ? "周全额度" : "5h滚动",
+                name: isWeekly ? "Codex 7D" : "Codex 5H",
+                shortName: isWeekly ? "7D" : "5H",
                 provider: "Codex",
                 account: accountLabel,
                 window: isWeekly ? "7d" : "5h",
@@ -413,8 +413,8 @@ async function syncCLIProxyQuotaData(ctx) {
 
                 modelList.push({
                   id: `codex-${authIndex}-${limitName.toLowerCase()}`,
-                  name: `${limitName} 额度`,
-                  shortName: `${limitName.split("-").pop() || "Spark"}(5H)`,
+                  name: "Spark 5H",
+                  shortName: "Spark 5H",
                   provider: "Codex",
                   account: accountLabel,
                   window: "5h",
@@ -621,7 +621,7 @@ function renderSmallWidget(model, updateTime) {
   const resetTime = isWeekly ? (model.resetAtMs ? formatShortDate(model.resetAtMs) : "--/--") : formatTimeOnly(model.resetAtMs);
   const progressSvg = createProgressBarSvg(model.remainingFraction, model.statusColor, 6);
   const accountText = maskEmail(model.account && model.account !== "默认账号" ? model.account : model.name, true);
-  const windowTag = isWeekly ? "周全额度 (7D)" : (model.isSpark ? "Spark 5小时" : "5h 滚动额度");
+  const windowTag = isWeekly ? "7D" : (model.isSpark ? "Spark 5H" : "5H");
 
   return {
     type: "widget",
