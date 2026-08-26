@@ -1,8 +1,12 @@
 /*
  * CLIProxy Quota 额度监控 — Egern 新式小组件
- * 核心升级：
+ * 核心设计系统：
  *   - 官方精细 AI 品牌矢量徽标（Gemini、Claude、OpenAI、DeepSeek、Grok）
- *   - 纯正 Apple HIG 拟物磨砂玻璃卡片（自适应浅色/深色透明度与边框）
+ *   - 纯正 Apple HIG 拟物磨砂玻璃卡片
+ *   - 大组件 (systemLarge) 智能三阶自适应：
+ *       1. 单账号：大字仪表盘 + 5h进度卡片 + 底部「重置机制 / 配额状态」双辅助看板
+ *       2. 双账号：上下两块全高平衡大卡片
+ *       3. 多账号：4 账号高密度看板列表
  *   - 适配全部主屏与锁屏尺寸 (systemSmall, systemMedium, systemLarge, accessory*)
  */
 
@@ -435,7 +439,6 @@ function renderSmallWidget(model, updateTime) {
     padding: 12,
     gap: 8,
     children: [
-      // 顶栏：官方品牌 Logo 胶囊 + 更新时间
       {
         type: "stack",
         direction: "row",
@@ -458,12 +461,11 @@ function renderSmallWidget(model, updateTime) {
           { type: "text", text: updateTime, font: { size: 10, weight: "medium" }, textColor: { light: "#8E8E93", dark: "#8E8E93" } },
         ],
       },
-      // 核心卡片容器（iOS 磨砂质感）
       {
         type: "stack",
         direction: "column",
         gap: 8,
-        padding: [10, 10, 10, 10],
+        padding: 10,
         backgroundColor: { light: "rgba(0,0,0,0.04)", dark: "rgba(255,255,255,0.08)" },
         borderWidth: 0.5,
         borderColor: { light: "rgba(0,0,0,0.06)", dark: "rgba(255,255,255,0.08)" },
@@ -687,15 +689,269 @@ function renderMediumWidget(models, updateStr, maskEmailEnabled) {
   };
 }
 
+// ── 大尺寸小组件 (systemLarge) 三阶排版 ──
 function renderLargeWidget(models, updateStr, maskEmailEnabled) {
+  const isSingle = models.length === 1;
+  const isDual = models.length === 2;
   const firstModel = models[0];
   const badge = getBadgeConfig(firstModel?.provider || "GOOGLE", firstModel?.name || "");
-  const topFour = models.slice(0, 4);
 
+  // 1. 单账号专属旗舰看板（大字仪表盘 + 底部重置机制与配额状态双卡片）
+  if (isSingle && firstModel) {
+    const usedPercent = Math.round((1 - firstModel.remainingFraction) * 100);
+    const remainPercent = Math.round(firstModel.remainingFraction * 100);
+    const accountText = maskEmail(firstModel.account && firstModel.account !== "默认账号" ? firstModel.account : firstModel.name, maskEmailEnabled);
+    const progressSvg = createProgressBarSvg(firstModel.remainingFraction, firstModel.statusColor, 7);
+    const statusDesc = remainPercent >= 50 ? "额度充沛" : remainPercent >= 20 ? "额度适中" : "即将耗尽";
+
+    return {
+      type: "widget",
+      padding: [14, 16, 14, 16],
+      gap: 12,
+      children: [
+        // 顶部 Header
+        {
+          type: "stack",
+          direction: "row",
+          alignItems: "center",
+          children: [
+            {
+              type: "stack",
+              direction: "row",
+              alignItems: "center",
+              gap: 5,
+              padding: [3.5, 10, 3.5, 10],
+              backgroundColor: badge.bg,
+              borderRadius: 11,
+              children: [
+                { type: "image", src: badge.svg, width: 14, height: 14 },
+                { type: "text", text: badge.text, font: { size: 12, weight: "heavy" }, textColor: "#FFFFFF" },
+              ],
+            },
+            { type: "spacer" },
+            { type: "text", text: `更新 ${updateStr}`, font: { size: 12, weight: "medium" }, textColor: "#8E8E93" },
+          ],
+        },
+        // 核心卡片容器
+        {
+          type: "stack",
+          direction: "column",
+          gap: 12,
+          padding: [14, 14, 14, 14],
+          backgroundColor: { light: "rgba(0,0,0,0.04)", dark: "rgba(255,255,255,0.08)" },
+          borderWidth: 0.5,
+          borderColor: { light: "rgba(0,0,0,0.06)", dark: "rgba(255,255,255,0.08)" },
+          borderRadius: 14,
+          children: [
+            {
+              type: "stack",
+              direction: "column",
+              gap: 2,
+              children: [
+                { type: "text", text: accountText, font: { size: 17, weight: "heavy" }, maxLines: 1 },
+                { type: "text", text: `${firstModel.provider} 5小时滚动配额`, font: { size: 11 }, textColor: "#8E8E93" },
+              ],
+            },
+            // 大数字仪表
+            {
+              type: "stack",
+              direction: "row",
+              alignItems: "center",
+              children: [
+                {
+                  type: "stack",
+                  direction: "column",
+                  gap: 2,
+                  children: [
+                    { type: "text", text: "已使用比例", font: { size: 11 }, textColor: "#8E8E93" },
+                    { type: "text", text: `${usedPercent}%`, font: { size: 22, weight: "heavy" }, textColor: { light: "#1C1C1E", dark: "#FFFFFF" } },
+                  ],
+                },
+                { type: "spacer" },
+                {
+                  type: "stack",
+                  direction: "column",
+                  alignItems: "end",
+                  gap: 2,
+                  children: [
+                    { type: "text", text: "5h 剩余配额", font: { size: 11 }, textColor: "#8E8E93" },
+                    { type: "text", text: `${remainPercent}%`, font: { size: 22, weight: "heavy" }, textColor: firstModel.statusColor },
+                  ],
+                },
+              ],
+            },
+            // 粗进度条
+            { type: "image", src: progressSvg, height: 7 },
+            // 底部时间
+            {
+              type: "stack",
+              direction: "row",
+              alignItems: "center",
+              children: [
+                { type: "text", text: `重置时间 ${firstModel.resetTimeStr}`, font: { size: 11 }, textColor: "#8E8E93" },
+                { type: "spacer" },
+                {
+                  type: "stack",
+                  direction: "row",
+                  gap: 3,
+                  alignItems: "center",
+                  children: [
+                    { type: "text", text: "恢复倒计时", font: { size: 11 }, textColor: "#8E8E93" },
+                    { type: "text", text: firstModel.resetCountdownStr, font: { size: 11, weight: "bold" }, textColor: firstModel.statusColor },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+        // 底部双卡片辅助看板 (左右等宽对称)
+        {
+          type: "stack",
+          direction: "row",
+          gap: 10,
+          children: [
+            {
+              type: "stack",
+              direction: "column",
+              gap: 4,
+              padding: [10, 12, 10, 12],
+              backgroundColor: { light: "rgba(0,0,0,0.04)", dark: "rgba(255,255,255,0.08)" },
+              borderWidth: 0.5,
+              borderColor: { light: "rgba(0,0,0,0.06)", dark: "rgba(255,255,255,0.08)" },
+              borderRadius: 12,
+              flex: 1,
+              children: [
+                { type: "text", text: "配额重置机制", font: { size: 11 }, textColor: "#8E8E93" },
+                { type: "text", text: "5小时滚动恢复", font: { size: 14, weight: "bold" } },
+              ],
+            },
+            {
+              type: "stack",
+              direction: "column",
+              gap: 4,
+              padding: [10, 12, 10, 12],
+              backgroundColor: { light: "rgba(0,0,0,0.04)", dark: "rgba(255,255,255,0.08)" },
+              borderWidth: 0.5,
+              borderColor: { light: "rgba(0,0,0,0.06)", dark: "rgba(255,255,255,0.08)" },
+              borderRadius: 12,
+              flex: 1,
+              children: [
+                { type: "text", text: "当前配额状态", font: { size: 11 }, textColor: "#8E8E93" },
+                { type: "text", text: statusDesc, font: { size: 14, weight: "bold" }, textColor: firstModel.statusColor },
+              ],
+            },
+          ],
+        },
+      ],
+    };
+  }
+
+  // 2. 双账号专属双大卡片排版（完美填满高度）
+  if (isDual) {
+    return {
+      type: "widget",
+      padding: [14, 16, 14, 16],
+      gap: 12,
+      children: [
+        {
+          type: "stack",
+          direction: "row",
+          alignItems: "center",
+          children: [
+            {
+              type: "stack",
+              direction: "row",
+              alignItems: "center",
+              gap: 5,
+              padding: [3.5, 10, 3.5, 10],
+              backgroundColor: badge.bg,
+              borderRadius: 11,
+              children: [
+                { type: "image", src: badge.svg, width: 14, height: 14 },
+                { type: "text", text: badge.text, font: { size: 12, weight: "heavy" }, textColor: "#FFFFFF" },
+              ],
+            },
+            { type: "spacer" },
+            { type: "text", text: `更新 ${updateStr}`, font: { size: 12, weight: "medium" }, textColor: "#8E8E93" },
+          ],
+        },
+        ...models.map((m) => {
+          const usedPercent = Math.round((1 - m.remainingFraction) * 100);
+          const remainPercent = Math.round(m.remainingFraction * 100);
+          const accountText = maskEmail(m.account && m.account !== "默认账号" ? m.account : m.name, maskEmailEnabled);
+          const progressSvg = createProgressBarSvg(m.remainingFraction, m.statusColor, 6);
+
+          return {
+            type: "stack",
+            direction: "column",
+            gap: 10,
+            padding: [14, 14, 14, 14],
+            backgroundColor: { light: "rgba(0,0,0,0.04)", dark: "rgba(255,255,255,0.08)" },
+            borderWidth: 0.5,
+            borderColor: { light: "rgba(0,0,0,0.06)", dark: "rgba(255,255,255,0.08)" },
+            borderRadius: 14,
+            flex: 1,
+            children: [
+              {
+                type: "stack",
+                direction: "row",
+                alignItems: "center",
+                children: [
+                  {
+                    type: "stack",
+                    direction: "column",
+                    gap: 1,
+                    children: [
+                      { type: "text", text: accountText, font: { size: 14, weight: "heavy" }, maxLines: 1 },
+                      { type: "text", text: `${m.provider} 5小时滚动配额`, font: { size: 10 }, textColor: "#8E8E93" },
+                    ],
+                  },
+                  { type: "spacer" },
+                  {
+                    type: "stack",
+                    direction: "column",
+                    alignItems: "end",
+                    gap: 1,
+                    children: [
+                      { type: "text", text: `剩余 ${remainPercent}%`, font: { size: 16, weight: "heavy" }, textColor: m.statusColor },
+                      { type: "text", text: `已用 ${usedPercent}%`, font: { size: 10 }, textColor: "#8E8E93" },
+                    ],
+                  },
+                ],
+              },
+              { type: "image", src: progressSvg, height: 6 },
+              {
+                type: "stack",
+                direction: "row",
+                alignItems: "center",
+                children: [
+                  { type: "text", text: `重置 ${m.resetTimeStr}`, font: { size: 10 }, textColor: "#8E8E93" },
+                  { type: "spacer" },
+                  {
+                    type: "stack",
+                    direction: "row",
+                    gap: 2,
+                    alignItems: "center",
+                    children: [
+                      { type: "text", text: "恢复倒计时", font: { size: 10 }, textColor: "#8E8E93" },
+                      { type: "text", text: m.resetCountdownStr, font: { size: 10, weight: "bold" }, textColor: m.statusColor },
+                    ],
+                  },
+                ],
+              },
+            ],
+          };
+        }),
+      ],
+    };
+  }
+
+  // 3. 3~4 个多账号紧凑列表
+  const topFour = models.slice(0, 4);
   return {
     type: "widget",
-    padding: 14,
-    gap: 10,
+    padding: [14, 16, 14, 16],
+    gap: 9,
     children: [
       {
         type: "stack",
@@ -707,11 +963,11 @@ function renderLargeWidget(models, updateStr, maskEmailEnabled) {
             direction: "row",
             alignItems: "center",
             gap: 5,
-            padding: [3, 9, 3, 9],
+            padding: [3.5, 10, 3.5, 10],
             backgroundColor: badge.bg,
-            borderRadius: 10,
+            borderRadius: 11,
             children: [
-              { type: "image", src: badge.svg, width: 13, height: 13 },
+              { type: "image", src: badge.svg, width: 14, height: 14 },
               { type: "text", text: badge.text, font: { size: 12, weight: "heavy" }, textColor: "#FFFFFF" },
             ],
           },
@@ -723,13 +979,13 @@ function renderLargeWidget(models, updateStr, maskEmailEnabled) {
         const mBadge = getBadgeConfig(m.provider, m.name);
         const remainPercent = Math.round(m.remainingFraction * 100);
         const accountText = maskEmail(m.account && m.account !== "默认账号" ? m.account : m.name, maskEmailEnabled);
-        const progressSvg = createProgressBarSvg(m.remainingFraction, m.statusColor, 6);
+        const progressSvg = createProgressBarSvg(m.remainingFraction, m.statusColor, 5.5);
 
         return {
           type: "stack",
           direction: "column",
-          gap: 5,
-          padding: [9, 11, 9, 11],
+          gap: 4,
+          padding: [8, 11, 8, 11],
           backgroundColor: { light: "rgba(0,0,0,0.04)", dark: "rgba(255,255,255,0.08)" },
           borderWidth: 0.5,
           borderColor: { light: "rgba(0,0,0,0.06)", dark: "rgba(255,255,255,0.08)" },
@@ -740,7 +996,7 @@ function renderLargeWidget(models, updateStr, maskEmailEnabled) {
               direction: "row",
               alignItems: "center",
               children: [
-                { type: "image", src: mBadge.svg, width: 13, height: 13 },
+                { type: "image", src: mBadge.svg, width: 12, height: 12 },
                 { type: "text", text: `  ${accountText}`, font: { size: 12, weight: "bold" }, maxLines: 1 },
                 { type: "spacer" },
                 {
@@ -751,15 +1007,15 @@ function renderLargeWidget(models, updateStr, maskEmailEnabled) {
                 },
               ],
             },
-            { type: "image", src: progressSvg, height: 6 },
+            { type: "image", src: progressSvg, height: 5.5 },
             {
               type: "stack",
               direction: "row",
               alignItems: "center",
               children: [
-                { type: "text", text: `重置 ${m.resetTimeStr}`, font: { size: 10 }, textColor: "#8E8E93" },
+                { type: "text", text: `重置 ${m.resetTimeStr}`, font: { size: 9.5 }, textColor: "#8E8E93" },
                 { type: "spacer" },
-                { type: "text", text: m.resetCountdownStr, font: { size: 10, weight: "bold" }, textColor: m.statusColor },
+                { type: "text", text: m.resetCountdownStr, font: { size: 9.5, weight: "bold" }, textColor: m.statusColor },
               ],
             },
           ],

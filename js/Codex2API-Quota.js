@@ -1,9 +1,12 @@
 /*
  * Codex2API Quota 额度监控 — Egern 新式小组件
- * 核心升级：
+ * 核心设计系统：
  *   - 官方 OpenAI / Codex 精细品牌矢量徽标
- *   - 纯正 Apple HIG 拟物磨砂玻璃卡片（自适应浅色/深色透明度与边框）
- *   - 智能 5h 滚动与 7d 周额度双窗口自适应
+ *   - 纯正 Apple HIG 拟物磨砂玻璃卡片
+ *   - 大组件 (systemLarge) 智能三阶自适应：
+ *       1. 单账号：账号健康状态标头 + 5h滚动卡片 + 7d周额度卡片 + 底部集群状态汇总
+ *       2. 双账号：上下两块全高平衡大卡片 + 底部集群状态汇总
+ *       3. 多账号：4 账号高密度看板列表 + 底部集群状态汇总
  *   - 适配全部主屏与锁屏尺寸 (systemSmall, systemMedium, systemLarge, accessory*)
  */
 
@@ -489,7 +492,7 @@ function renderSmallWidget(account, updateTime) {
         type: "stack",
         direction: "column",
         gap: 8,
-        padding: [10, 10, 10, 10],
+        padding: 10,
         backgroundColor: { light: "rgba(0,0,0,0.04)", dark: "rgba(255,255,255,0.08)" },
         borderWidth: 0.5,
         borderColor: { light: "rgba(0,0,0,0.06)", dark: "rgba(255,255,255,0.08)" },
@@ -760,11 +763,14 @@ function renderMediumWidget(accounts, updateStr, maskEmailEnabled) {
   };
 }
 
+// ── 大尺寸小组件 (systemLarge) 三阶排版 ──
 function renderLargeWidget(accounts, stats, updateStr, maskEmailEnabled) {
   const isSingle = accounts.length === 1;
+  const isDual = accounts.length === 2;
   const first = accounts[0];
   const badge = getPlanBadge(first.planType, first.primaryWindow);
 
+  // 1. 单账号专属旗舰看板（账号标头 + 5h卡片 + 7d卡片 + 底部集群状态汇总）
   if (isSingle) {
     const used5h = first.usagePercent5h !== null ? Math.round(first.usagePercent5h) : Math.round((1 - first.remainingFraction5h) * 100);
     const remain5h = Math.round(first.remainingFraction5h * 100);
@@ -774,9 +780,10 @@ function renderLargeWidget(accounts, stats, updateStr, maskEmailEnabled) {
 
     return {
       type: "widget",
-      padding: 14,
+      padding: [14, 16, 14, 16],
       gap: 10,
       children: [
+        // 顶部 Header
         {
           type: "stack",
           direction: "row",
@@ -787,11 +794,11 @@ function renderLargeWidget(accounts, stats, updateStr, maskEmailEnabled) {
               direction: "row",
               alignItems: "center",
               gap: 5,
-              padding: [3, 9, 3, 9],
+              padding: [3.5, 10, 3.5, 10],
               backgroundColor: badge.bg,
-              borderRadius: 10,
+              borderRadius: 11,
               children: [
-                { type: "image", src: badge.svg, width: 13, height: 13 },
+                { type: "image", src: badge.svg, width: 14, height: 14 },
                 { type: "text", text: badge.text, font: { size: 12, weight: "heavy" }, textColor: "#FFFFFF" },
               ],
             },
@@ -799,20 +806,26 @@ function renderLargeWidget(accounts, stats, updateStr, maskEmailEnabled) {
             { type: "text", text: `更新 ${updateStr}`, font: { size: 12, weight: "medium" }, textColor: "#8E8E93" },
           ],
         },
+        // 账号标头与评分卡片
         {
           type: "stack",
           direction: "column",
-          gap: 2,
+          gap: 3,
+          padding: [8, 12, 8, 12],
+          backgroundColor: { light: "rgba(0,0,0,0.04)", dark: "rgba(255,255,255,0.08)" },
+          borderWidth: 0.5,
+          borderColor: { light: "rgba(0,0,0,0.06)", dark: "rgba(255,255,255,0.08)" },
+          borderRadius: 12,
           children: [
-            { type: "text", text: accountLabel, font: { size: 14, weight: "heavy" }, maxLines: 1 },
+            { type: "text", text: accountLabel, font: { size: 15, weight: "heavy" }, maxLines: 1 },
             {
               type: "stack",
               direction: "row",
               gap: 8,
               children: [
-                { type: "text", text: `调度: ${first.dispatchScore}`, font: { size: 10 }, textColor: "#8E8E93" },
+                { type: "text", text: `调度评分: ${first.dispatchScore}`, font: { size: 10 }, textColor: "#8E8E93" },
                 { type: "text", text: `状态: ${first.healthTier}`, font: { size: 10 }, textColor: "#8E8E93" },
-                { type: "text", text: `请求: ${first.successRequests}`, font: { size: 10 }, textColor: "#8E8E93" },
+                { type: "text", text: `成功请求: ${first.successRequests}`, font: { size: 10 }, textColor: "#8E8E93" },
               ],
             },
           ],
@@ -835,7 +848,7 @@ function renderLargeWidget(accounts, stats, updateStr, maskEmailEnabled) {
               children: [
                 { type: "text", text: "5小时 滚动配额", font: { size: 13, weight: "bold" } },
                 { type: "spacer" },
-                { type: "text", text: `剩余 ${remain5h}%`, font: { size: 13, weight: "heavy" }, textColor: getQuotaColor(first.remainingFraction5h) },
+                { type: "text", text: `剩余 ${remain5h}%`, font: { size: 14, weight: "heavy" }, textColor: getQuotaColor(first.remainingFraction5h) },
               ],
             },
             { type: "image", src: createProgressBarSvg(first.remainingFraction5h, getQuotaColor(first.remainingFraction5h), 6), height: 6 },
@@ -869,7 +882,7 @@ function renderLargeWidget(accounts, stats, updateStr, maskEmailEnabled) {
               children: [
                 { type: "text", text: "7天 周额度 (Weekly)", font: { size: 13, weight: "bold" } },
                 { type: "spacer" },
-                { type: "text", text: `剩余 ${remain7d}%`, font: { size: 13, weight: "heavy" }, textColor: getQuotaColor(first.remainingFraction7d) },
+                { type: "text", text: `剩余 ${remain7d}%`, font: { size: 14, weight: "heavy" }, textColor: getQuotaColor(first.remainingFraction7d) },
               ],
             },
             { type: "image", src: createProgressBarSvg(first.remainingFraction7d, getQuotaColor(first.remainingFraction7d), 6), height: 6 },
@@ -885,12 +898,12 @@ function renderLargeWidget(accounts, stats, updateStr, maskEmailEnabled) {
             },
           ],
         }] : []),
-        // 底部集群汇总
+        // 底部集群汇总卡片
         ...(stats ? [{
           type: "stack",
           direction: "row",
           alignItems: "center",
-          padding: [9, 12, 9, 12],
+          padding: [8, 12, 8, 12],
           backgroundColor: { light: "rgba(0,0,0,0.04)", dark: "rgba(255,255,255,0.08)" },
           borderWidth: 0.5,
           borderColor: { light: "rgba(0,0,0,0.06)", dark: "rgba(255,255,255,0.08)" },
@@ -922,11 +935,118 @@ function renderLargeWidget(accounts, stats, updateStr, maskEmailEnabled) {
     };
   }
 
+  // 2. 双账号专属双大卡片排版
+  if (isDual) {
+    return {
+      type: "widget",
+      padding: [14, 16, 14, 16],
+      gap: 10,
+      children: [
+        {
+          type: "stack",
+          direction: "row",
+          alignItems: "center",
+          children: [
+            {
+              type: "stack",
+              direction: "row",
+              alignItems: "center",
+              gap: 5,
+              padding: [3.5, 10, 3.5, 10],
+              backgroundColor: badge.bg,
+              borderRadius: 11,
+              children: [
+                { type: "image", src: badge.svg, width: 14, height: 14 },
+                { type: "text", text: badge.text, font: { size: 12, weight: "heavy" }, textColor: "#FFFFFF" },
+              ],
+            },
+            { type: "spacer" },
+            { type: "text", text: `更新 ${updateStr}`, font: { size: 12, weight: "medium" }, textColor: "#8E8E93" },
+          ],
+        },
+        ...accounts.map((acc) => {
+          const usedPercent = Math.round((1 - acc.primaryRemainingFraction) * 100);
+          const remainPercent = Math.round(acc.primaryRemainingFraction * 100);
+          const accountLabel = maskEmail(acc.email || acc.name, maskEmailEnabled);
+          const progressSvg = createProgressBarSvg(acc.primaryRemainingFraction, acc.statusColor, 6);
+
+          return {
+            type: "stack",
+            direction: "column",
+            gap: 8,
+            padding: [12, 12, 12, 12],
+            backgroundColor: { light: "rgba(0,0,0,0.04)", dark: "rgba(255,255,255,0.08)" },
+            borderWidth: 0.5,
+            borderColor: { light: "rgba(0,0,0,0.06)", dark: "rgba(255,255,255,0.08)" },
+            borderRadius: 13,
+            flex: 1,
+            children: [
+              {
+                type: "stack",
+                direction: "row",
+                alignItems: "center",
+                children: [
+                  {
+                    type: "stack",
+                    direction: "column",
+                    gap: 1,
+                    children: [
+                      { type: "text", text: accountLabel, font: { size: 13, weight: "heavy" }, maxLines: 1 },
+                      { type: "text", text: `状态: ${acc.healthTier} · 评分 ${acc.dispatchScore}`, font: { size: 10 }, textColor: "#8E8E93" },
+                    ],
+                  },
+                  { type: "spacer" },
+                  {
+                    type: "stack",
+                    direction: "column",
+                    alignItems: "end",
+                    gap: 1,
+                    children: [
+                      { type: "text", text: `${acc.primaryWindowLabel}余 ${remainPercent}%`, font: { size: 15, weight: "heavy" }, textColor: acc.statusColor },
+                      { type: "text", text: `已用 ${usedPercent}%`, font: { size: 10 }, textColor: "#8E8E93" },
+                    ],
+                  },
+                ],
+              },
+              { type: "image", src: progressSvg, height: 6 },
+              {
+                type: "stack",
+                direction: "row",
+                alignItems: "center",
+                children: [
+                  { type: "text", text: `重置 ${formatSmallResetLabel(acc.primaryResetAtMs, acc.primaryWindow === "7d")}`, font: { size: 10 }, textColor: "#8E8E93" },
+                  { type: "spacer" },
+                  { type: "text", text: acc.primaryResetCountdownStr, font: { size: 10, weight: "bold" }, textColor: acc.statusColor },
+                ],
+              },
+            ],
+          };
+        }),
+        ...(stats ? [{
+          type: "stack",
+          direction: "row",
+          alignItems: "center",
+          padding: [7, 12, 7, 12],
+          backgroundColor: { light: "rgba(0,0,0,0.04)", dark: "rgba(255,255,255,0.08)" },
+          borderWidth: 0.5,
+          borderColor: { light: "rgba(0,0,0,0.06)", dark: "rgba(255,255,255,0.08)" },
+          borderRadius: 10,
+          children: [
+            { type: "text", text: `集群: ${stats.availableAccounts}/${stats.totalAccounts} 可用`, font: { size: 10, weight: "bold" }, textColor: "#34C759" },
+            { type: "spacer" },
+            { type: "text", text: `今日: ${stats.todayRequests} 次 · RPM: ${stats.rpm ?? 0}`, font: { size: 10 }, textColor: "#8E8E93" },
+          ],
+        }] : []),
+      ],
+    };
+  }
+
+  // 3. 3~4 个多账号紧凑列表
   const topFour = accounts.slice(0, 4);
   return {
     type: "widget",
-    padding: 14,
-    gap: 10,
+    padding: [14, 16, 14, 16],
+    gap: 8,
     children: [
       {
         type: "stack",
@@ -938,11 +1058,11 @@ function renderLargeWidget(accounts, stats, updateStr, maskEmailEnabled) {
             direction: "row",
             alignItems: "center",
             gap: 5,
-            padding: [3, 9, 3, 9],
+            padding: [3.5, 10, 3.5, 10],
             backgroundColor: badge.bg,
-            borderRadius: 10,
+            borderRadius: 11,
             children: [
-              { type: "image", src: badge.svg, width: 13, height: 13 },
+              { type: "image", src: badge.svg, width: 14, height: 14 },
               { type: "text", text: badge.text, font: { size: 12, weight: "heavy" }, textColor: "#FFFFFF" },
             ],
           },
@@ -953,13 +1073,13 @@ function renderLargeWidget(accounts, stats, updateStr, maskEmailEnabled) {
       ...topFour.map((acc) => {
         const remainPercent = Math.round(acc.primaryRemainingFraction * 100);
         const accountLabel = maskEmail(acc.email || acc.name, maskEmailEnabled);
-        const progressSvg = createProgressBarSvg(acc.primaryRemainingFraction, acc.statusColor, 6);
+        const progressSvg = createProgressBarSvg(acc.primaryRemainingFraction, acc.statusColor, 5.5);
 
         return {
           type: "stack",
           direction: "column",
           gap: 4,
-          padding: [9, 11, 9, 11],
+          padding: [8, 11, 8, 11],
           backgroundColor: { light: "rgba(0,0,0,0.04)", dark: "rgba(255,255,255,0.08)" },
           borderWidth: 0.5,
           borderColor: { light: "rgba(0,0,0,0.06)", dark: "rgba(255,255,255,0.08)" },
@@ -980,15 +1100,15 @@ function renderLargeWidget(accounts, stats, updateStr, maskEmailEnabled) {
                 },
               ],
             },
-            { type: "image", src: progressSvg, height: 6 },
+            { type: "image", src: progressSvg, height: 5.5 },
             {
               type: "stack",
               direction: "row",
               alignItems: "center",
               children: [
-                { type: "text", text: `重置 ${formatSmallResetLabel(acc.primaryResetAtMs, acc.primaryWindow === "7d")}`, font: { size: 9 }, textColor: "#8E8E93" },
+                { type: "text", text: `重置 ${formatSmallResetLabel(acc.primaryResetAtMs, acc.primaryWindow === "7d")}`, font: { size: 9.5 }, textColor: "#8E8E93" },
                 { type: "spacer" },
-                { type: "text", text: acc.primaryResetCountdownStr, font: { size: 9, weight: "semibold" }, textColor: acc.statusColor },
+                { type: "text", text: acc.primaryResetCountdownStr, font: { size: 9.5, weight: "bold" }, textColor: acc.statusColor },
               ],
             },
           ],
@@ -998,11 +1118,11 @@ function renderLargeWidget(accounts, stats, updateStr, maskEmailEnabled) {
         type: "stack",
         direction: "row",
         alignItems: "center",
-        padding: [8, 12, 8, 12],
+        padding: [7, 11, 7, 11],
         backgroundColor: { light: "rgba(0,0,0,0.04)", dark: "rgba(255,255,255,0.08)" },
         borderWidth: 0.5,
         borderColor: { light: "rgba(0,0,0,0.06)", dark: "rgba(255,255,255,0.08)" },
-        borderRadius: 12,
+        borderRadius: 10,
         children: [
           { type: "text", text: `集群可用: ${stats.availableAccounts}/${stats.totalAccounts}`, font: { size: 10 }, textColor: "#8E8E93" },
           { type: "spacer" },
