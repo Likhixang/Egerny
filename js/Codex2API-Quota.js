@@ -697,12 +697,12 @@ function renderMediumWidget(accounts, updateStr, maskEmailEnabled) {
     const accountLabel = maskEmail(first.email || first.name, maskEmailEnabled);
 
     if (isDual) {
-      // 单账号双配额标准排版（完全对齐中号双账号经典三行式卡片结构：首行余量 - 中行满宽条 - 末行重置）
+      // 单账号双配额专属卡片：唯一母卡片包含账号标头，内部包含 7D 和 Spark 5H 两个完整独立三行进度块
       return {
         type: "widget",
         backgroundColor: C.widgetBg,
         padding: [12, 14, 12, 14],
-        gap: 7,
+        gap: 8,
         children: [
           // 顶部 Header (Codex2API 官方 Logo)
           {
@@ -726,17 +726,19 @@ function renderMediumWidget(accounts, updateStr, maskEmailEnabled) {
               { type: "text", text: `更新 ${updateStr}`, font: { size: 11, weight: "medium" }, textColor: C.textSecondary },
             ],
           },
-          // 1. 7D 独立等高卡片
+          // 单一核心母卡片（只出现一次账号身份，彻底消除双账号误解）
           {
             type: "stack",
             direction: "column",
-            gap: 3,
-            padding: [7, 10, 7, 10],
+            gap: 7,
+            padding: [10, 12, 10, 12],
             backgroundColor: C.cardBg,
             borderWidth: 0.5,
             borderColor: C.cardBorder,
-            borderRadius: 11,
+            borderRadius: 13,
+            flex: 1,
             children: [
+              // 1. 唯一账号身份标头
               {
                 type: "stack",
                 direction: "row",
@@ -749,75 +751,69 @@ function renderMediumWidget(accounts, updateStr, maskEmailEnabled) {
                     gap: 5,
                     children: [
                       createMicroBadge(accBadge),
-                      { type: "text", text: accountLabel, font: { size: 11, weight: "bold" }, maxLines: 1 },
+                      { type: "text", text: accountLabel, font: { size: 11.5, weight: "bold" }, maxLines: 1 },
                     ],
                   },
                   { type: "spacer" },
-                  {
-                    type: "text",
-                    text: `${first.fullQuotaLabel} 余 ${remain7d}%`,
-                    font: { size: 11, weight: "heavy" },
-                    textColor: getQuotaColor(first.remainingFraction7d),
-                  },
+                  { type: "text", text: `评分 ${first.dispatchScore}`, font: { size: 10 }, textColor: C.textSecondary },
                 ],
               },
-              { type: "image", src: createProgressBarSvg(first.remainingFraction7d, getQuotaColor(first.remainingFraction7d), 5), height: 5 },
+              // 2. 7D 独立配额块 (行1: 标签+余量 / 行2: 满宽进度条 / 行3: 重置时间+倒计时)
               {
                 type: "stack",
-                direction: "row",
-                alignItems: "center",
-                children: [
-                  { type: "text", text: `重置 ${first.reset7dTimeStr}`, font: { size: 9 }, textColor: C.textSecondary },
-                  { type: "spacer" },
-                  { type: "text", text: first.reset7dCountdownStr, font: { size: 9, weight: "semibold" }, textColor: getQuotaColor(first.remainingFraction7d) },
-                ],
-              },
-            ],
-          },
-          // 2. 次级配额独立等高卡片 (Spark 5H / 5H)
-          {
-            type: "stack",
-            direction: "column",
-            gap: 3,
-            padding: [7, 10, 7, 10],
-            backgroundColor: C.cardBg,
-            borderWidth: 0.5,
-            borderColor: C.cardBorder,
-            borderRadius: 11,
-            children: [
-              {
-                type: "stack",
-                direction: "row",
-                alignItems: "center",
+                direction: "column",
+                gap: 2.5,
                 children: [
                   {
                     type: "stack",
                     direction: "row",
                     alignItems: "center",
-                    gap: 5,
                     children: [
-                      createMicroBadge(accBadge),
-                      { type: "text", text: accountLabel, font: { size: 11, weight: "bold" }, maxLines: 1 },
+                      { type: "text", text: first.fullQuotaLabel, font: { size: 10.5, weight: "bold" }, textColor: C.textPrimary },
+                      { type: "spacer" },
+                      { type: "text", text: `余 ${remain7d}%`, font: { size: 10.5, weight: "heavy" }, textColor: getQuotaColor(first.remainingFraction7d) },
                     ],
                   },
-                  { type: "spacer" },
+                  { type: "image", src: createProgressBarSvg(first.remainingFraction7d, getQuotaColor(first.remainingFraction7d), 4.5), height: 4.5 },
                   {
-                    type: "text",
-                    text: `${first.secondaryLabel} 余 ${remain5h}%`,
-                    font: { size: 11, weight: "heavy" },
-                    textColor: getQuotaColor(first.remainingFraction5h),
+                    type: "stack",
+                    direction: "row",
+                    alignItems: "center",
+                    children: [
+                      { type: "text", text: `重置 ${first.reset7dTimeStr}`, font: { size: 9 }, textColor: C.textSecondary },
+                      { type: "spacer" },
+                      { type: "text", text: first.reset7dCountdownStr, font: { size: 9, weight: "semibold" }, textColor: getQuotaColor(first.remainingFraction7d) },
+                    ],
                   },
                 ],
               },
-              { type: "image", src: createProgressBarSvg(first.remainingFraction5h, getQuotaColor(first.remainingFraction5h), 5), height: 5 },
+              // 3. Spark 5H / 5H 独立配额块 (行1: 标签+余量 / 行2: 满宽进度条 / 行3: 重置时间+倒计时)
               {
                 type: "stack",
-                direction: "row",
-                alignItems: "center",
+                direction: "column",
+                gap: 2.5,
                 children: [
-                  { type: "text", text: `重置 ${first.reset5hTimeStr}`, font: { size: 9 }, textColor: C.textSecondary },
-                  { type: "spacer" },
-                  { type: "text", text: first.reset5hCountdownStr, font: { size: 9, weight: "semibold" }, textColor: getQuotaColor(first.remainingFraction5h) },
+                  {
+                    type: "stack",
+                    direction: "row",
+                    alignItems: "center",
+                    children: [
+                      { type: "text", text: first.secondaryLabel, font: { size: 10.5, weight: "bold" }, textColor: C.textPrimary },
+                      { type: "spacer" },
+                      { type: "text", text: `余 ${remain5h}%`, font: { size: 10.5, weight: "heavy" }, textColor: getQuotaColor(first.remainingFraction5h) },
+                    ],
+                  },
+                  { type: "image", src: createProgressBarSvg(first.remainingFraction5h, getQuotaColor(first.remainingFraction5h), 4.5), height: 4.5 },
+                  {
+                    type: "stack",
+                    direction: "row",
+                    alignItems: "center",
+                    children: [
+                      { type: "text", text: `重置 ${first.reset5hTimeStr}`, font: { size: 9 }, textColor: C.textSecondary },
+                      { type: "spacer" },
+                      { type: "text", text: first.reset5hCountdownStr, font: { size: 9, weight: "semibold" }, textColor: getQuotaColor(first.remainingFraction5h) },
+                    ],
+                  },
                 ],
               },
             ],
