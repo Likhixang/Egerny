@@ -183,21 +183,31 @@ function parseAccountItem(acc) {
   const reset7dCountdownStr = formatCountdown(reset7dAtMs, remainingFraction7d);
   const billed7d = typeof acc.billed_7d === "number" ? acc.billed_7d : null;
 
-  // 自动判断主力窗口
+  // 自动判断主力与次级窗口语义
+  // 1. 同时拥有 7d (周额度) 与 5h (短期额度): 7d 为周全额度，5h 为 5小时滚动额度
+  // 2. 仅拥有 7d: 7d 为周全额度
+  // 3. 仅拥有 5h: 5h 为 5小时全额度
   let primaryWindow = "5h";
-  if (has7d && !has5h) {
-    primaryWindow = "7d";
-  } else if (has5h && !has7d) {
-    primaryWindow = "5h";
-  } else if (has5h && has7d) {
-    if (usage7d !== null && usage5h !== null && usage7d > usage5h && usage7d > 0) {
-      primaryWindow = "7d";
-    } else {
-      primaryWindow = "5h";
-    }
-  }
+  let primaryWindowLabel = "5小时";
+  let window7dLabel = "周全额度";
+  let window5hLabel = "5h 滚动";
 
-  const primaryWindowLabel = primaryWindow === "7d" ? "周额度" : "5小时";
+  if (has7d && has5h) {
+    primaryWindow = "7d";
+    primaryWindowLabel = "周全额度";
+    window7dLabel = "周全额度";
+    window5hLabel = "5h 滚动";
+  } else if (has7d && !has5h) {
+    primaryWindow = "7d";
+    primaryWindowLabel = "周全额度";
+    window7dLabel = "周全额度";
+    window5hLabel = "5h 滚动";
+  } else {
+    primaryWindow = "5h";
+    primaryWindowLabel = "5小时";
+    window7dLabel = "周全额度";
+    window5hLabel = "5小时";
+  }
   const primaryRemainingFraction = primaryWindow === "7d" ? remainingFraction7d : remainingFraction5h;
   const primaryResetAtMs = primaryWindow === "7d" ? reset7dAtMs : reset5hAtMs;
   const primaryResetTimeStr = primaryWindow === "7d" ? reset7dTimeStr : reset5hTimeStr;
@@ -227,6 +237,8 @@ function parseAccountItem(acc) {
     billed7d,
     primaryWindow,
     primaryWindowLabel,
+    window7dLabel,
+    window5hLabel,
     primaryRemainingFraction,
     primaryResetAtMs,
     primaryResetTimeStr,
@@ -693,7 +705,7 @@ function renderMediumWidget(accounts, updateStr, maskEmailEnabled) {
                   direction: "row",
                   alignItems: "center",
                   children: [
-                    { type: "text", text: `Spark 5h 剩余 ${remain5h}%`, font: { size: 11, weight: "bold" }, textColor: getQuotaColor(first.remainingFraction5h) },
+                    { type: "text", text: `5小时滚动 剩余 ${remain5h}%`, font: { size: 11, weight: "bold" }, textColor: getQuotaColor(first.remainingFraction5h) },
                     { type: "spacer" },
                     { type: "text", text: `重置 ${first.reset5hTimeStr}`, font: { size: 9.5 }, textColor: C.textSecondary },
                   ],
@@ -712,7 +724,7 @@ function renderMediumWidget(accounts, updateStr, maskEmailEnabled) {
                   direction: "row",
                   alignItems: "center",
                   children: [
-                    { type: "text", text: `全额度 剩余 ${remain7d}%`, font: { size: 11, weight: "bold" }, textColor: getQuotaColor(first.remainingFraction7d) },
+                    { type: "text", text: `周全额度 剩余 ${remain7d}%`, font: { size: 11, weight: "bold" }, textColor: getQuotaColor(first.remainingFraction7d) },
                     { type: "spacer" },
                     { type: "text", text: `重置 ${first.reset7dTimeStr}`, font: { size: 9.5 }, textColor: C.textSecondary },
                   ],
@@ -960,7 +972,7 @@ function renderLargeWidget(accounts, stats, updateStr, maskEmailEnabled) {
               direction: "row",
               alignItems: "center",
               children: [
-                { type: "text", text: "Spark 额度 (5小时快速恢复)", font: { size: 12, weight: "bold" } },
+                { type: "text", text: "5小时滚动额度 (短期限制)", font: { size: 12, weight: "bold" } },
                 { type: "spacer" },
                 { type: "text", text: `剩余 ${remain5h}%`, font: { size: 13, weight: "heavy" }, textColor: getQuotaColor(first.remainingFraction5h) },
               ],
@@ -994,7 +1006,7 @@ function renderLargeWidget(accounts, stats, updateStr, maskEmailEnabled) {
               direction: "row",
               alignItems: "center",
               children: [
-                { type: "text", text: "全额度 (7天周期)", font: { size: 12, weight: "bold" } },
+                { type: "text", text: "周全额度 (7天周期限制)", font: { size: 12, weight: "bold" } },
                 { type: "spacer" },
                 { type: "text", text: `剩余 ${remain7d}%`, font: { size: 13, weight: "heavy" }, textColor: getQuotaColor(first.remainingFraction7d) },
               ],

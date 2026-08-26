@@ -300,7 +300,7 @@ async function syncCLIProxyQuotaData(ctx) {
         } catch (e) {}
       }
 
-      // 3. OpenAI / Codex (ChatGPT wham/usage)
+      // 3. OpenAI / Codex (ChatGPT wham/usage 深度解析: 周全额度 / 5h滚动额度 / Spark独立限额)
       if (
         fileTypeLower.includes("codex") ||
         fileTypeLower.includes("openai") ||
@@ -325,7 +325,11 @@ async function syncCLIProxyQuotaData(ctx) {
             const rateLimit = body.rate_limit || body.rateLimit || {};
             const primary = rateLimit.primary_window || rateLimit.primaryWindow;
             const secondary = rateLimit.secondary_window || rateLimit.secondaryWindow;
+            const additionals = Array.isArray(body.additional_rate_limits) ? body.additional_rate_limits : [];
 
+            const hasBoth = Boolean(primary && secondary);
+
+            // 解析主要窗口
             if (primary) {
               const usedPercent = Number(primary.used_percent ?? primary.usedPercent ?? 0);
               const remainingFraction = Math.max(0, Math.min(1, 1 - usedPercent / 100));
@@ -335,18 +339,20 @@ async function syncCLIProxyQuotaData(ctx) {
               } else if (primary.reset_after_seconds) {
                 resetAtMs = Date.now() + primary.reset_after_seconds * 1000;
               }
-              const isWeekly = primary.window_seconds ? primary.window_seconds >= 86400 * 2 : true;
+              const winSecs = Number(primary.limit_window_seconds || primary.window_seconds || 0);
+              const isWeekly = winSecs > 0 ? winSecs >= 86400 * 2 : (hasBoth || !secondary);
+              const is5hRolling = winSecs > 0 ? (winSecs < 86400 * 2) : !isWeekly;
               const resetTimeStr = resetAtMs ? (isWeekly ? formatShortDate(resetAtMs) : formatTimeOnly(resetAtMs)) : "--:--";
               const resetCountdownStr = formatCountdown(resetAtMs, remainingFraction);
 
               modelList.push({
                 id: `codex-${authIndex}-primary`,
-                name: isWeekly ? "Codex 全额度 (7天)" : "Codex 全额度 (5小时)",
-                shortName: isWeekly ? "全额度(7D)" : "全额度(5H)",
+                name: isWeekly ? "Codex 周全额度" : "Codex 5h滚动额度",
+                shortName: isWeekly ? "周全额度" : "5h滚动",
                 provider: "Codex",
                 account: accountLabel,
                 window: isWeekly ? "7d" : "5h",
-                isFullQuota: true,
+                isFullQuota: isWeekly || !hasBoth,
                 isSpark: false,
                 remainingFraction,
                 resetAtMs,
@@ -356,6 +362,7 @@ async function syncCLIProxyQuotaData(ctx) {
               });
             }
 
+            // 解析次要窗口 (如 5h 滚动额度)
             if (secondary) {
               const usedPercent = Number(secondary.used_percent ?? secondary.usedPercent ?? 0);
               const remainingFraction = Math.max(0, Math.min(1, 1 - usedPercent / 100));
@@ -365,24 +372,61 @@ async function syncCLIProxyQuotaData(ctx) {
               } else if (secondary.reset_after_seconds) {
                 resetAtMs = Date.now() + secondary.reset_after_seconds * 1000;
               }
-              const resetTimeStr = resetAtMs ? formatTimeOnly(resetAtMs) : "--:--";
+              const winSecs = Number(secondary.limit_window_seconds || secondary.window_seconds || 0);
+              const isWeekly = winSecs >= 86400 * 2;
+              const resetTimeStr = resetAtMs ? (isWeekly ? formatShortDate(resetAtMs) : formatTimeOnly(resetAtMs)) : "--:--";
               const resetCountdownStr = formatCountdown(resetAtMs, remainingFraction);
 
               modelList.push({
-                id: `codex-${authIndex}-spark`,
-                name: "Spark 额度 (5小时)",
-                shortName: "Spark(5H)",
+                id: `codex-${authIndex}-secondary`,
+                name: isWeekly ? "Codex 周全额度" : "Codex 5h滚动额度",
+                shortName: isWeekly ? "周全额度" : "5h滚动",
                 provider: "Codex",
                 account: accountLabel,
-                window: "5h",
-                isFullQuota: false,
-                isSpark: true,
+                window: isWeekly ? "7d" : "5h",
+                isFullQuota: isWeekly,
+                isSpark: false,
                 remainingFraction,
                 resetAtMs,
                 resetTimeStr,
                 resetCountdownStr,
                 statusColor: getQuotaColor(remainingFraction),
               });
+            }
+
+            // 解析独立附加限额 (如 GPT-5.3-Codex-Spark)
+            for (const addLimit of additionals) {
+              const limitName = addLimit.limit_name || addLimit.limitName || "Spark";
+              const addRate = addLimit.rate_limit || addLimit.rateLimit || addLimit;
+              const addWin = addRate.primary_window || addRate.primaryWindow || addRate;
+              if (addWin && addWin.used_percent !== undefined) {
+                const usedPercent = Number(addWin.used_percent ?? 0);
+                const remainingFraction = Math.max(0, Math.min(1, 1 - usedPercent / 100));
+                let resetAtMs = null;
+                if (addWin.reset_at) {
+                  resetAtMs = typeof addWin.reset_at === "number" ? addWin.reset_at * 1000 : new Date(addWin.reset_at).getTime();
+                } else if (addWin.reset_after_seconds) {
+                  resetAtMs = Date.now() + addWin.reset_after_seconds * 1000;
+                }
+                const resetTimeStr = resetAtMs ? formatTimeOnly(resetAtMs) : "--:--";
+                const resetCountdownStr = formatCountdown(resetAtMs, remainingFraction);
+
+                modelList.push({
+                  id: `codex-${authIndex}-${limitName.toLowerCase()}`,
+                  name: `${limitName} 额度`,
+                  shortName: `${limitName.split("-").pop() || "Spark"}(5H)`,
+                  provider: "Codex",
+                  account: accountLabel,
+                  window: "5h",
+                  isFullQuota: false,
+                  isSpark: true,
+                  remainingFraction,
+                  resetAtMs,
+                  resetTimeStr,
+                  resetCountdownStr,
+                  statusColor: getQuotaColor(remainingFraction),
+                });
+              }
             }
           }
         } catch (e) {}
