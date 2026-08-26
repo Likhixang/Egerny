@@ -1,3 +1,6 @@
+// ── Codex2API 官方项目高清徽标 ──
+const CODEX2API_LOGO = "data:image/png;base64,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";
+
 /*
  * Codex2API Quota 额度监控 — Egern 新式小组件
  * 核心设计系统：
@@ -496,11 +499,28 @@ const C = {
 
 // ── HIG 拟物卡片式布局 ──
 
+function createMicroBadge(badge) {
+  return {
+    type: "stack",
+    direction: "row",
+    alignItems: "center",
+    gap: 3,
+    padding: [2, 5],
+    backgroundColor: badge.bg,
+    borderRadius: 5,
+    children: [
+      { type: "image", src: badge.svg, width: 9, height: 9 },
+      { type: "text", text: badge.text, font: { size: 8.5, weight: "heavy" }, textColor: "#FFFFFF" },
+    ],
+  };
+}
+
 function renderSmallWidget(account, updateTime) {
   const usedPercent = Math.round((1 - account.primaryRemainingFraction) * 100);
   const remainPercent = Math.round(account.primaryRemainingFraction * 100);
-  const badge = getAccountBadge(account);
+  const accBadge = getAccountBadge(account);
   const progressSvg = createProgressBarSvg(account.primaryRemainingFraction, account.statusColor, 6);
+  const accountLabel = maskEmail(account.email || account.name, true);
 
   return {
     type: "widget",
@@ -508,32 +528,24 @@ function renderSmallWidget(account, updateTime) {
     padding: 12,
     gap: 8,
     children: [
+      // 顶部 Header (Codex2API 官方 Logo)
       {
         type: "stack",
         direction: "row",
         alignItems: "center",
+        gap: 5,
         children: [
-          {
-            type: "stack",
-            direction: "row",
-            alignItems: "center",
-            gap: 4,
-            padding: [3, 8, 3, 8],
-            backgroundColor: badge.bg,
-            borderRadius: 10,
-            children: [
-              { type: "image", src: badge.svg, width: 12, height: 12 },
-              { type: "text", text: badge.text, font: { size: 10, weight: "heavy" }, textColor: "#FFFFFF" },
-            ],
-          },
+          { type: "image", src: CODEX2API_LOGO, width: 14, height: 14, borderRadius: 3.5 },
+          { type: "text", text: "Codex2API", font: { size: "caption1", weight: "heavy" }, textColor: C.textPrimary },
           { type: "spacer" },
           { type: "text", text: updateTime, font: { size: 10, weight: "medium" }, textColor: C.textSecondary },
         ],
       },
+      // 核心卡片容器
       {
         type: "stack",
         direction: "column",
-        gap: 8,
+        gap: 6,
         padding: 10,
         backgroundColor: C.cardBg,
         borderWidth: 0.5,
@@ -541,34 +553,46 @@ function renderSmallWidget(account, updateTime) {
         borderRadius: 13,
         flex: 1,
         children: [
+          // 账号前微型徽标色条
           {
             type: "stack",
             direction: "row",
-            alignItems: "start",
+            alignItems: "center",
+            gap: 4,
+            children: [
+              createMicroBadge(accBadge),
+              { type: "text", text: accountLabel, font: { size: 11, weight: "bold" }, maxLines: 1 },
+            ],
+          },
+          {
+            type: "stack",
+            direction: "row",
+            alignItems: "center",
             children: [
               {
                 type: "stack",
-                direction: "column",
-                gap: 1,
+                direction: "row",
+                gap: 3,
+                alignItems: "baseline",
                 children: [
                   { type: "text", text: "已用", font: { size: 10 }, textColor: C.textSecondary },
-                  { type: "text", text: `${usedPercent}%`, font: { size: 17, weight: "heavy" }, textColor: C.textPrimary },
+                  { type: "text", text: `${usedPercent}%`, font: { size: 15, weight: "heavy" }, textColor: C.textPrimary },
                 ],
               },
               { type: "spacer" },
               {
                 type: "stack",
-                direction: "column",
-                alignItems: "end",
-                gap: 1,
+                direction: "row",
+                gap: 3,
+                alignItems: "baseline",
                 children: [
                   { type: "text", text: `剩余 (${account.primaryWindow})`, font: { size: 10 }, textColor: C.textSecondary },
-                  { type: "text", text: `${remainPercent}%`, font: { size: 17, weight: "heavy" }, textColor: account.statusColor },
+                  { type: "text", text: `${remainPercent}%`, font: { size: 16, weight: "heavy" }, textColor: account.statusColor },
                 ],
               },
             ],
           },
-          { type: "image", src: progressSvg, height: 6 },
+          { type: "image", src: progressSvg, height: 5.5 },
           {
             type: "stack",
             direction: "row",
@@ -576,7 +600,7 @@ function renderSmallWidget(account, updateTime) {
             children: [
               { type: "text", text: formatSmallResetLabel(account.primaryResetAtMs, account.primaryWindow === "7d"), font: { size: 9 }, textColor: C.textSecondary },
               { type: "spacer" },
-              { type: "text", text: formatCountdown(account.primaryResetAtMs, account.primaryRemainingFraction), font: { size: 10, weight: "bold" }, textColor: account.statusColor },
+              { type: "text", text: formatCountdown(account.primaryResetAtMs, account.primaryRemainingFraction), font: { size: 9.5, weight: "bold" }, textColor: account.statusColor },
             ],
           },
         ],
@@ -588,16 +612,14 @@ function renderSmallWidget(account, updateTime) {
 function renderMediumWidget(accounts, updateStr, maskEmailEnabled) {
   const isSingle = accounts.length === 1;
   const first = accounts[0];
-  const headerBadge = getHeaderBadge(accounts);
-  const badge = getAccountBadge(first);
 
-  if (isSingle) {
+  if (isSingle && first) {
     const isDual = first.has5h && first.has7d;
+    const accBadge = getAccountBadge(first);
     const used5h = first.usagePercent5h !== null ? Math.round(first.usagePercent5h) : Math.round((1 - first.remainingFraction5h) * 100);
     const remain5h = Math.round(first.remainingFraction5h * 100);
     const used7d = first.usagePercent7d !== null ? Math.round(first.usagePercent7d) : Math.round((1 - first.remainingFraction7d) * 100);
     const remain7d = Math.round(first.remainingFraction7d * 100);
-
     const accountLabel = maskEmail(first.email || first.name, maskEmailEnabled);
 
     return {
@@ -606,38 +628,29 @@ function renderMediumWidget(accounts, updateStr, maskEmailEnabled) {
       padding: [12, 14, 12, 14],
       gap: 8,
       children: [
+        // 顶部 Header (Codex2API 官方 Logo)
         {
           type: "stack",
           direction: "row",
           alignItems: "center",
+          gap: 6,
           children: [
+            { type: "image", src: CODEX2API_LOGO, width: 15, height: 15, borderRadius: 3.5 },
+            { type: "text", text: "Codex2API 额度", font: { size: "footnote", weight: "heavy" }, textColor: C.textPrimary },
             {
               type: "stack",
-              direction: "row",
-              alignItems: "center",
-              gap: 5,
-              padding: [3, 9, 3, 9],
-              backgroundColor: badge.bg,
-              borderRadius: 10,
+              padding: [2, 5],
+              borderRadius: 4,
+              backgroundColor: C.cardBg,
               children: [
-                { type: "image", src: badge.svg, width: 13, height: 13 },
-                { type: "text", text: badge.text, font: { size: 11, weight: "heavy" }, textColor: "#FFFFFF" },
+                { type: "text", text: isDual ? "双窗口" : "单账号", font: { size: 9.5, weight: "bold" }, textColor: C.textSecondary },
               ],
             },
             { type: "spacer" },
             { type: "text", text: `更新 ${updateStr}`, font: { size: 11, weight: "medium" }, textColor: C.textSecondary },
           ],
         },
-        {
-          type: "stack",
-          direction: "row",
-          alignItems: "center",
-          children: [
-            { type: "text", text: accountLabel, font: { size: 12, weight: "bold" }, maxLines: 1 },
-            { type: "spacer" },
-            { type: "text", text: `状态: ${first.healthTier}`, font: { size: 10 }, textColor: C.textSecondary },
-          ],
-        },
+        // 核心卡片容器
         {
           type: "stack",
           direction: "column",
@@ -649,24 +662,20 @@ function renderMediumWidget(accounts, updateStr, maskEmailEnabled) {
           borderRadius: 13,
           flex: 1,
           children: isDual ? [
+            // 双窗口模式 (5h + 7d)
             {
               type: "stack",
-              direction: "column",
-              gap: 2,
+              direction: "row",
+              alignItems: "center",
+              gap: 5,
               children: [
-                {
-                  type: "stack",
-                  direction: "row",
-                  alignItems: "center",
-                  children: [
-                    { type: "text", text: "5小时 滚动额度", font: { size: 10, weight: "semibold" } },
-                    { type: "spacer" },
-                    { type: "text", text: `余 ${remain5h}% (${first.reset5hCountdownStr})`, font: { size: 10, weight: "bold" }, textColor: getQuotaColor(first.remainingFraction5h) },
-                  ],
-                },
-                { type: "image", src: createProgressBarSvg(first.remainingFraction5h, getQuotaColor(first.remainingFraction5h), 5), height: 5 },
+                createMicroBadge(accBadge),
+                { type: "text", text: accountLabel, font: { size: 12, weight: "bold" }, maxLines: 1 },
+                { type: "spacer" },
+                { type: "text", text: `评分 ${first.dispatchScore}`, font: { size: 10 }, textColor: C.textSecondary },
               ],
             },
+            // 5h 进度
             {
               type: "stack",
               direction: "column",
@@ -677,15 +686,47 @@ function renderMediumWidget(accounts, updateStr, maskEmailEnabled) {
                   direction: "row",
                   alignItems: "center",
                   children: [
-                    { type: "text", text: "7天 周额度 (Weekly)", font: { size: 10, weight: "semibold" } },
+                    { type: "text", text: `5h 剩余 ${remain5h}%`, font: { size: 11, weight: "bold" }, textColor: getQuotaColor(first.remainingFraction5h) },
                     { type: "spacer" },
-                    { type: "text", text: `余 ${remain7d}% (${first.reset7dCountdownStr})`, font: { size: 10, weight: "bold" }, textColor: getQuotaColor(first.remainingFraction7d) },
+                    { type: "text", text: `重置 ${first.reset5hTimeStr}`, font: { size: 9.5 }, textColor: C.textSecondary },
                   ],
                 },
-                { type: "image", src: createProgressBarSvg(first.remainingFraction7d, getQuotaColor(first.remainingFraction7d), 5), height: 5 },
+                { type: "image", src: createProgressBarSvg(first.remainingFraction5h, getQuotaColor(first.remainingFraction5h), 4.5), height: 4.5 },
+              ],
+            },
+            // 7d 进度
+            {
+              type: "stack",
+              direction: "column",
+              gap: 2,
+              children: [
+                {
+                  type: "stack",
+                  direction: "row",
+                  alignItems: "center",
+                  children: [
+                    { type: "text", text: `周额度 剩余 ${remain7d}%`, font: { size: 11, weight: "bold" }, textColor: getQuotaColor(first.remainingFraction7d) },
+                    { type: "spacer" },
+                    { type: "text", text: `重置 ${first.reset7dTimeStr}`, font: { size: 9.5 }, textColor: C.textSecondary },
+                  ],
+                },
+                { type: "image", src: createProgressBarSvg(first.remainingFraction7d, getQuotaColor(first.remainingFraction7d), 4.5), height: 4.5 },
               ],
             },
           ] : [
+            // 单主力窗口模式
+            {
+              type: "stack",
+              direction: "row",
+              alignItems: "center",
+              gap: 5,
+              children: [
+                createMicroBadge(accBadge),
+                { type: "text", text: accountLabel, font: { size: 12, weight: "bold" }, maxLines: 1 },
+                { type: "spacer" },
+                { type: "text", text: `状态: ${first.healthTier}`, font: { size: 10 }, textColor: C.textSecondary },
+              ],
+            },
             {
               type: "stack",
               direction: "row",
@@ -731,6 +772,7 @@ function renderMediumWidget(accounts, updateStr, maskEmailEnabled) {
     };
   }
 
+  // 双账号等高卡片排版
   const topTwo = accounts.slice(0, 2);
   return {
     type: "widget",
@@ -738,22 +780,22 @@ function renderMediumWidget(accounts, updateStr, maskEmailEnabled) {
     padding: [12, 14, 12, 14],
     gap: 7,
     children: [
+      // 顶部 Header (Codex2API 官方 Logo)
       {
         type: "stack",
         direction: "row",
         alignItems: "center",
+        gap: 6,
         children: [
+          { type: "image", src: CODEX2API_LOGO, width: 15, height: 15, borderRadius: 3.5 },
+          { type: "text", text: "Codex2API 额度", font: { size: "footnote", weight: "heavy" }, textColor: C.textPrimary },
           {
             type: "stack",
-            direction: "row",
-            alignItems: "center",
-            gap: 5,
-            padding: [3, 9, 3, 9],
-            backgroundColor: badge.bg,
-            borderRadius: 10,
+            padding: [2, 5],
+            borderRadius: 4,
+            backgroundColor: C.cardBg,
             children: [
-              { type: "image", src: badge.svg, width: 13, height: 13 },
-              { type: "text", text: badge.text, font: { size: 11, weight: "heavy" }, textColor: "#FFFFFF" },
+              { type: "text", text: `${accounts.length} 账号`, font: { size: 9.5, weight: "bold" }, textColor: C.textSecondary },
             ],
           },
           { type: "spacer" },
@@ -782,19 +824,7 @@ function renderMediumWidget(accounts, updateStr, maskEmailEnabled) {
               alignItems: "center",
               gap: 5,
               children: [
-                {
-                  type: "stack",
-                  direction: "row",
-                  alignItems: "center",
-                  gap: 3,
-                  padding: [2, 5],
-                  backgroundColor: accBadge.bg,
-                  borderRadius: 5,
-                  children: [
-                    { type: "image", src: accBadge.svg, width: 9, height: 9 },
-                    { type: "text", text: accBadge.text, font: { size: 8.5, weight: "heavy" }, textColor: "#FFFFFF" },
-                  ],
-                },
+                createMicroBadge(accBadge),
                 { type: "text", text: accountLabel, font: { size: 11, weight: "bold" }, maxLines: 1 },
                 { type: "spacer" },
                 {
@@ -828,11 +858,10 @@ function renderLargeWidget(accounts, stats, updateStr, maskEmailEnabled) {
   const isSingle = accounts.length === 1;
   const isDual = accounts.length === 2;
   const first = accounts[0];
-  const headerBadge = getHeaderBadge(accounts);
-  const badge = getAccountBadge(first);
 
   // 1. 单账号专属旗舰看板（满宽账号标头 + 5h大卡片 + 7d大卡片 + 底部集群状态汇总）
   if (isSingle) {
+    const accBadge = getAccountBadge(first);
     const used5h = first.usagePercent5h !== null ? Math.round(first.usagePercent5h) : Math.round((1 - first.remainingFraction5h) * 100);
     const remain5h = Math.round(first.remainingFraction5h * 100);
     const used7d = first.usagePercent7d !== null ? Math.round(first.usagePercent7d) : Math.round((1 - first.remainingFraction7d) * 100);
@@ -845,23 +874,22 @@ function renderLargeWidget(accounts, stats, updateStr, maskEmailEnabled) {
       padding: [14, 16, 14, 16],
       gap: 10,
       children: [
-        // 顶部 Header
+        // 顶栏 (Codex2API 官方 Logo)
         {
           type: "stack",
           direction: "row",
           alignItems: "center",
+          gap: 6,
           children: [
+            { type: "image", src: CODEX2API_LOGO, width: 16, height: 16, borderRadius: 4 },
+            { type: "text", text: "Codex2API 额度监控", font: { size: "subheadline", weight: "heavy" }, textColor: C.textPrimary },
             {
               type: "stack",
-              direction: "row",
-              alignItems: "center",
-              gap: 5,
-              padding: [3.5, 10, 3.5, 10],
-              backgroundColor: headerBadge.bg,
-              borderRadius: 11,
+              padding: [2, 5],
+              borderRadius: 4,
+              backgroundColor: C.cardBg,
               children: [
-                { type: "image", src: headerBadge.svg, width: 14, height: 14 },
-                { type: "text", text: headerBadge.text, font: { size: 12, weight: "heavy" }, textColor: "#FFFFFF" },
+                { type: "text", text: "单账号", font: { size: 10, weight: "bold" }, textColor: C.textSecondary },
               ],
             },
             { type: "spacer" },
@@ -883,8 +911,18 @@ function renderLargeWidget(accounts, stats, updateStr, maskEmailEnabled) {
               type: "stack",
               direction: "column",
               gap: 3,
+              flex: 1,
               children: [
-                { type: "text", text: accountLabel, font: { size: 15, weight: "heavy" }, maxLines: 1 },
+                {
+                  type: "stack",
+                  direction: "row",
+                  alignItems: "center",
+                  gap: 6,
+                  children: [
+                    createMicroBadge(accBadge),
+                    { type: "text", text: accountLabel, font: { size: 15, weight: "heavy" }, maxLines: 1 },
+                  ],
+                },
                 {
                   type: "stack",
                   direction: "row",
@@ -897,11 +935,10 @@ function renderLargeWidget(accounts, stats, updateStr, maskEmailEnabled) {
                 },
               ],
             },
-            { type: "spacer" },
           ],
         },
-        // 5小时卡片
-        ...(first.has5h ? [{
+        // 5小时短期滚动额度卡片
+        {
           type: "stack",
           direction: "column",
           gap: 6,
@@ -916,12 +953,12 @@ function renderLargeWidget(accounts, stats, updateStr, maskEmailEnabled) {
               direction: "row",
               alignItems: "center",
               children: [
-                { type: "text", text: "5小时 滚动配额", font: { size: 13, weight: "bold" } },
+                { type: "text", text: "5小时滚动额度", font: { size: 12, weight: "bold" } },
                 { type: "spacer" },
-                { type: "text", text: `剩余 ${remain5h}%`, font: { size: 14, weight: "heavy" }, textColor: getQuotaColor(first.remainingFraction5h) },
+                { type: "text", text: `剩余 ${remain5h}%`, font: { size: 13, weight: "heavy" }, textColor: getQuotaColor(first.remainingFraction5h) },
               ],
             },
-            { type: "image", src: createProgressBarSvg(first.remainingFraction5h, getQuotaColor(first.remainingFraction5h), 6), height: 6 },
+            { type: "image", src: createProgressBarSvg(first.remainingFraction5h, getQuotaColor(first.remainingFraction5h), 6.5), height: 6.5 },
             {
               type: "stack",
               direction: "row",
@@ -933,9 +970,9 @@ function renderLargeWidget(accounts, stats, updateStr, maskEmailEnabled) {
               ],
             },
           ],
-        }] : []),
-        // 7天周额度卡片
-        ...(first.has7d ? [{
+        },
+        // 7天长期周额度卡片
+        {
           type: "stack",
           direction: "column",
           gap: 6,
@@ -950,12 +987,12 @@ function renderLargeWidget(accounts, stats, updateStr, maskEmailEnabled) {
               direction: "row",
               alignItems: "center",
               children: [
-                { type: "text", text: "7天 周额度 (Weekly)", font: { size: 13, weight: "bold" } },
+                { type: "text", text: "7天周期额度", font: { size: 12, weight: "bold" } },
                 { type: "spacer" },
-                { type: "text", text: `剩余 ${remain7d}%`, font: { size: 14, weight: "heavy" }, textColor: getQuotaColor(first.remainingFraction7d) },
+                { type: "text", text: `剩余 ${remain7d}%`, font: { size: 13, weight: "heavy" }, textColor: getQuotaColor(first.remainingFraction7d) },
               ],
             },
-            { type: "image", src: createProgressBarSvg(first.remainingFraction7d, getQuotaColor(first.remainingFraction7d), 6), height: 6 },
+            { type: "image", src: createProgressBarSvg(first.remainingFraction7d, getQuotaColor(first.remainingFraction7d), 6.5), height: 6.5 },
             {
               type: "stack",
               direction: "row",
@@ -967,8 +1004,8 @@ function renderLargeWidget(accounts, stats, updateStr, maskEmailEnabled) {
               ],
             },
           ],
-        }] : []),
-        // 底部集群汇总卡片
+        },
+        // 底部集群状态看板
         ...(stats ? [{
           type: "stack",
           direction: "row",
@@ -1013,22 +1050,22 @@ function renderLargeWidget(accounts, stats, updateStr, maskEmailEnabled) {
       padding: [14, 16, 14, 16],
       gap: 10,
       children: [
+        // 顶栏 (Codex2API 官方 Logo)
         {
           type: "stack",
           direction: "row",
           alignItems: "center",
+          gap: 6,
           children: [
+            { type: "image", src: CODEX2API_LOGO, width: 16, height: 16, borderRadius: 4 },
+            { type: "text", text: "Codex2API 额度监控", font: { size: "subheadline", weight: "heavy" }, textColor: C.textPrimary },
             {
               type: "stack",
-              direction: "row",
-              alignItems: "center",
-              gap: 5,
-              padding: [3.5, 10, 3.5, 10],
-              backgroundColor: headerBadge.bg,
-              borderRadius: 11,
+              padding: [2, 5],
+              borderRadius: 4,
+              backgroundColor: C.cardBg,
               children: [
-                { type: "image", src: headerBadge.svg, width: 14, height: 14 },
-                { type: "text", text: headerBadge.text, font: { size: 12, weight: "heavy" }, textColor: "#FFFFFF" },
+                { type: "text", text: `${accounts.length} 账号`, font: { size: 10, weight: "bold" }, textColor: C.textSecondary },
               ],
             },
             { type: "spacer" },
@@ -1037,8 +1074,12 @@ function renderLargeWidget(accounts, stats, updateStr, maskEmailEnabled) {
         },
         ...accounts.map((acc) => {
           const accBadge = getAccountBadge(acc);
-          const usedPercent = Math.round((1 - acc.primaryRemainingFraction) * 100);
-          const remainPercent = Math.round(acc.primaryRemainingFraction * 100);
+          const used5h = acc.usagePercent5h !== null ? Math.round(acc.usagePercent5h) : Math.round((1 - acc.remainingFraction5h) * 100);
+          const remain5h = Math.round(acc.remainingFraction5h * 100);
+          const used7d = acc.usagePercent7d !== null ? Math.round(acc.usagePercent7d) : Math.round((1 - acc.remainingFraction7d) * 100);
+          const remain7d = Math.round(acc.remainingFraction7d * 100);
+          const usedPercent = acc.primaryWindow === "7d" ? used7d : used5h;
+          const remainPercent = acc.primaryWindow === "7d" ? remain7d : remain5h;
           const accountLabel = maskEmail(acc.email || acc.name, maskEmailEnabled);
           const progressSvg = createProgressBarSvg(acc.primaryRemainingFraction, acc.statusColor, 6);
 
@@ -1064,19 +1105,7 @@ function renderLargeWidget(accounts, stats, updateStr, maskEmailEnabled) {
                     alignItems: "center",
                     gap: 6,
                     children: [
-                      {
-                        type: "stack",
-                        direction: "row",
-                        alignItems: "center",
-                        gap: 3,
-                        padding: [2.5, 6],
-                        backgroundColor: accBadge.bg,
-                        borderRadius: 5,
-                        children: [
-                          { type: "image", src: accBadge.svg, width: 9, height: 9 },
-                          { type: "text", text: accBadge.text, font: { size: 8.5, weight: "heavy" }, textColor: "#FFFFFF" },
-                        ],
-                      },
+                      createMicroBadge(accBadge),
                       {
                         type: "stack",
                         direction: "column",
@@ -1142,22 +1171,22 @@ function renderLargeWidget(accounts, stats, updateStr, maskEmailEnabled) {
     padding: [14, 16, 14, 16],
     gap: 8,
     children: [
+      // 顶栏 (Codex2API 官方 Logo)
       {
         type: "stack",
         direction: "row",
         alignItems: "center",
+        gap: 6,
         children: [
+          { type: "image", src: CODEX2API_LOGO, width: 16, height: 16, borderRadius: 4 },
+          { type: "text", text: "Codex2API 额度监控", font: { size: "subheadline", weight: "heavy" }, textColor: C.textPrimary },
           {
             type: "stack",
-            direction: "row",
-            alignItems: "center",
-            gap: 5,
-            padding: [3.5, 10, 3.5, 10],
-            backgroundColor: headerBadge.bg,
-            borderRadius: 11,
+            padding: [2, 5],
+            borderRadius: 4,
+            backgroundColor: C.cardBg,
             children: [
-              { type: "image", src: headerBadge.svg, width: 14, height: 14 },
-              { type: "text", text: headerBadge.text, font: { size: 12, weight: "heavy" }, textColor: "#FFFFFF" },
+              { type: "text", text: `${accounts.length} 账号`, font: { size: 10, weight: "bold" }, textColor: C.textSecondary },
             ],
           },
           { type: "spacer" },
@@ -1168,7 +1197,7 @@ function renderLargeWidget(accounts, stats, updateStr, maskEmailEnabled) {
         const accBadge = getAccountBadge(acc);
         const remainPercent = Math.round(acc.primaryRemainingFraction * 100);
         const accountLabel = maskEmail(acc.email || acc.name, maskEmailEnabled);
-        const progressSvg = createProgressBarSvg(acc.primaryRemainingFraction, acc.statusColor, 5.5);
+        const progressSvg = createProgressBarSvg(acc.primaryRemainingFraction, acc.statusColor, 5);
 
         return {
           type: "stack",
@@ -1186,30 +1215,18 @@ function renderLargeWidget(accounts, stats, updateStr, maskEmailEnabled) {
               alignItems: "center",
               gap: 5,
               children: [
-                {
-                  type: "stack",
-                  direction: "row",
-                  alignItems: "center",
-                  gap: 3,
-                  padding: [2, 5],
-                  backgroundColor: accBadge.bg,
-                  borderRadius: 5,
-                  children: [
-                    { type: "image", src: accBadge.svg, width: 9, height: 9 },
-                    { type: "text", text: accBadge.text, font: { size: 8.5, weight: "heavy" }, textColor: "#FFFFFF" },
-                  ],
-                },
+                createMicroBadge(accBadge),
                 { type: "text", text: accountLabel, font: { size: 11.5, weight: "bold" }, maxLines: 1 },
                 { type: "spacer" },
                 {
                   type: "text",
-                  text: `余 ${remainPercent}%`,
+                  text: `${acc.primaryWindowLabel}余 ${remainPercent}%`,
                   font: { size: 11.5, weight: "heavy" },
                   textColor: acc.statusColor,
                 },
               ],
             },
-            { type: "image", src: progressSvg, height: 5.5 },
+            { type: "image", src: progressSvg, height: 5 },
             {
               type: "stack",
               direction: "row",
@@ -1243,57 +1260,39 @@ function renderLargeWidget(accounts, stats, updateStr, maskEmailEnabled) {
 }
 
 function renderAccessoryCircular(account) {
-  const remainPercent = Math.round((account?.primaryRemainingFraction || 1.0) * 100);
+  const percent = Math.round(account.primaryRemainingFraction * 100);
   return {
     type: "widget",
     children: [
       {
-        type: "stack",
-        direction: "column",
-        alignItems: "center",
-        gap: 2,
-        children: [
-          { type: "image", src: "sf-symbol:crown.fill", width: 14, height: 14 },
-          { type: "text", text: `${remainPercent}%`, font: { size: 11, weight: "bold" } },
-        ],
+        type: "gauge",
+        value: account.primaryRemainingFraction,
+        label: { type: "text", text: account.primaryWindow.toUpperCase(), font: { size: 9, weight: "heavy" } },
+        currentValueLabel: { type: "text", text: `${percent}`, font: { size: 12, weight: "bold" } },
       },
     ],
   };
 }
 
 function renderAccessoryRectangular(account) {
-  const remainPercent = Math.round((account?.primaryRemainingFraction || 1.0) * 100);
+  const remainPercent = Math.round(account.primaryRemainingFraction * 100);
   return {
     type: "widget",
+    padding: [4, 6, 4, 6],
     children: [
-      {
-        type: "stack",
-        direction: "row",
-        alignItems: "center",
-        gap: 4,
-        children: [
-          { type: "image", src: "sf-symbol:crown.fill", width: 12, height: 12 },
-          { type: "text", text: `${account?.planType?.toUpperCase() || "CODEX"} (${account?.primaryWindowLabel || "5h"})`, font: { size: 12, weight: "bold" } },
-        ],
-      },
-      {
-        type: "text",
-        text: `剩余 ${remainPercent}% · ${account?.primaryResetCountdownStr || "恢复中"}`,
-        font: { size: 11 },
-      },
+      { type: "text", text: account.name, font: { size: 12, weight: "bold" }, maxLines: 1 },
+      { type: "text", text: `${account.primaryWindowLabel}剩余: ${remainPercent}% · ${account.primaryResetCountdownStr}`, font: { size: 10 }, maxLines: 1 },
+      { type: "text", text: `重置时间: ${account.primaryResetTimeStr}`, font: { size: 9 }, maxLines: 1 },
     ],
   };
 }
 
 function renderAccessoryInline(account) {
-  const remainPercent = Math.round((account?.primaryRemainingFraction || 1.0) * 100);
+  const remainPercent = Math.round(account.primaryRemainingFraction * 100);
   return {
     type: "widget",
     children: [
-      {
-        type: "text",
-        text: `Codex(${account?.primaryWindow || "5h"}): 余${remainPercent}% (${account?.primaryResetCountdownStr || "OK"})`,
-      },
+      { type: "text", text: `${account.name}: 余${remainPercent}% (${account.primaryResetCountdownStr})` },
     ],
   };
 }
@@ -1309,20 +1308,10 @@ function renderErrorWidget(family, error, updateTime) {
         type: "stack",
         direction: "row",
         alignItems: "center",
+        gap: 5,
         children: [
-          {
-            type: "stack",
-            direction: "row",
-            gap: 4,
-            alignItems: "center",
-            padding: [2, 6, 2, 6],
-            backgroundColor: "#FF3B30",
-            borderRadius: 8,
-            children: [
-              { type: "image", src: "sf-symbol:exclamationmark.triangle.fill", width: 10, height: 10, color: "#FFFFFF" },
-              { type: "text", text: "CODEX2API", font: { size: 10, weight: "bold" }, textColor: "#FFFFFF" },
-            ],
-          },
+          { type: "image", src: CODEX2API_LOGO, width: 14, height: 14, borderRadius: 3.5 },
+          { type: "text", text: "Codex2API", font: { size: 11, weight: "bold" }, textColor: C.textPrimary },
           { type: "spacer" },
           { type: "text", text: updateTime, font: { size: 10 }, textColor: C.textSecondary },
         ],

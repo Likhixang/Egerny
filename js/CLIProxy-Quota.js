@@ -1,3 +1,6 @@
+// ── CLIProxy 官方项目高清徽标 ──
+const CLIPROXY_LOGO = "data:image/png;base64,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";
+
 /*
  * CLIProxy Quota 额度监控 — Egern 新式小组件
  * 核心设计系统：
@@ -455,12 +458,29 @@ const C = {
 
 // ── HIG 拟物卡片式布局 ──
 
+function createMicroBadge(badge) {
+  return {
+    type: "stack",
+    direction: "row",
+    alignItems: "center",
+    gap: 3,
+    padding: [2, 5],
+    backgroundColor: badge.bg,
+    borderRadius: 5,
+    children: [
+      { type: "image", src: badge.svg, width: 9, height: 9 },
+      { type: "text", text: badge.text, font: { size: 8.5, weight: "heavy" }, textColor: "#FFFFFF" },
+    ],
+  };
+}
+
 function renderSmallWidget(model, updateTime) {
   const usedPercent = Math.round((1 - model.remainingFraction) * 100);
   const remainPercent = Math.round(model.remainingFraction * 100);
-  const badge = getBadgeConfig(model.provider, model.name);
+  const mBadge = getBadgeConfig(model.provider, model.name);
   const resetTime = formatTimeOnly(model.resetAtMs);
   const progressSvg = createProgressBarSvg(model.remainingFraction, model.statusColor, 6);
+  const accountText = maskEmail(model.account && model.account !== "默认账号" ? model.account : model.name, true);
 
   return {
     type: "widget",
@@ -468,32 +488,24 @@ function renderSmallWidget(model, updateTime) {
     padding: 12,
     gap: 8,
     children: [
+      // 顶部 Header (CLIProxy 官方 Logo)
       {
         type: "stack",
         direction: "row",
         alignItems: "center",
+        gap: 5,
         children: [
-          {
-            type: "stack",
-            direction: "row",
-            alignItems: "center",
-            gap: 4,
-            padding: [3, 8, 3, 8],
-            backgroundColor: badge.bg,
-            borderRadius: 10,
-            children: [
-              { type: "image", src: badge.svg, width: 12, height: 12 },
-              { type: "text", text: badge.text, font: { size: 10, weight: "heavy" }, textColor: "#FFFFFF" },
-            ],
-          },
+          { type: "image", src: CLIPROXY_LOGO, width: 14, height: 14, borderRadius: 3.5 },
+          { type: "text", text: "CLIProxy", font: { size: "caption1", weight: "heavy" }, textColor: C.textPrimary },
           { type: "spacer" },
           { type: "text", text: updateTime, font: { size: 10, weight: "medium" }, textColor: C.textTertiary },
         ],
       },
+      // 核心卡片容器
       {
         type: "stack",
         direction: "column",
-        gap: 8,
+        gap: 6,
         padding: 10,
         backgroundColor: C.cardBg,
         borderWidth: 0.5,
@@ -501,34 +513,46 @@ function renderSmallWidget(model, updateTime) {
         borderRadius: 13,
         flex: 1,
         children: [
+          // 账号前微型徽标色条
           {
             type: "stack",
             direction: "row",
-            alignItems: "start",
+            alignItems: "center",
+            gap: 4,
+            children: [
+              createMicroBadge(mBadge),
+              { type: "text", text: accountText, font: { size: 11, weight: "bold" }, maxLines: 1 },
+            ],
+          },
+          {
+            type: "stack",
+            direction: "row",
+            alignItems: "center",
             children: [
               {
                 type: "stack",
-                direction: "column",
-                gap: 1,
+                direction: "row",
+                gap: 3,
+                alignItems: "baseline",
                 children: [
                   { type: "text", text: "已用", font: { size: 10 }, textColor: C.textSecondary },
-                  { type: "text", text: `${usedPercent}%`, font: { size: 17, weight: "heavy" }, textColor: C.textPrimary },
+                  { type: "text", text: `${usedPercent}%`, font: { size: 15, weight: "heavy" }, textColor: C.textPrimary },
                 ],
               },
               { type: "spacer" },
               {
                 type: "stack",
-                direction: "column",
-                alignItems: "end",
-                gap: 1,
+                direction: "row",
+                gap: 3,
+                alignItems: "baseline",
                 children: [
-                  { type: "text", text: "剩余 (5h)", font: { size: 10 }, textColor: C.textSecondary },
-                  { type: "text", text: `${remainPercent}%`, font: { size: 17, weight: "heavy" }, textColor: model.statusColor },
+                  { type: "text", text: "剩余", font: { size: 10 }, textColor: C.textSecondary },
+                  { type: "text", text: `${remainPercent}%`, font: { size: 16, weight: "heavy" }, textColor: model.statusColor },
                 ],
               },
             ],
           },
-          { type: "image", src: progressSvg, height: 6 },
+          { type: "image", src: progressSvg, height: 5.5 },
           {
             type: "stack",
             direction: "row",
@@ -536,7 +560,7 @@ function renderSmallWidget(model, updateTime) {
             children: [
               { type: "text", text: `重置 ${resetTime}`, font: { size: 9 }, textColor: C.textSecondary },
               { type: "spacer" },
-              { type: "text", text: formatCountdown(model.resetAtMs, model.remainingFraction), font: { size: 10, weight: "bold" }, textColor: model.statusColor },
+              { type: "text", text: formatCountdown(model.resetAtMs, model.remainingFraction), font: { size: 9.5, weight: "bold" }, textColor: model.statusColor },
             ],
           },
         ],
@@ -548,10 +572,9 @@ function renderSmallWidget(model, updateTime) {
 function renderMediumWidget(models, updateStr, maskEmailEnabled) {
   const isSingle = models.length === 1;
   const firstModel = models[0];
-  const headerBadge = getHeaderBadge(models);
 
   if (isSingle && firstModel) {
-    const badge = getBadgeConfig(firstModel.provider, firstModel.name);
+    const mBadge = getBadgeConfig(firstModel.provider, firstModel.name);
     const usedPercent = Math.round((1 - firstModel.remainingFraction) * 100);
     const remainPercent = Math.round(firstModel.remainingFraction * 100);
     const accountText = maskEmail(firstModel.account && firstModel.account !== "默认账号" ? firstModel.account : firstModel.name, maskEmailEnabled);
@@ -563,28 +586,29 @@ function renderMediumWidget(models, updateStr, maskEmailEnabled) {
       padding: [12, 14, 12, 14],
       gap: 8,
       children: [
+        // 顶部 Header (CLIProxy 官方 Logo)
         {
           type: "stack",
           direction: "row",
           alignItems: "center",
+          gap: 6,
           children: [
+            { type: "image", src: CLIPROXY_LOGO, width: 15, height: 15, borderRadius: 3.5 },
+            { type: "text", text: "CLIProxy 配额", font: { size: "footnote", weight: "heavy" }, textColor: C.textPrimary },
             {
               type: "stack",
-              direction: "row",
-              alignItems: "center",
-              gap: 5,
-              padding: [3, 9, 3, 9],
-              backgroundColor: badge.bg,
-              borderRadius: 10,
+              padding: [2, 5],
+              borderRadius: 4,
+              backgroundColor: C.cardBg,
               children: [
-                { type: "image", src: badge.svg, width: 13, height: 13 },
-                { type: "text", text: badge.text, font: { size: 11, weight: "heavy" }, textColor: "#FFFFFF" },
+                { type: "text", text: "5h 配额", font: { size: 9.5, weight: "bold" }, textColor: C.textSecondary },
               ],
             },
             { type: "spacer" },
             { type: "text", text: `更新 ${updateStr}`, font: { size: 11, weight: "medium" }, textColor: C.textSecondary },
           ],
         },
+        // 核心卡片容器
         {
           type: "stack",
           direction: "column",
@@ -596,7 +620,17 @@ function renderMediumWidget(models, updateStr, maskEmailEnabled) {
           borderRadius: 13,
           flex: 1,
           children: [
-            { type: "text", text: accountText, font: { size: 12, weight: "bold" }, maxLines: 1 },
+            // 账号前微型徽标色条
+            {
+              type: "stack",
+              direction: "row",
+              alignItems: "center",
+              gap: 5,
+              children: [
+                createMicroBadge(mBadge),
+                { type: "text", text: accountText, font: { size: 12, weight: "bold" }, maxLines: 1 },
+              ],
+            },
             {
               type: "stack",
               direction: "row",
@@ -642,6 +676,7 @@ function renderMediumWidget(models, updateStr, maskEmailEnabled) {
     };
   }
 
+  // 双账号等高卡片排版
   const topTwo = models.slice(0, 2);
   return {
     type: "widget",
@@ -649,22 +684,22 @@ function renderMediumWidget(models, updateStr, maskEmailEnabled) {
     padding: [12, 14, 12, 14],
     gap: 7,
     children: [
+      // 顶部 Header (CLIProxy 官方 Logo)
       {
         type: "stack",
         direction: "row",
         alignItems: "center",
+        gap: 6,
         children: [
+          { type: "image", src: CLIPROXY_LOGO, width: 15, height: 15, borderRadius: 3.5 },
+          { type: "text", text: "CLIProxy 配额", font: { size: "footnote", weight: "heavy" }, textColor: C.textPrimary },
           {
             type: "stack",
-            direction: "row",
-            alignItems: "center",
-            gap: 5,
-            padding: [3, 9, 3, 9],
-            backgroundColor: headerBadge.bg,
-            borderRadius: 10,
+            padding: [2, 5],
+            borderRadius: 4,
+            backgroundColor: C.cardBg,
             children: [
-              { type: "image", src: headerBadge.svg, width: 13, height: 13 },
-              { type: "text", text: headerBadge.text, font: { size: 11, weight: "heavy" }, textColor: "#FFFFFF" },
+              { type: "text", text: `${models.length} 账号`, font: { size: 9.5, weight: "bold" }, textColor: C.textSecondary },
             ],
           },
           { type: "spacer" },
@@ -693,19 +728,7 @@ function renderMediumWidget(models, updateStr, maskEmailEnabled) {
               alignItems: "center",
               gap: 5,
               children: [
-                {
-                  type: "stack",
-                  direction: "row",
-                  alignItems: "center",
-                  gap: 3,
-                  padding: [2, 5],
-                  backgroundColor: mBadge.bg,
-                  borderRadius: 5,
-                  children: [
-                    { type: "image", src: mBadge.svg, width: 9, height: 9 },
-                    { type: "text", text: mBadge.text, font: { size: 8.5, weight: "heavy" }, textColor: "#FFFFFF" },
-                  ],
-                },
+                createMicroBadge(mBadge),
                 { type: "text", text: accountText, font: { size: 11, weight: "bold" }, maxLines: 1 },
                 { type: "spacer" },
                 {
@@ -739,11 +762,10 @@ function renderLargeWidget(models, updateStr, maskEmailEnabled) {
   const isSingle = models.length === 1;
   const isDual = models.length === 2;
   const firstModel = models[0];
-  const headerBadge = getHeaderBadge(models);
 
   // 1. 单账号专属旗舰看板（大字仪表盘 + 底部重置机制与配额状态双卡片）
   if (isSingle && firstModel) {
-    const badge = getBadgeConfig(firstModel.provider, firstModel.name);
+    const mBadge = getBadgeConfig(firstModel.provider, firstModel.name);
     const usedPercent = Math.round((1 - firstModel.remainingFraction) * 100);
     const remainPercent = Math.round(firstModel.remainingFraction * 100);
     const accountText = maskEmail(firstModel.account && firstModel.account !== "默认账号" ? firstModel.account : firstModel.name, maskEmailEnabled);
@@ -756,23 +778,22 @@ function renderLargeWidget(models, updateStr, maskEmailEnabled) {
       padding: [14, 16, 14, 16],
       gap: 12,
       children: [
-        // 顶部 Header
+        // 顶部 Header (CLIProxy 官方 Logo)
         {
           type: "stack",
           direction: "row",
           alignItems: "center",
+          gap: 6,
           children: [
+            { type: "image", src: CLIPROXY_LOGO, width: 16, height: 16, borderRadius: 4 },
+            { type: "text", text: "CLIProxy 额度监控", font: { size: "subheadline", weight: "heavy" }, textColor: C.textPrimary },
             {
               type: "stack",
-              direction: "row",
-              alignItems: "center",
-              gap: 5,
-              padding: [3.5, 10, 3.5, 10],
-              backgroundColor: badge.bg,
-              borderRadius: 11,
+              padding: [2, 5],
+              borderRadius: 4,
+              backgroundColor: C.cardBg,
               children: [
-                { type: "image", src: badge.svg, width: 14, height: 14 },
-                { type: "text", text: badge.text, font: { size: 12, weight: "heavy" }, textColor: "#FFFFFF" },
+                { type: "text", text: "5h 配额", font: { size: 10, weight: "bold" }, textColor: C.textSecondary },
               ],
             },
             { type: "spacer" },
@@ -793,9 +814,18 @@ function renderLargeWidget(models, updateStr, maskEmailEnabled) {
             {
               type: "stack",
               direction: "column",
-              gap: 2,
+              gap: 4,
               children: [
-                { type: "text", text: accountText, font: { size: 17, weight: "heavy" }, maxLines: 1 },
+                {
+                  type: "stack",
+                  direction: "row",
+                  alignItems: "center",
+                  gap: 6,
+                  children: [
+                    createMicroBadge(mBadge),
+                    { type: "text", text: accountText, font: { size: 16, weight: "heavy" }, maxLines: 1 },
+                  ],
+                },
                 { type: "text", text: `${firstModel.provider} 5小时滚动配额`, font: { size: 11 }, textColor: C.textSecondary },
               ],
             },
@@ -901,22 +931,22 @@ function renderLargeWidget(models, updateStr, maskEmailEnabled) {
       padding: [14, 16, 14, 16],
       gap: 12,
       children: [
+        // 顶部 Header (CLIProxy 官方 Logo)
         {
           type: "stack",
           direction: "row",
           alignItems: "center",
+          gap: 6,
           children: [
+            { type: "image", src: CLIPROXY_LOGO, width: 16, height: 16, borderRadius: 4 },
+            { type: "text", text: "CLIProxy 额度监控", font: { size: "subheadline", weight: "heavy" }, textColor: C.textPrimary },
             {
               type: "stack",
-              direction: "row",
-              alignItems: "center",
-              gap: 5,
-              padding: [3.5, 10, 3.5, 10],
-              backgroundColor: headerBadge.bg,
-              borderRadius: 11,
+              padding: [2, 5],
+              borderRadius: 4,
+              backgroundColor: C.cardBg,
               children: [
-                { type: "image", src: headerBadge.svg, width: 14, height: 14 },
-                { type: "text", text: headerBadge.text, font: { size: 12, weight: "heavy" }, textColor: "#FFFFFF" },
+                { type: "text", text: `${models.length} 账号`, font: { size: 10, weight: "bold" }, textColor: C.textSecondary },
               ],
             },
             { type: "spacer" },
@@ -952,19 +982,7 @@ function renderLargeWidget(models, updateStr, maskEmailEnabled) {
                     alignItems: "center",
                     gap: 6,
                     children: [
-                      {
-                        type: "stack",
-                        direction: "row",
-                        alignItems: "center",
-                        gap: 3,
-                        padding: [2.5, 7],
-                        backgroundColor: mBadge.bg,
-                        borderRadius: 6,
-                        children: [
-                          { type: "image", src: mBadge.svg, width: 10, height: 10 },
-                          { type: "text", text: mBadge.text, font: { size: 9.5, weight: "heavy" }, textColor: "#FFFFFF" },
-                        ],
-                      },
+                      createMicroBadge(mBadge),
                       {
                         type: "stack",
                         direction: "column",
@@ -1024,22 +1042,22 @@ function renderLargeWidget(models, updateStr, maskEmailEnabled) {
     padding: [14, 16, 14, 16],
     gap: 9,
     children: [
+      // 顶部 Header (CLIProxy 官方 Logo)
       {
         type: "stack",
         direction: "row",
         alignItems: "center",
+        gap: 6,
         children: [
+          { type: "image", src: CLIPROXY_LOGO, width: 16, height: 16, borderRadius: 4 },
+          { type: "text", text: "CLIProxy 额度监控", font: { size: "subheadline", weight: "heavy" }, textColor: C.textPrimary },
           {
             type: "stack",
-            direction: "row",
-            alignItems: "center",
-            gap: 5,
-            padding: [3.5, 10, 3.5, 10],
-            backgroundColor: headerBadge.bg,
-            borderRadius: 11,
+            padding: [2, 5],
+            borderRadius: 4,
+            backgroundColor: C.cardBg,
             children: [
-              { type: "image", src: headerBadge.svg, width: 14, height: 14 },
-              { type: "text", text: headerBadge.text, font: { size: 12, weight: "heavy" }, textColor: "#FFFFFF" },
+              { type: "text", text: `${models.length} 账号`, font: { size: 10, weight: "bold" }, textColor: C.textSecondary },
             ],
           },
           { type: "spacer" },
@@ -1068,19 +1086,7 @@ function renderLargeWidget(models, updateStr, maskEmailEnabled) {
               alignItems: "center",
               gap: 5,
               children: [
-                {
-                  type: "stack",
-                  direction: "row",
-                  alignItems: "center",
-                  gap: 3,
-                  padding: [2, 5],
-                  backgroundColor: mBadge.bg,
-                  borderRadius: 5,
-                  children: [
-                    { type: "image", src: mBadge.svg, width: 9, height: 9 },
-                    { type: "text", text: mBadge.text, font: { size: 8.5, weight: "heavy" }, textColor: "#FFFFFF" },
-                  ],
-                },
+                createMicroBadge(mBadge),
                 { type: "text", text: accountText, font: { size: 11.5, weight: "bold" }, maxLines: 1 },
                 { type: "spacer" },
                 {
@@ -1110,57 +1116,39 @@ function renderLargeWidget(models, updateStr, maskEmailEnabled) {
 }
 
 function renderAccessoryCircular(model) {
-  const remainPercent = Math.round((model?.remainingFraction || 1.0) * 100);
+  const percent = Math.round(model.remainingFraction * 100);
   return {
     type: "widget",
     children: [
       {
-        type: "stack",
-        direction: "column",
-        alignItems: "center",
-        gap: 2,
-        children: [
-          { type: "image", src: "sf-symbol:sparkles", width: 14, height: 14 },
-          { type: "text", text: `${remainPercent}%`, font: { size: 11, weight: "bold" } },
-        ],
+        type: "gauge",
+        value: model.remainingFraction,
+        label: { type: "text", text: model.shortName.slice(0, 3).toUpperCase(), font: { size: 9, weight: "heavy" } },
+        currentValueLabel: { type: "text", text: `${percent}`, font: { size: 12, weight: "bold" } },
       },
     ],
   };
 }
 
 function renderAccessoryRectangular(model) {
-  const remainPercent = Math.round((model?.remainingFraction || 1.0) * 100);
+  const remainPercent = Math.round(model.remainingFraction * 100);
   return {
     type: "widget",
+    padding: [4, 6, 4, 6],
     children: [
-      {
-        type: "stack",
-        direction: "row",
-        alignItems: "center",
-        gap: 4,
-        children: [
-          { type: "image", src: "sf-symbol:sparkles", width: 12, height: 12 },
-          { type: "text", text: model?.name || "Gemini 5h", font: { size: 12, weight: "bold" } },
-        ],
-      },
-      {
-        type: "text",
-        text: `剩余 ${remainPercent}% · ${model?.resetCountdownStr || "恢复中"}`,
-        font: { size: 11 },
-      },
+      { type: "text", text: model.name, font: { size: 12, weight: "bold" }, maxLines: 1 },
+      { type: "text", text: `5h 剩余 ${remainPercent}% · ${model.resetCountdownStr}`, font: { size: 10 }, maxLines: 1 },
+      { type: "text", text: `重置时间: ${model.resetTimeStr}`, font: { size: 9 }, maxLines: 1 },
     ],
   };
 }
 
 function renderAccessoryInline(model) {
-  const remainPercent = Math.round((model?.remainingFraction || 1.0) * 100);
+  const remainPercent = Math.round(model.remainingFraction * 100);
   return {
     type: "widget",
     children: [
-      {
-        type: "text",
-        text: `${model?.name || "Gemini"}: 5h余${remainPercent}% (${model?.resetCountdownStr || "OK"})`,
-      },
+      { type: "text", text: `${model.shortName}: 5h余${remainPercent}% (${model.resetCountdownStr})` },
     ],
   };
 }
@@ -1176,20 +1164,10 @@ function renderErrorWidget(family, error, updateTime) {
         type: "stack",
         direction: "row",
         alignItems: "center",
+        gap: 5,
         children: [
-          {
-            type: "stack",
-            direction: "row",
-            gap: 4,
-            alignItems: "center",
-            padding: [2, 6, 2, 6],
-            backgroundColor: "#FF3B30",
-            borderRadius: 8,
-            children: [
-              { type: "image", src: "sf-symbol:exclamationmark.triangle.fill", width: 10, height: 10, color: "#FFFFFF" },
-              { type: "text", text: "CLIPROXY", font: { size: 10, weight: "bold" }, textColor: "#FFFFFF" },
-            ],
-          },
+          { type: "image", src: CLIPROXY_LOGO, width: 14, height: 14, borderRadius: 3.5 },
+          { type: "text", text: "CLIProxy", font: { size: 11, weight: "bold" }, textColor: C.textPrimary },
           { type: "spacer" },
           { type: "text", text: updateTime, font: { size: 10 }, textColor: C.textSecondary },
         ],
