@@ -1,8 +1,7 @@
 /*
  * IPPure 节点 IP 纯净度 — Egern 新式小组件
- * 设计系统：Apple HIG 统一通透风格
- *   - 全尺寸设计语言严谨统一（无突兀的局部大遮罩嵌套）
- *   - Small: 顶部 Header + 正中纯粹大圆环仪表
+ * 设计系统：Apple HIG 统一通透与精致层级
+ *   - Small: 顶部 Header + 90pt 充盈大圆环 + 底部精致 IP/位置胶囊
  *   - Medium: 顶部 Header + 左侧大圆环仪表 + 右侧核心信息流
  *   - Large: 顶部 Header + 顶部大圆环 Hero 概览 + 底部 2x2 对称等高数据卡片
  *   - 锁屏系列: accessoryCircular / accessoryRectangular / accessoryInline
@@ -75,8 +74,11 @@ export default async function(ctx) {
   // ── 主屏幕小组件 ──
   if (family === "systemSmall") {
     return renderSystemSmall({
+      displayIP,
+      locShort,
       purity,
-      level
+      level,
+      ipVer
     })
   }
 
@@ -139,32 +141,41 @@ const C = {
 
 /**
  * 主屏幕 Small 小尺寸 (2x2)
- * 结构：
- *  - Header: 左侧盾牌+标题，右侧风险评级胶囊
- *  - Center: 居中通透大圆环仪表 (86x86pt)，绝对对称
+ * 精致三段式重构：
+ *  - Header: 盾牌+标题 + 右侧协议药丸
+ *  - Center: 90x90pt 充盈大圆环仪表（绝对居中）
+ *  - Footer: 底部精巧信息胶囊（图钉 + IP/归属地 + 风险状态）
  */
 function renderSystemSmall(d) {
   return {
     type: "widget",
     padding: 12,
     children: [
-      // 1. 顶部 Header 行
+      // 1. 顶部 Header
       {
         type: "stack",
         direction: "row",
         alignItems: "center",
         gap: 4,
         children: [
-          { type: "image", src: "sf-symbol:shield.fill", color: d.level.color, width: 12, height: 12 },
+          { type: "image", src: "sf-symbol:shield.lefthalf.filled", color: d.level.color, width: 13, height: 13 },
           { type: "text", text: "IP 纯净度", font: { size: "caption1", weight: "bold" }, textColor: C.textPrimary },
           { type: "spacer" },
-          createMiniPill(d.level.text, d.level.color, d.level.badgeBg)
+          {
+            type: "stack",
+            padding: [2, 5],
+            borderRadius: 4,
+            backgroundColor: C.cardBg,
+            children: [
+              { type: "text", text: d.ipVer, font: { size: 9, weight: "bold" }, textColor: C.textSecondary }
+            ]
+          }
         ]
       },
 
       { type: "spacer" },
 
-      // 2. 居中大圆环仪表
+      // 2. 核心大圆环仪表
       {
         type: "stack",
         direction: "row",
@@ -173,15 +184,45 @@ function renderSystemSmall(d) {
           { type: "spacer" },
           {
             type: "image",
-            src: createGaugeRingSvg(d.purity, 86, 8, d.level.color, "纯净度"),
-            width: 86,
-            height: 86
+            src: createGaugeRingSvg(d.purity, 90, 8.5, d.level.color, "纯净度"),
+            width: 90,
+            height: 90
           },
           { type: "spacer" }
         ]
       },
 
-      { type: "spacer" }
+      { type: "spacer" },
+
+      // 3. 底部精巧信息胶囊 (IP 与归属)
+      {
+        type: "stack",
+        direction: "row",
+        alignItems: "center",
+        padding: [3, 7],
+        borderRadius: 6,
+        backgroundColor: C.cardBg,
+        gap: 4,
+        children: [
+          { type: "image", src: "sf-symbol:mappin.and.ellipse", color: C.textTertiary, width: 10, height: 10 },
+          {
+            type: "text",
+            text: `${d.displayIP} · ${d.locShort}`,
+            font: { size: 10, weight: "medium" },
+            textColor: C.textSecondary,
+            maxLines: 1,
+            minScale: 0.65,
+            flex: 1
+          },
+          {
+            type: "text",
+            text: d.level.text,
+            font: { size: 9, weight: "bold" },
+            textColor: d.level.color,
+            maxLines: 1
+          }
+        ]
+      }
     ]
   }
 }
@@ -320,11 +361,6 @@ function renderSystemMedium(d) {
 
 /**
  * 主屏幕 Large 大尺寸 (4x4)
- * 结构：
- *  - Header 顶栏
- *  - Hero 主仪表盘概览（通透无突兀大灰底嵌套，与 Small/Medium 统一）
- *  - 严丝合缝等宽高对称四宫格矩阵（2x2 Grid）
- *  - Footer 底部来源与时间
  */
 function renderSystemLarge(d) {
   return {
@@ -346,7 +382,7 @@ function renderSystemLarge(d) {
         ]
       },
 
-      // 2. Hero 主仪表盘概览（去除突兀的大灰底遮罩，全尺寸语言统一）
+      // 2. Hero 主仪表盘概览
       {
         type: "stack",
         direction: "row",
@@ -420,7 +456,6 @@ function renderSystemLarge(d) {
         gap: 8,
         flex: 1,
         children: [
-          // 第一行（2个等宽高卡片）
           {
             type: "stack",
             direction: "row",
@@ -431,7 +466,6 @@ function renderSystemLarge(d) {
               createGridCard("sf-symbol:building.2.crop.circle", "网络运营商", d.asnNumber, d.asnOrg || "未知组织")
             ]
           },
-          // 第二行（2个等宽高卡片）
           {
             type: "stack",
             direction: "row",
@@ -464,9 +498,6 @@ function renderSystemLarge(d) {
 // 🔒 锁屏小组件渲染 (Lock Screen Accessories)
 // ══════════════════════════════════════════════════════
 
-/**
- * 锁屏圆形 (accessoryCircular)
- */
 function renderAccessoryCircular(purity, level) {
   return {
     type: "widget",
@@ -493,9 +524,6 @@ function renderAccessoryCircular(purity, level) {
   }
 }
 
-/**
- * 锁屏矩形 (accessoryRectangular)
- */
 function renderAccessoryRectangular(displayIP, locShort, purity, level, ipType) {
   return {
     type: "widget",
@@ -550,9 +578,6 @@ function renderAccessoryRectangular(displayIP, locShort, purity, level, ipType) 
   }
 }
 
-/**
- * 锁屏单行 (accessoryInline)
- */
 function renderAccessoryInline(displayIP, purity, level) {
   return {
     type: "widget",
@@ -600,18 +625,6 @@ function createPillBadge(text, textColor, bgColor, icon) {
     borderRadius: 6,
     backgroundColor: bgColor,
     children
-  }
-}
-
-function createMiniPill(text, textColor, bgColor) {
-  return {
-    type: "stack",
-    padding: [2, 5],
-    borderRadius: 5,
-    backgroundColor: bgColor,
-    children: [
-      { type: "text", text, font: { size: 9, weight: "bold" }, textColor, maxLines: 1 }
-    ]
   }
 }
 
