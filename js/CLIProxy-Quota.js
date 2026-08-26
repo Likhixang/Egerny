@@ -428,10 +428,12 @@ export default async function(ctx) {
 // ── 设计系统色彩规范 (纯白 #FFFFFF & 纯黑 #151515) ──
 const C = {
   textPrimary: { light: "#151515", dark: "#FFFFFF" },
-  textSecondary: { light: "#666666", dark: "#AAAAAA" },
-  textTertiary: { light: "#888888", dark: "#888888" },
-  cardBg: { light: "#FFFFFF", dark: "#151515" },
-  cardBorder: { light: "rgba(21, 21, 21, 0.08)", dark: "rgba(255, 255, 255, 0.12)" },
+  textSecondary: { light: "#6E6E73", dark: "#98989D" },
+  textTertiary: { light: "#8E8E93", dark: "#636366" },
+
+  widgetBg: { light: "#FFFFFF", dark: "#151515" },
+  cardBg: { light: "rgba(0, 0, 0, 0.04)", dark: "rgba(255, 255, 255, 0.08)" },
+  cardBorder: { light: "rgba(0, 0, 0, 0.06)", dark: "rgba(255, 255, 255, 0.08)" },
 };
 
 // ── HIG 拟物卡片式布局 ──
@@ -445,6 +447,7 @@ function renderSmallWidget(model, updateTime) {
 
   return {
     type: "widget",
+    backgroundColor: C.widgetBg,
     padding: 12,
     gap: 8,
     children: [
@@ -538,6 +541,7 @@ function renderMediumWidget(models, updateStr, maskEmailEnabled) {
 
     return {
       type: "widget",
+      backgroundColor: C.widgetBg,
       padding: [12, 14, 12, 14],
       gap: 8,
       children: [
@@ -623,6 +627,7 @@ function renderMediumWidget(models, updateStr, maskEmailEnabled) {
   const topTwo = models.slice(0, 2);
   return {
     type: "widget",
+    backgroundColor: C.widgetBg,
     padding: [12, 14, 12, 14],
     gap: 7,
     children: [
@@ -715,6 +720,7 @@ function renderLargeWidget(models, updateStr, maskEmailEnabled) {
 
     return {
       type: "widget",
+      backgroundColor: C.widgetBg,
       padding: [14, 16, 14, 16],
       gap: 12,
       children: [
@@ -859,6 +865,7 @@ function renderLargeWidget(models, updateStr, maskEmailEnabled) {
   if (isDual) {
     return {
       type: "widget",
+      backgroundColor: C.widgetBg,
       padding: [14, 16, 14, 16],
       gap: 12,
       children: [
@@ -959,6 +966,7 @@ function renderLargeWidget(models, updateStr, maskEmailEnabled) {
   const topFour = models.slice(0, 4);
   return {
     type: "widget",
+    backgroundColor: C.widgetBg,
     padding: [14, 16, 14, 16],
     gap: 9,
     children: [
@@ -1093,6 +1101,7 @@ function renderAccessoryInline(model) {
 function renderErrorWidget(family, error, updateTime) {
   return {
     type: "widget",
+    backgroundColor: C.widgetBg,
     padding: 12,
     gap: 6,
     children: [

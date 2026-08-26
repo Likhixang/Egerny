@@ -123,12 +123,13 @@ export default async function(ctx) {
 
 const C = {
   textPrimary: { light: "#151515", dark: "#FFFFFF" },
-  textSecondary: { light: "#666666", dark: "#AAAAAA" },
-  textTertiary: { light: "#888888", dark: "#888888" },
+  textSecondary: { light: "#6E6E73", dark: "#98989D" },
+  textTertiary: { light: "#8E8E93", dark: "#636366" },
 
-  cardBg: { light: "#FFFFFF", dark: "#151515" },
-  cardBgSecondary: { light: "#F5F5F5", dark: "#1F1F1F" },
-  cardBorder: { light: "rgba(21, 21, 21, 0.08)", dark: "rgba(255, 255, 255, 0.12)" }
+  widgetBg: { light: "#FFFFFF", dark: "#151515" },
+  cardBg: { light: "rgba(0, 0, 0, 0.04)", dark: "rgba(255, 255, 255, 0.08)" },
+  cardBgSecondary: { light: "rgba(0, 0, 0, 0.025)", dark: "rgba(255, 255, 255, 0.05)" },
+  cardBorder: { light: "rgba(0, 0, 0, 0.04)", dark: "rgba(255, 255, 255, 0.06)" }
 }
 
 // ══════════════════════════════════════════════════════
@@ -141,6 +142,7 @@ const C = {
 function renderSystemSmall(d) {
   return {
     type: "widget",
+    backgroundColor: C.widgetBg,
     padding: 14,
     children: [
       // 1. 顶部 Header (官方高清 Logo)
@@ -260,6 +262,7 @@ function renderSystemSmall(d) {
 function renderSystemMedium(d) {
   return {
     type: "widget",
+    backgroundColor: C.widgetBg,
     padding: 14,
     gap: 6,
     children: [
@@ -382,6 +385,7 @@ function renderSystemMedium(d) {
 function renderSystemLarge(d) {
   return {
     type: "widget",
+    backgroundColor: C.widgetBg,
     padding: 16,
     gap: 12,
     children: [
@@ -604,6 +608,7 @@ function createDataCard(icon, title, line1, line2, flexVal) {
 function renderErrorWidget(family, errorMsg) {
   return {
     type: "widget",
+    backgroundColor: C.widgetBg,
     padding: 14,
     children: [
       {

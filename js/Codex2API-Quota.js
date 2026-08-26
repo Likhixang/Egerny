@@ -456,10 +456,12 @@ export default async function(ctx) {
 // ── 设计系统色彩规范 (纯白 #FFFFFF & 纯黑 #151515) ──
 const C = {
   textPrimary: { light: "#151515", dark: "#FFFFFF" },
-  textSecondary: { light: "#666666", dark: "#AAAAAA" },
-  textTertiary: { light: "#888888", dark: "#888888" },
-  cardBg: { light: "#FFFFFF", dark: "#151515" },
-  cardBorder: { light: "rgba(21, 21, 21, 0.08)", dark: "rgba(255, 255, 255, 0.12)" },
+  textSecondary: { light: "#6E6E73", dark: "#98989D" },
+  textTertiary: { light: "#8E8E93", dark: "#636366" },
+
+  widgetBg: { light: "#FFFFFF", dark: "#151515" },
+  cardBg: { light: "rgba(0, 0, 0, 0.04)", dark: "rgba(255, 255, 255, 0.08)" },
+  cardBorder: { light: "rgba(0, 0, 0, 0.06)", dark: "rgba(255, 255, 255, 0.08)" },
 };
 
 // ── HIG 拟物卡片式布局 ──
@@ -472,6 +474,7 @@ function renderSmallWidget(account, updateTime) {
 
   return {
     type: "widget",
+    backgroundColor: C.widgetBg,
     padding: 12,
     gap: 8,
     children: [
@@ -568,6 +571,7 @@ function renderMediumWidget(accounts, updateStr, maskEmailEnabled) {
 
     return {
       type: "widget",
+      backgroundColor: C.widgetBg,
       padding: [12, 14, 12, 14],
       gap: 8,
       children: [
@@ -699,6 +703,7 @@ function renderMediumWidget(accounts, updateStr, maskEmailEnabled) {
   const topTwo = accounts.slice(0, 2);
   return {
     type: "widget",
+    backgroundColor: C.widgetBg,
     padding: [12, 14, 12, 14],
     gap: 7,
     children: [
@@ -789,6 +794,7 @@ function renderLargeWidget(accounts, stats, updateStr, maskEmailEnabled) {
 
     return {
       type: "widget",
+      backgroundColor: C.widgetBg,
       padding: [14, 16, 14, 16],
       gap: 10,
       children: [
@@ -956,6 +962,7 @@ function renderLargeWidget(accounts, stats, updateStr, maskEmailEnabled) {
   if (isDual) {
     return {
       type: "widget",
+      backgroundColor: C.widgetBg,
       padding: [14, 16, 14, 16],
       gap: 10,
       children: [
@@ -1062,6 +1069,7 @@ function renderLargeWidget(accounts, stats, updateStr, maskEmailEnabled) {
   const topFour = accounts.slice(0, 4);
   return {
     type: "widget",
+    backgroundColor: C.widgetBg,
     padding: [14, 16, 14, 16],
     gap: 8,
     children: [
@@ -1209,6 +1217,7 @@ function renderAccessoryInline(account) {
 function renderErrorWidget(family, error, updateTime) {
   return {
     type: "widget",
+    backgroundColor: C.widgetBg,
     padding: 12,
     gap: 6,
     children: [
