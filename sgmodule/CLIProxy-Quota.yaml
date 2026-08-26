@@ -1,26 +1,26 @@
 name: "CLIProxy-Quota"
 description: "CLIProxy 额度监控（5小时模型配额、账号状态与调用统计），新式小组件，支持全部主屏与锁屏尺寸"
 
-# 统一参数入口（compat_arguments）：解析期替换到 rules/脚本 env
-compat_arguments:
-  ServerURL: "http://127.0.0.1:8317"
-  ManagementKey: ""
-  MaskEmail: "false"
-  Filter: ""
-compat_arguments_desc: |
-  ServerURL: CLIProxy API 地址，默认 http://127.0.0.1:8317
-  ManagementKey: 管理密钥（选填）
-  MaskEmail: 是否对账号/邮箱打码，默认 false
-  Filter: 筛选指定账号、模型关键字或序号（选填）
-
-# 模块编辑页 UI 控件
+# 模块可视化配置控件 (Egern 2.16+)
 env_schema:
-  MaskEmail:
+  SERVER_URL:
+    name: 服务地址
+    description: "CLIProxy 服务地址，如 http://127.0.0.1:8317 或局域网/公网地址"
+    default_value: "http://127.0.0.1:8317"
+  MANAGEMENT_KEY:
+    name: 管理密钥
+    description: "CLIProxy Management Key（若开启管理鉴权需填写）"
+    default_value: ""
+  MASK_EMAIL:
     name: 账号邮箱打码
     description: "是否对账号和邮箱进行打码隐藏"
     options:
       - "false"
       - "true"
+  FILTER:
+    name: 过滤筛选
+    description: "筛选指定模型、账号关键字或序号（选填）"
+    default_value: ""
 
 scriptings:
   - generic:
@@ -28,10 +28,10 @@ scriptings:
       script_url: https://raw.githubusercontent.com/Likhixang/Egerny/main/js/CLIProxy-Quota.js
       timeout: 20
       env:
-        SERVER_URL: "{{{ServerURL}}}"
-        MANAGEMENT_KEY: "{{{ManagementKey}}}"
-        MASK_EMAIL: "{{{MaskEmail}}}"
-        FILTER: "{{{Filter}}}"
+        SERVER_URL: "http://127.0.0.1:8317"
+        MANAGEMENT_KEY: ""
+        MASK_EMAIL: "false"
+        FILTER: ""
 
 widgets:
   - name: CLIProxy-Quota
