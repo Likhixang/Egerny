@@ -10,7 +10,7 @@ const CODEX2API_LOGO = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAABACA
  *       1. 单账号：满宽账号健康标头 + 5h滚动大卡片 + 7d周额度大卡片 + 底部集群状态汇总
  *       2. 双账号：上下两块全高平衡大卡片 + 底部集群状态汇总
  *       3. 多账号：4 账号高密度看板列表 + 底部集群状态汇总
- *   - 适配全部主屏与锁屏尺寸 (systemSmall, systemMedium, systemLarge, accessory*)
+ *   - 适配主屏全部尺寸 (systemSmall, systemMedium, systemLarge)
  */
 
 // ── 官方精细矢量徽标 (Lobe Icons 官方 SVG 提取) ──

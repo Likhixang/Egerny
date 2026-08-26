@@ -1,5 +1,5 @@
 name: "CLIProxy-Quota"
-description: "CLIProxy 配额监控（5小时模型配额、账号状态与调用统计），新式小组件，支持全部主屏与锁屏尺寸"
+description: "CLIProxy 配额监控（5小时模型配额、账号状态与调用统计），新式小组件，支持主屏全部尺寸"
 
 # 模块可视化配置控件 (Egern 2.16+)
 env_schema:

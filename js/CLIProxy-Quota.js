@@ -10,7 +10,7 @@ const CLIPROXY_LOGO = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAY
  *       1. 单账号：大字仪表盘 + 5h进度卡片 + 底部「重置机制 / 配额状态」双辅助看板
  *       2. 双账号：上下两块全高平衡大卡片
  *       3. 多账号：4 账号高密度看板列表
- *   - 适配全部主屏与锁屏尺寸 (systemSmall, systemMedium, systemLarge, accessory*)
+ *   - 适配主屏全部尺寸 (systemSmall, systemMedium, systemLarge)
  */
 
 // ── 官方精细矢量徽标 (Lobe Icons 官方 SVG 提取) ──

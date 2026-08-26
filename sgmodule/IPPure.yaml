@@ -1,5 +1,5 @@
 name: "IP-Pure"
-description: "节点 IP 纯净度检测（IPPure），新式小组件，支持全部主屏与锁屏尺寸，数据源 my.ippure.com"
+description: "节点 IP 纯净度检测（IPPure），新式小组件，支持主屏全部尺寸，数据源 my.ippure.com"
 
 # 策略组路由参数（用于规则匹配）
 compat_arguments:
