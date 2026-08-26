@@ -717,7 +717,7 @@ function renderMediumWidget(accounts, updateStr, maskEmailEnabled) {
               borderRadius: 4,
               backgroundColor: C.cardBg,
               children: [
-                { type: "text", text: isDual ? "双窗口" : "单账号", font: { size: 9.5, weight: "bold" }, textColor: C.textSecondary },
+                { type: "text", text: `${accounts.length} 账号`, font: { size: 9.5, weight: "bold" }, textColor: C.textSecondary },
               ],
             },
             { type: "spacer" },
@@ -970,7 +970,7 @@ function renderLargeWidget(accounts, stats, updateStr, maskEmailEnabled) {
               borderRadius: 4,
               backgroundColor: C.cardBg,
               children: [
-                { type: "text", text: "单账号", font: { size: 10, weight: "bold" }, textColor: C.textSecondary },
+                { type: "text", text: `${accounts.length} 账号`, font: { size: 10, weight: "bold" }, textColor: C.textSecondary },
               ],
             },
             { type: "spacer" },

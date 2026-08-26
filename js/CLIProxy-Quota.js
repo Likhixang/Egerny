@@ -742,7 +742,7 @@ function renderMediumWidget(models, updateStr, maskEmailEnabled) {
               borderRadius: 4,
               backgroundColor: C.cardBg,
               children: [
-                { type: "text", text: "5h 配额", font: { size: 9.5, weight: "bold" }, textColor: C.textSecondary },
+                { type: "text", text: `${models.length} 账号`, font: { size: 9.5, weight: "bold" }, textColor: C.textSecondary },
               ],
             },
             { type: "spacer" },
@@ -934,7 +934,7 @@ function renderLargeWidget(models, updateStr, maskEmailEnabled) {
               borderRadius: 4,
               backgroundColor: C.cardBg,
               children: [
-                { type: "text", text: "5h 配额", font: { size: 10, weight: "bold" }, textColor: C.textSecondary },
+                { type: "text", text: `${models.length} 账号`, font: { size: 10, weight: "bold" }, textColor: C.textSecondary },
               ],
             },
             { type: "spacer" },
