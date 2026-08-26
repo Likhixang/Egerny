@@ -1,8 +1,9 @@
 /*
  * IPPure 节点 IP 纯净度 — Egern 新式小组件
- * 设计系统：Apple HIG 统一通透与精致层级
- *   - Small: 顶部 Header + 90pt 充盈大圆环 + 底部精致 IP/位置胶囊
- *   - Medium: 顶部 Header + 左侧大圆环仪表 + 右侧核心信息流
+ * 设计系统：Apple HIG 视觉与光学居中标准（Optical Centering）
+ *   - 严格基于 Cap-Height 与光学配重计算 SVG 环内文字重心，彻底消除下坠与偏顶感
+ *   - Small: 顶部 Header + 84pt 黄金比例大圆环 + 底部精巧信息胶囊
+ *   - Medium: 顶部 Header + 左侧大圆环仪表 + 右侧结构化信息流
  *   - Large: 顶部 Header + 顶部大圆环 Hero 概览 + 底部 2x2 对称等高数据卡片
  *   - 锁屏系列: accessoryCircular / accessoryRectangular / accessoryInline
  * 数据源：https://my.ippure.com/v1/info
@@ -141,9 +142,9 @@ const C = {
 
 /**
  * 主屏幕 Small 小尺寸 (2x2)
- * 精致三段式重构：
+ * 光学居中精修：
  *  - Header: 盾牌+标题 + 右侧协议药丸
- *  - Center: 90x90pt 充盈大圆环仪表（绝对居中）
+ *  - Center: 84x84pt 黄金比例大圆环仪表（光学视觉中心严格重合）
  *  - Footer: 底部精巧信息胶囊（图钉 + IP/归属地 + 风险状态）
  */
 function renderSystemSmall(d) {
@@ -175,7 +176,7 @@ function renderSystemSmall(d) {
 
       { type: "spacer" },
 
-      // 2. 核心大圆环仪表
+      // 2. 核心大圆环仪表（光学视觉居中配重）
       {
         type: "stack",
         direction: "row",
@@ -184,9 +185,9 @@ function renderSystemSmall(d) {
           { type: "spacer" },
           {
             type: "image",
-            src: createGaugeRingSvg(d.purity, 90, 8.5, d.level.color, "纯净度"),
-            width: 90,
-            height: 90
+            src: createGaugeRingSvg(d.purity, 84, 8, d.level.color, "纯净度"),
+            width: 84,
+            height: 84
           },
           { type: "spacer" }
         ]
@@ -194,7 +195,7 @@ function renderSystemSmall(d) {
 
       { type: "spacer" },
 
-      // 3. 底部精巧信息胶囊 (IP 与归属)
+      // 3. 底部精巧信息胶囊
       {
         type: "stack",
         direction: "row",
@@ -293,7 +294,7 @@ function renderSystemMedium(d) {
             type: "stack",
             direction: "column",
             flex: 1,
-            gap: 4,
+            gap: 3,
             children: [
               // IP 大字
               {
@@ -712,9 +713,13 @@ function renderErrorWidget(family, message) {
 }
 
 // ══════════════════════════════════════════════════════
-// 📊 SVG 矢量图形渲染 (Gauges & Rings)
+// 📊 SVG 矢量图形渲染 (Optical Centering Gauges)
 // ══════════════════════════════════════════════════════
 
+/**
+ * 绘制高质感视觉/光学绝对居中大圆环仪表
+ * 基于 Cap-Height 光学配重：数字与标签整体重心精确重合于圆心 half
+ */
 function createGaugeRingSvg(purity, size, strokeWidth, strokeColor, labelText = "纯净度") {
   const half = size / 2
   const r = half - strokeWidth / 2
@@ -723,10 +728,12 @@ function createGaugeRingSvg(purity, size, strokeWidth, strokeColor, labelText = 
   const dash = (circ * pct).toFixed(1)
   const gap = (circ - dash).toFixed(1)
 
-  const numFontSize = Math.round(size * 0.30)
+  const numFontSize = Math.round(size * 0.31)
   const labelFontSize = Math.round(size * 0.11)
-  const numY = Math.round(half - size * 0.04)
-  const labelY = Math.round(half + size * 0.20)
+
+  // 光学居中精准定位
+  const numY = Math.round(half + numFontSize * 0.05)
+  const labelY = Math.round(half + numFontSize * 0.62)
 
   const trackColor = "rgba(128,128,128,0.18)"
   const numColor = strokeColor
@@ -768,8 +775,8 @@ function createLockScreenGaugeSvg(purity, size, strokeWidth) {
 
   const numFontSize = 15
   const labelFontSize = 7.5
-  const numY = half - 1
-  const labelY = half + 11
+  const numY = Math.round(half + numFontSize * 0.05)
+  const labelY = Math.round(half + numFontSize * 0.62)
 
   return `data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 ${size} ${size}'>` +
     `<circle cx='${half}' cy='${half}' r='${r}' fill='none' stroke='rgba(255,255,255,0.22)' stroke-width='${strokeWidth}'/>` +
