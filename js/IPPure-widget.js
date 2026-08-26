@@ -6,6 +6,7 @@
  *   - 优雅的自适应语义配色（Light / Dark 自适应）
  *   - 最小号小组件（systemSmall）：顶部两侧标题与风险胶囊 + 中间居中精致大圆环
  *   - 中号小组件（systemMedium）：经典仪表盘分栏（左侧大圆环 + 右侧结构化信息流）
+ *   - 大号小组件（systemLarge）：仪表盘 Hero 面板 + 严丝合缝等宽高对称四宫格矩阵
  *   - 环境变量：MarkIP = true 时对 IP 地址脱敏显示
  * 数据源：https://my.ippure.com/v1/info
  */
@@ -54,6 +55,9 @@ export default async function(ctx) {
 
   const locShort = [city, countryCode].filter(Boolean).join(", ") || country || "未知位置"
   const locFull = [city, region, country].filter(Boolean).join(", ") || country || "未知位置"
+  const locLine1 = [city, region].filter(Boolean).join(", ") || city || region || "未知城市"
+  const locLine2 = [country, countryCode ? `(${countryCode})` : ""].filter(Boolean).join(" ") || "未知国家"
+
   const timezone = data.timezone || ""
   const coordinates = (data.latitude && data.longitude) ? `${data.latitude}, ${data.longitude}` : ""
 
@@ -83,6 +87,8 @@ export default async function(ctx) {
       displayIP,
       ipVer,
       locFull,
+      locLine1,
+      locLine2,
       purity,
       fraudScore,
       level,
@@ -315,12 +321,17 @@ function renderSystemMedium(d) {
 
 /**
  * 主屏幕 Large 大尺寸 (4x4)
+ * 结构：
+ *  - Header 顶栏
+ *  - Hero 主仪表盘卡片
+ *  - 严丝合缝等宽高对称四宫格矩阵（2x2 Grid）
+ *  - Footer 底部来源与时间
  */
 function renderSystemLarge(d) {
   return {
     type: "widget",
     padding: 16,
-    gap: 12,
+    gap: 10,
     children: [
       // 1. Header
       {
@@ -348,15 +359,15 @@ function renderSystemLarge(d) {
         children: [
           {
             type: "image",
-            src: createGaugeRingSvg(d.purity, 104, 10, d.level.color, "纯净度"),
-            width: 104,
-            height: 104
+            src: createGaugeRingSvg(d.purity, 98, 9.5, d.level.color, "纯净度"),
+            width: 98,
+            height: 98
           },
           {
             type: "stack",
             direction: "column",
             flex: 1,
-            gap: 5,
+            gap: 4,
             children: [
               {
                 type: "stack",
@@ -406,44 +417,33 @@ function renderSystemLarge(d) {
         ]
       },
 
-      // 3. 四宫格详情卡片
+      // 3. 严格等宽等高对称四宫格矩阵 (2x2 Grid)
       {
         type: "stack",
         direction: "column",
         gap: 8,
         flex: 1,
         children: [
+          // 第一行（2个等宽高卡片）
           {
             type: "stack",
             direction: "row",
             gap: 8,
             flex: 1,
             children: [
-              createGridCard("sf-symbol:mappin.and.ellipse", "地理归属", [
-                d.locFull,
-                d.coordinates ? `坐标: ${d.coordinates}` : null,
-                d.postalCode ? `邮编: ${d.postalCode}` : null
-              ]),
-              createGridCard("sf-symbol:building.2.crop.circle", "网络运营商", [
-                d.asnNumber,
-                d.asnOrg || "未知组织"
-              ])
+              createGridCard("sf-symbol:mappin.and.ellipse", "地理位置", d.locLine1, d.locLine2),
+              createGridCard("sf-symbol:building.2.crop.circle", "网络运营商", d.asnNumber, d.asnOrg || "未知组织")
             ]
           },
+          // 第二行（2个等宽高卡片）
           {
             type: "stack",
             direction: "row",
             gap: 8,
             flex: 1,
             children: [
-              createGridCard("sf-symbol:antenna.radiowaves.left.and.right", "IP 属性特征", [
-                `类型: ${d.ipType}`,
-                `路由: ${d.broadcastText}`
-              ]),
-              createGridCard("sf-symbol:clock.badge.checkmark", "环境时区", [
-                `时区: ${d.timezone || "未知"}`,
-                `检测状态: ${d.level.text}`
-              ])
+              createGridCard("sf-symbol:antenna.radiowaves.left.and.right", "IP 属性特征", `类型: ${d.ipType}`, `路由: ${d.broadcastText}`),
+              createGridCard("sf-symbol:clock.badge.checkmark", "环境时区", `时区: ${d.timezone || "未知"}`, d.coordinates ? `坐标: ${d.coordinates}` : `状态: ${d.level.text}`)
             ]
           }
         ]
@@ -599,25 +599,18 @@ function createMiniTag(iconSrc, text) {
   }
 }
 
-function createGridCard(iconSrc, title, lines) {
-  const lineChildren = lines
-    .filter(Boolean)
-    .map(line => ({
-      type: "text",
-      text: line,
-      font: { size: 11, weight: "regular" },
-      textColor: C.textSecondary,
-      maxLines: 1,
-      minScale: 0.7
-    }))
-
+/**
+ * 创建严格统一结构（1行标题 + 2行文本）的对称网格卡片
+ * 确保所有 4 张卡片宽度 1:1、高度完全一致
+ */
+function createGridCard(iconSrc, title, line1, line2) {
   return {
     type: "stack",
     direction: "column",
-    padding: 10,
+    padding: [9, 10],
     borderRadius: 10,
     backgroundColor: C.cardBg,
-    gap: 4,
+    gap: 3,
     flex: 1,
     children: [
       {
@@ -626,11 +619,26 @@ function createGridCard(iconSrc, title, lines) {
         alignItems: "center",
         gap: 4,
         children: [
-          { type: "image", src: iconSrc, color: C.textPrimary, width: 13, height: 13 },
+          { type: "image", src: iconSrc, color: C.textPrimary, width: 12, height: 12 },
           { type: "text", text: title, font: { size: 12, weight: "semibold" }, textColor: C.textPrimary, maxLines: 1 }
         ]
       },
-      ...lineChildren
+      {
+        type: "text",
+        text: line1 || "--",
+        font: { size: 11, weight: "regular" },
+        textColor: C.textSecondary,
+        maxLines: 1,
+        minScale: 0.7
+      },
+      {
+        type: "text",
+        text: line2 || "--",
+        font: { size: 11, weight: "regular" },
+        textColor: C.textSecondary,
+        maxLines: 1,
+        minScale: 0.7
+      }
     ]
   }
 }
