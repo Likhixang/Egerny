@@ -4,7 +4,8 @@
  *   - 经典仪表盘大圆环（Hero Circular Progress Gauge）直观展现 IP 纯净度
  *   - 严格遵循 Apple iOS Human Interface Guidelines 规范
  *   - 优雅的自适应语义配色（Light / Dark 自适应）
- *   - 支持全尺寸：systemSmall / systemMedium / systemLarge / accessoryCircular / accessoryRectangular / accessoryInline
+ *   - 最小号小组件（systemSmall）纯粹呈现大圆环，绝对居中无多余元素
+ *   - 中号小组件（systemMedium）经典仪表盘分栏：左侧大圆环 + 右侧结构化信息流
  *   - 环境变量：MarkIP = true 时对 IP 地址脱敏显示
  * 数据源：https://my.ippure.com/v1/info
  */
@@ -72,14 +73,8 @@ export default async function(ctx) {
   // ── 主屏幕小组件 ──
   if (family === "systemSmall") {
     return renderSystemSmall({
-      displayIP,
-      locShort,
       purity,
-      level,
-      asnNumber,
-      ipType,
-      ipTypeIcon,
-      ipVer
+      level
     })
   }
 
@@ -139,77 +134,30 @@ const C = {
 
 /**
  * 主屏幕 Small 小尺寸 (2x2)
- * 结构：
- *  - Header: 图标 + "IP PURE" + 风险指示点
- *  - Center: 精美大圆环仪表（直径 80pt，中心大纯净度数字 + "纯净度"标签）
- *  - Footer: IP 归属 + 网络类型
+ * 极致纯粹：仅保留一个大圆环仪表，上下左右绝对居中
  */
 function renderSystemSmall(d) {
   return {
     type: "widget",
-    padding: 12,
-    gap: 2,
+    padding: 0,
     children: [
-      // 1. Header
+      { type: "spacer" },
       {
         type: "stack",
         direction: "row",
         alignItems: "center",
-        gap: 4,
         children: [
-          { type: "image", src: "sf-symbol:shield.fill", color: d.level.color, width: 12, height: 12 },
-          { type: "text", text: "IP 纯净度", font: { size: 11, weight: "bold" }, textColor: C.textPrimary },
           { type: "spacer" },
-          createMiniPill(d.level.text, d.level.color, d.level.badgeBg)
-        ]
-      },
-
-      { type: "spacer" },
-
-      // 2. 居中大圆环仪表
-      {
-        type: "stack",
-        direction: "column",
-        alignItems: "center",
-        children: [
           {
             type: "image",
-            src: createGaugeRingSvg(d.purity, 78, 7.5, d.level.color, "纯净度"),
-            width: 78,
-            height: 78
-          }
+            src: createGaugeRingSvg(d.purity, 114, 10, d.level.color, "纯净度"),
+            width: 114,
+            height: 114
+          },
+          { type: "spacer" }
         ]
       },
-
-      { type: "spacer" },
-
-      // 3. 底部信息行 (IP 与类型)
-      {
-        type: "stack",
-        direction: "row",
-        alignItems: "center",
-        padding: [3, 6],
-        borderRadius: 6,
-        backgroundColor: C.cardBg,
-        children: [
-          {
-            type: "text",
-            text: d.displayIP,
-            font: { size: 10, weight: "bold" },
-            textColor: C.textPrimary,
-            maxLines: 1,
-            minScale: 0.65,
-            flex: 1
-          },
-          {
-            type: "text",
-            text: d.ipType,
-            font: { size: 9, weight: "medium" },
-            textColor: C.textSecondary,
-            maxLines: 1
-          }
-        ]
-      }
+      { type: "spacer" }
     ]
   }
 }
@@ -219,7 +167,7 @@ function renderSystemSmall(d) {
  * 结构：
  *  - Header: 盾牌 + "节点 IP 纯净度" + IPv4/v6 + Spacer + 风险评级 Badge
  *  - Main (左右分栏):
- *    - Left: 核心大圆环仪表 (90x90pt，大数字 + 纯净度)
+ *    - Left: 核心大圆环仪表 (88x88pt)
  *    - Right: 结构化信息流 (IP 大字、地理位置、ASN 组织、属性标签群)
  */
 function renderSystemMedium(d) {
@@ -348,11 +296,6 @@ function renderSystemMedium(d) {
 
 /**
  * 主屏幕 Large 大尺寸 (4x4)
- * 结构：
- *  - Header
- *  - Hero 面板：左侧 108pt 超大圆环仪表 + 右侧核心分析
- *  - 4 宫格网格矩阵 (地理归属、运营商、IP 属性、环境时区)
- *  - Footer: 刷新时间与来源
  */
 function renderSystemLarge(d) {
   return {
@@ -384,14 +327,12 @@ function renderSystemLarge(d) {
         borderRadius: 12,
         backgroundColor: C.cardBg,
         children: [
-          // 左侧：超大圆环仪表
           {
             type: "image",
             src: createGaugeRingSvg(d.purity, 104, 10, d.level.color, "纯净度"),
             width: 104,
             height: 104
           },
-          // 右侧：核心概要
           {
             type: "stack",
             direction: "column",
@@ -611,18 +552,6 @@ function createPillBadge(text, textColor, bgColor, icon) {
   }
 }
 
-function createMiniPill(text, textColor, bgColor) {
-  return {
-    type: "stack",
-    padding: [2, 5],
-    borderRadius: 5,
-    backgroundColor: bgColor,
-    children: [
-      { type: "text", text, font: { size: 9, weight: "bold" }, textColor, maxLines: 1 }
-    ]
-  }
-}
-
 function createMiniTag(iconSrc, text) {
   return {
     type: "stack",
@@ -708,7 +637,7 @@ function renderErrorWidget(family, message) {
 
 /**
  * 绘制高质感居中环形进度圈
- * 采用 Apple 级几何比例，文字使用 baseline 绝对对齐
+ * 采用严格基线数学对齐，彻底杜绝偏心与平台渲染偏差
  */
 function createGaugeRingSvg(purity, size, strokeWidth, strokeColor, labelText = "纯净度", isLockScreen = false) {
   const half = size / 2
@@ -718,25 +647,25 @@ function createGaugeRingSvg(purity, size, strokeWidth, strokeColor, labelText = 
   const dash = (circ * pct).toFixed(1)
   const gap = (circ - dash).toFixed(1)
 
-  // 字体与排版参数
-  const numFontSize = Math.round(size * 0.32)
-  const labelFontSize = Math.round(size * 0.13)
-  const numY = Math.round(half - size * 0.03)
-  const labelY = Math.round(half + size * 0.23)
+  // 严格基线计算：数字视觉居中偏上，标签紧跟其下
+  const numFontSize = Math.round(size * 0.30)
+  const labelFontSize = Math.round(size * 0.11)
+  const numY = Math.round(half - size * 0.04)
+  const labelY = Math.round(half + size * 0.20)
 
   const trackColor = isLockScreen ? "rgba(255,255,255,0.2)" : "rgba(128,128,128,0.18)"
   const numColor = isLockScreen ? "#FFFFFF" : strokeColor
   const subColor = isLockScreen ? "rgba(255,255,255,0.7)" : "rgba(128,128,128,0.85)"
 
   return `data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 ${size} ${size}'>` +
-    // 底轨 Track
+    // 1. 底轨
     `<circle cx='${half}' cy='${half}' r='${r}' fill='none' stroke='${trackColor}' stroke-width='${strokeWidth}'/>` +
-    // 进度弧线 Progress Arc (顺时针，从顶部 12 点钟开始)
+    // 2. 顺时针进度圆弧
     `<circle cx='${half}' cy='${half}' r='${r}' fill='none' stroke='${strokeColor}' stroke-width='${strokeWidth}' stroke-linecap='round' stroke-dasharray='${dash} ${gap}' transform='rotate(-90 ${half} ${half})'/>` +
-    // 中心大数字
-    `<text x='${half}' y='${numY}' text-anchor='middle' dominant-baseline='central' font-size='${numFontSize}' font-weight='800' font-family='-apple-system, system-ui, sans-serif' fill='${numColor}'>${purity}</text>` +
-    // 下方小标签
-    `<text x='${half}' y='${labelY}' text-anchor='middle' dominant-baseline='central' font-size='${labelFontSize}' font-weight='600' font-family='-apple-system, system-ui, sans-serif' fill='${subColor}'>${labelText}</text>` +
+    // 3. 中心大数字
+    `<text x='${half}' y='${numY}' text-anchor='middle' font-size='${numFontSize}' font-weight='800' font-family='-apple-system, BlinkMacSystemFont, sans-serif' fill='${numColor}'>${purity}</text>` +
+    // 4. 下方居中标签
+    (labelText ? `<text x='${half}' y='${labelY}' text-anchor='middle' font-size='${labelFontSize}' font-weight='600' font-family='-apple-system, BlinkMacSystemFont, sans-serif' fill='${subColor}'>${labelText}</text>` : '') +
     `</svg>`
 }
 
