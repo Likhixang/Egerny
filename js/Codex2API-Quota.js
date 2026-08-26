@@ -697,7 +697,7 @@ function renderMediumWidget(accounts, updateStr, maskEmailEnabled) {
     const accountLabel = maskEmail(first.email || first.name, maskEmailEnabled);
 
     if (isDual) {
-      // 单账号双配额严格同行布局：【标签 - 进度条 - 剩余与重置时间】在同一水平线上对齐
+      // 单账号双配额三栏定宽网格布局：【左定宽标签栏 - 中间自适应居中进度条 - 右定宽余量时间栏】
       return {
         type: "widget",
         backgroundColor: C.widgetBg,
@@ -758,14 +758,20 @@ function renderMediumWidget(accounts, updateStr, maskEmailEnabled) {
                   { type: "text", text: `评分 ${first.dispatchScore}`, font: { size: 10 }, textColor: C.textSecondary },
                 ],
               },
-              // 行 1: 7D 【左标签 - 中进度条 - 右剩余与重置】同一水平线
+              // 行 1: 7D 【左定宽56pt - 中间居中进度条 - 右定宽120pt】
               {
                 type: "stack",
                 direction: "row",
                 alignItems: "center",
-                gap: 7,
+                gap: 8,
                 children: [
-                  { type: "text", text: first.fullQuotaLabel, font: { size: 11, weight: "bold" }, textColor: C.textPrimary },
+                  {
+                    type: "stack",
+                    width: 56,
+                    children: [
+                      { type: "text", text: first.fullQuotaLabel, font: { size: 11, weight: "bold" }, textColor: C.textPrimary },
+                    ],
+                  },
                   {
                     type: "image",
                     src: createProgressBarSvg(first.remainingFraction7d, getQuotaColor(first.remainingFraction7d), 5),
@@ -773,21 +779,30 @@ function renderMediumWidget(accounts, updateStr, maskEmailEnabled) {
                     flex: 1,
                   },
                   {
-                    type: "text",
-                    text: `余 ${remain7d}% · 重置 ${first.reset7dTimeStr}`,
-                    font: { size: 9.5, weight: "semibold" },
-                    textColor: getQuotaColor(first.remainingFraction7d),
+                    type: "stack",
+                    width: 120,
+                    direction: "row",
+                    children: [
+                      { type: "spacer" },
+                      { type: "text", text: `余 ${remain7d}% · 重置 ${first.reset7dTimeStr}`, font: { size: 9.5, weight: "semibold" }, textColor: getQuotaColor(first.remainingFraction7d) },
+                    ],
                   },
                 ],
               },
-              // 行 2: Spark 5H / 5H 【左标签 - 中进度条 - 右剩余与重置】同一水平线
+              // 行 2: Spark 5H / 5H 【左定宽56pt - 中间居中进度条 - 右定宽120pt】
               {
                 type: "stack",
                 direction: "row",
                 alignItems: "center",
-                gap: 7,
+                gap: 8,
                 children: [
-                  { type: "text", text: first.secondaryLabel, font: { size: 11, weight: "bold" }, textColor: C.textPrimary },
+                  {
+                    type: "stack",
+                    width: 56,
+                    children: [
+                      { type: "text", text: first.secondaryLabel, font: { size: 11, weight: "bold" }, textColor: C.textPrimary },
+                    ],
+                  },
                   {
                     type: "image",
                     src: createProgressBarSvg(first.remainingFraction5h, getQuotaColor(first.remainingFraction5h), 5),
@@ -795,10 +810,13 @@ function renderMediumWidget(accounts, updateStr, maskEmailEnabled) {
                     flex: 1,
                   },
                   {
-                    type: "text",
-                    text: `余 ${remain5h}% · 重置 ${first.reset5hTimeStr}`,
-                    font: { size: 9.5, weight: "semibold" },
-                    textColor: getQuotaColor(first.remainingFraction5h),
+                    type: "stack",
+                    width: 120,
+                    direction: "row",
+                    children: [
+                      { type: "spacer" },
+                      { type: "text", text: `余 ${remain5h}% · 重置 ${first.reset5hTimeStr}`, font: { size: 9.5, weight: "semibold" }, textColor: getQuotaColor(first.remainingFraction5h) },
+                    ],
                   },
                 ],
               },
