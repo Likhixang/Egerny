@@ -17,6 +17,7 @@ env_schema:
     options:
       - "true"
       - "false"
+    default_value: "false"
   FILTER:
     name: 过滤筛选
     description: "筛选指定账号名、邮箱关键字或序号（选填）"
