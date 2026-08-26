@@ -1,9 +1,8 @@
 /*
  * IPPure 节点 IP 纯净度 — Egern 新式小组件
- * 设计系统：Apple HIG 视觉与光学居中标准（Optical Centering）
- *   - 严格基于 Cap-Height 与光学配重计算 SVG 环内文字重心，彻底消除下坠与偏顶感
- *   - Small: 顶部 Header + 84pt 黄金比例大圆环 + 底部精巧信息胶囊
- *   - Medium: 顶部 Header + 左侧大圆环仪表 + 右侧结构化信息流
+ * 设计系统：Apple HIG 现代化自适应排版
+ *   - Small: 顶部 Header + 大字 IP/归属 + 纯净度水平长条进度条 + 底部双属性胶囊
+ *   - Medium: 经典宽屏仪表盘（左侧大圆环仪表 + 右侧结构化信息流）
  *   - Large: 顶部 Header + 顶部大圆环 Hero 概览 + 底部 2x2 对称等高数据卡片
  *   - 锁屏系列: accessoryCircular / accessoryRectangular / accessoryInline
  * 数据源：https://my.ippure.com/v1/info
@@ -76,9 +75,13 @@ export default async function(ctx) {
   if (family === "systemSmall") {
     return renderSystemSmall({
       displayIP,
+      locFull,
       locShort,
       purity,
       level,
+      asnNumber,
+      ipType,
+      ipTypeIcon,
       ipVer
     })
   }
@@ -142,15 +145,17 @@ const C = {
 
 /**
  * 主屏幕 Small 小尺寸 (2x2)
- * 光学居中精修：
+ * 精致长条状纯净度与卡片流：
  *  - Header: 盾牌+标题 + 右侧协议药丸
- *  - Center: 84x84pt 黄金比例大圆环仪表（光学视觉中心严格重合）
- *  - Footer: 底部精巧信息胶囊（图钉 + IP/归属地 + 风险状态）
+ *  - Hero: 大字 IP + 详细地理位置
+ *  - Meter: 纯净度% + 评级状态 + 精美水平长条进度条
+ *  - Footer: 双迷你胶囊卡片（ASN 编号 | 原生/数据中心）
  */
 function renderSystemSmall(d) {
   return {
     type: "widget",
-    padding: 12,
+    padding: 13,
+    gap: 5,
     children: [
       // 1. 顶部 Header
       {
@@ -174,54 +179,87 @@ function renderSystemSmall(d) {
         ]
       },
 
-      { type: "spacer" },
-
-      // 2. 核心大圆环仪表（光学视觉居中配重）
+      // 2. Hero 主区域 (大字 IP + 详细位置)
       {
         type: "stack",
-        direction: "row",
-        alignItems: "center",
+        direction: "column",
+        gap: 2,
         children: [
-          { type: "spacer" },
           {
-            type: "image",
-            src: createGaugeRingSvg(d.purity, 84, 8, d.level.color, "纯净度"),
-            width: 84,
-            height: 84
+            type: "text",
+            text: d.displayIP,
+            font: { size: 17, weight: "bold" },
+            textColor: C.textPrimary,
+            maxLines: 1,
+            minScale: 0.65
           },
-          { type: "spacer" }
+          {
+            type: "stack",
+            direction: "row",
+            alignItems: "center",
+            gap: 3,
+            children: [
+              { type: "image", src: "sf-symbol:mappin.and.ellipse", color: C.textTertiary, width: 10, height: 10 },
+              {
+                type: "text",
+                text: d.locFull,
+                font: { size: 11 },
+                textColor: C.textSecondary,
+                maxLines: 1,
+                minScale: 0.75
+              }
+            ]
+          }
         ]
       },
 
       { type: "spacer" },
 
-      // 3. 底部精巧信息胶囊
+      // 3. 核心长条状纯净度进度条 (Horizontal Meter)
+      {
+        type: "stack",
+        direction: "column",
+        gap: 4,
+        children: [
+          {
+            type: "stack",
+            direction: "row",
+            alignItems: "center",
+            children: [
+              {
+                type: "text",
+                text: `纯净度 ${d.purity}%`,
+                font: { size: "caption1", weight: "bold" },
+                textColor: d.level.color
+              },
+              { type: "spacer" },
+              {
+                type: "text",
+                text: d.level.text,
+                font: { size: "caption2", weight: "semibold" },
+                textColor: d.level.color
+              }
+            ]
+          },
+          {
+            type: "image",
+            src: createProgressBarSvg(d.purity, d.level.color),
+            height: 5,
+            resizable: true
+          }
+        ]
+      },
+
+      { type: "spacer" },
+
+      // 4. 底部双属性胶囊
       {
         type: "stack",
         direction: "row",
-        alignItems: "center",
-        padding: [3, 7],
-        borderRadius: 6,
-        backgroundColor: C.cardBg,
-        gap: 4,
+        gap: 5,
         children: [
-          { type: "image", src: "sf-symbol:mappin.and.ellipse", color: C.textTertiary, width: 10, height: 10 },
-          {
-            type: "text",
-            text: `${d.displayIP} · ${d.locShort}`,
-            font: { size: 10, weight: "medium" },
-            textColor: C.textSecondary,
-            maxLines: 1,
-            minScale: 0.65,
-            flex: 1
-          },
-          {
-            type: "text",
-            text: d.level.text,
-            font: { size: 9, weight: "bold" },
-            textColor: d.level.color,
-            maxLines: 1
-          }
+          createSmallPill("sf-symbol:network", d.asnNumber, 1),
+          createSmallPill(`sf-symbol:${d.ipTypeIcon}`, d.ipType, 1)
         ]
       }
     ]
@@ -457,6 +495,7 @@ function renderSystemLarge(d) {
         gap: 8,
         flex: 1,
         children: [
+          // 第一行（2个等宽高卡片）
           {
             type: "stack",
             direction: "row",
@@ -467,6 +506,7 @@ function renderSystemLarge(d) {
               createGridCard("sf-symbol:building.2.crop.circle", "网络运营商", d.asnNumber, d.asnOrg || "未知组织")
             ]
           },
+          // 第二行（2个等宽高卡片）
           {
             type: "stack",
             direction: "row",
@@ -645,6 +685,30 @@ function createMiniTag(iconSrc, text) {
   }
 }
 
+function createSmallPill(iconSrc, text, flex = 1) {
+  return {
+    type: "stack",
+    direction: "row",
+    alignItems: "center",
+    gap: 3,
+    padding: [3, 5],
+    borderRadius: 5,
+    backgroundColor: C.cardBg,
+    flex,
+    children: [
+      { type: "image", src: iconSrc, color: C.textTertiary, width: 10, height: 10 },
+      {
+        type: "text",
+        text,
+        font: { size: 10, weight: "medium" },
+        textColor: C.textSecondary,
+        maxLines: 1,
+        minScale: 0.75
+      }
+    ]
+  }
+}
+
 function createGridCard(iconSrc, title, line1, line2) {
   return {
     type: "stack",
@@ -713,12 +777,20 @@ function renderErrorWidget(family, message) {
 }
 
 // ══════════════════════════════════════════════════════
-// 📊 SVG 矢量图形渲染 (Optical Centering Gauges)
+// 📊 SVG 矢量图形渲染 (Progress & Gauge)
 // ══════════════════════════════════════════════════════
 
 /**
- * 绘制高质感视觉/光学绝对居中大圆环仪表
- * 基于 Cap-Height 光学配重：数字与标签整体重心精确重合于圆心 half
+ * 水平长条状细进度条 (Small 尺寸专用)
+ */
+function createProgressBarSvg(purity, color) {
+  const pct = Math.max(0, Math.min(100, purity))
+  const trackColor = "rgba(128,128,128,0.18)"
+  return `data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 5'><rect width='100' height='5' rx='2.5' fill='${trackColor}'/><rect width='${pct}' height='5' rx='2.5' fill='${color}'/></svg>`
+}
+
+/**
+ * 经典大圆环仪表 (Medium & Large 尺寸)
  */
 function createGaugeRingSvg(purity, size, strokeWidth, strokeColor, labelText = "纯净度") {
   const half = size / 2
@@ -730,8 +802,6 @@ function createGaugeRingSvg(purity, size, strokeWidth, strokeColor, labelText = 
 
   const numFontSize = Math.round(size * 0.31)
   const labelFontSize = Math.round(size * 0.11)
-
-  // 光学居中精准定位
   const numY = Math.round(half + numFontSize * 0.05)
   const labelY = Math.round(half + numFontSize * 0.62)
 
