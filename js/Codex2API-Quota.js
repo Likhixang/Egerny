@@ -183,35 +183,73 @@ function parseAccountItem(acc) {
   const reset7dCountdownStr = formatCountdown(reset7dAtMs, remainingFraction7d);
   const billed7d = typeof acc.billed_7d === "number" ? acc.billed_7d : null;
 
-  // 自动判断主力与次级窗口语义
-  // 1. 同时拥有 7d (周额度) 与 5h (短期额度): 7d 为周全额度，5h 为 5小时滚动额度
-  // 2. 仅拥有 7d: 7d 为周全额度
-  // 3. 仅拥有 5h: 5h 为 5小时全额度
-  let primaryWindow = "5h";
-  let primaryWindowLabel = "5小时";
-  let window7dLabel = "周全额度";
-  let window5hLabel = "5h 滚动";
+  // 智能额度语义判定 (基于订阅方案及窗口组合精准判定)
+  const isPro = planType.includes("pro") && !planType.includes("plus");
+  const isFree = planType.includes("free") || planType.includes("guest");
 
-  if (has7d && has5h) {
-    primaryWindow = "7d";
-    primaryWindowLabel = "周全额度";
-    window7dLabel = "周全额度";
-    window5hLabel = "5h 滚动";
-  } else if (has7d && !has5h) {
-    primaryWindow = "7d";
-    primaryWindowLabel = "周全额度";
-    window7dLabel = "周全额度";
-    window5hLabel = "5h 滚动";
+  let fullQuotaWindow = "7d";
+  let fullQuotaLabel = "周全额度";
+  let fullFraction = remainingFraction7d;
+  let fullUsedPercent = usage7d;
+  let fullResetAtMs = reset7dAtMs;
+  let fullResetTimeStr = reset7dTimeStr;
+  let fullResetCountdownStr = reset7dCountdownStr;
+
+  let secondaryLabel = "5小时滚动";
+  let isSecondarySpark = false;
+
+  if (isFree) {
+    fullQuotaWindow = "30d";
+    fullQuotaLabel = "月全额度";
+    fullFraction = has7d ? remainingFraction7d : remainingFraction5h;
+    fullUsedPercent = has7d ? usage7d : usage5h;
+    fullResetAtMs = has7d ? reset7dAtMs : reset5hAtMs;
+    fullResetTimeStr = has7d ? reset7dTimeStr : reset5hTimeStr;
+    fullResetCountdownStr = has7d ? reset7dCountdownStr : reset5hCountdownStr;
+    secondaryLabel = "短期额度";
+  } else if (isPro) {
+    fullQuotaWindow = "7d";
+    fullQuotaLabel = "周全额度";
+    fullFraction = has7d ? remainingFraction7d : (usage7d !== null ? remainingFraction7d : 1.0);
+    fullUsedPercent = has7d ? usage7d : 0;
+    fullResetAtMs = reset7dAtMs;
+    fullResetTimeStr = reset7dTimeStr;
+    fullResetCountdownStr = reset7dCountdownStr;
+    secondaryLabel = "Spark 5小时";
+    isSecondarySpark = true;
+  } else if (has7d && has5h) {
+    fullQuotaWindow = "7d";
+    fullQuotaLabel = "周全额度";
+    fullFraction = remainingFraction7d;
+    fullUsedPercent = usage7d;
+    fullResetAtMs = reset7dAtMs;
+    fullResetTimeStr = reset7dTimeStr;
+    fullResetCountdownStr = reset7dCountdownStr;
+    secondaryLabel = "5小时滚动";
+  } else if (has7d) {
+    fullQuotaWindow = "7d";
+    fullQuotaLabel = "周全额度";
+    fullFraction = remainingFraction7d;
+    fullUsedPercent = usage7d;
+    fullResetAtMs = reset7dAtMs;
+    fullResetTimeStr = reset7dTimeStr;
+    fullResetCountdownStr = reset7dCountdownStr;
+    secondaryLabel = "5小时滚动";
   } else {
-    primaryWindow = "5h";
-    primaryWindowLabel = "5小时";
-    window7dLabel = "周全额度";
-    window5hLabel = "5小时";
+    fullQuotaWindow = "5h";
+    fullQuotaLabel = "5小时全额度";
+    fullFraction = remainingFraction5h;
+    fullUsedPercent = usage5h;
+    fullResetAtMs = reset5hAtMs;
+    fullResetTimeStr = reset5hTimeStr;
+    fullResetCountdownStr = reset5hCountdownStr;
+    secondaryLabel = "5小时滚动";
   }
-  const primaryRemainingFraction = primaryWindow === "7d" ? remainingFraction7d : remainingFraction5h;
-  const primaryResetAtMs = primaryWindow === "7d" ? reset7dAtMs : reset5hAtMs;
-  const primaryResetTimeStr = primaryWindow === "7d" ? reset7dTimeStr : reset5hTimeStr;
-  const primaryResetCountdownStr = primaryWindow === "7d" ? reset7dCountdownStr : reset5hCountdownStr;
+
+  const primaryRemainingFraction = fullFraction;
+  const primaryResetAtMs = fullResetAtMs;
+  const primaryResetTimeStr = fullResetTimeStr;
+  const primaryResetCountdownStr = fullResetCountdownStr;
   const statusColor = getQuotaColor(primaryRemainingFraction);
 
   return {
@@ -235,10 +273,17 @@ function parseAccountItem(acc) {
     reset7dTimeStr,
     reset7dCountdownStr,
     billed7d,
-    primaryWindow,
-    primaryWindowLabel,
-    window7dLabel,
-    window5hLabel,
+    primaryWindow: fullQuotaWindow,
+    primaryWindowLabel: fullQuotaLabel,
+    fullQuotaWindow,
+    fullQuotaLabel,
+    fullFraction,
+    fullUsedPercent,
+    fullResetAtMs,
+    fullResetTimeStr,
+    fullResetCountdownStr,
+    secondaryLabel,
+    isSecondarySpark,
     primaryRemainingFraction,
     primaryResetAtMs,
     primaryResetTimeStr,
@@ -528,18 +573,17 @@ function createMicroBadge(badge) {
 }
 
 function renderSmallWidget(account, updateTime) {
-  // 小尺寸小组件：只展示「全额度」，不展示 Spark 5h 额度
-  const isWeekly = account.has7d;
-  const fullFraction = isWeekly ? account.remainingFraction7d : account.remainingFraction5h;
-  const usedPercent = isWeekly ? (account.usagePercent7d !== null ? Math.round(account.usagePercent7d) : Math.round((1 - fullFraction) * 100)) : (account.usagePercent5h !== null ? Math.round(account.usagePercent5h) : Math.round((1 - fullFraction) * 100));
+  // 小尺寸小组件：只展示「全额度」，绝不展示次要的 5h/Spark 额度
+  const fullFraction = account.fullFraction;
+  const usedPercent = account.fullUsedPercent !== null ? Math.round(account.fullUsedPercent) : Math.round((1 - fullFraction) * 100);
   const remainPercent = Math.round(fullFraction * 100);
   const statusColor = getQuotaColor(fullFraction);
-  const resetAtMs = isWeekly ? account.reset7dAtMs : account.reset5hAtMs;
-  const resetCountdownStr = isWeekly ? account.reset7dCountdownStr : account.reset5hCountdownStr;
+  const resetAtMs = account.fullResetAtMs;
+  const resetCountdownStr = account.fullResetCountdownStr;
   const accBadge = getAccountBadge(account);
   const progressSvg = createProgressBarSvg(fullFraction, statusColor, 6);
   const accountLabel = maskEmail(account.email || account.name, true);
-  const windowTag = isWeekly ? "全额度 (7D)" : "全额度 (5H)";
+  const windowTag = account.fullQuotaLabel;
 
   return {
     type: "widget",
@@ -617,7 +661,7 @@ function renderSmallWidget(account, updateTime) {
             direction: "row",
             alignItems: "center",
             children: [
-              { type: "text", text: `重置 ${formatSmallResetLabel(resetAtMs, isWeekly)}`, font: { size: 9 }, textColor: C.textSecondary },
+              { type: "text", text: `重置 ${formatSmallResetLabel(resetAtMs, account.fullQuotaWindow !== "5h")}`, font: { size: 9 }, textColor: C.textSecondary },
               { type: "spacer" },
               { type: "text", text: resetCountdownStr, font: { size: 9.5, weight: "bold" }, textColor: statusColor },
             ],
@@ -694,7 +738,7 @@ function renderMediumWidget(accounts, updateStr, maskEmailEnabled) {
                 { type: "text", text: `评分 ${first.dispatchScore}`, font: { size: 10 }, textColor: C.textSecondary },
               ],
             },
-            // 5h 进度
+            // 全额度进度 (周全额度 / 月全额度)
             {
               type: "stack",
               direction: "column",
@@ -705,31 +749,31 @@ function renderMediumWidget(accounts, updateStr, maskEmailEnabled) {
                   direction: "row",
                   alignItems: "center",
                   children: [
-                    { type: "text", text: `5小时滚动 剩余 ${remain5h}%`, font: { size: 11, weight: "bold" }, textColor: getQuotaColor(first.remainingFraction5h) },
-                    { type: "spacer" },
-                    { type: "text", text: `重置 ${first.reset5hTimeStr}`, font: { size: 9.5 }, textColor: C.textSecondary },
-                  ],
-                },
-                { type: "image", src: createProgressBarSvg(first.remainingFraction5h, getQuotaColor(first.remainingFraction5h), 4.5), height: 4.5 },
-              ],
-            },
-            // 7d 进度
-            {
-              type: "stack",
-              direction: "column",
-              gap: 2,
-              children: [
-                {
-                  type: "stack",
-                  direction: "row",
-                  alignItems: "center",
-                  children: [
-                    { type: "text", text: `周全额度 剩余 ${remain7d}%`, font: { size: 11, weight: "bold" }, textColor: getQuotaColor(first.remainingFraction7d) },
+                    { type: "text", text: `${first.fullQuotaLabel} 剩余 ${remain7d}%`, font: { size: 11, weight: "bold" }, textColor: getQuotaColor(first.remainingFraction7d) },
                     { type: "spacer" },
                     { type: "text", text: `重置 ${first.reset7dTimeStr}`, font: { size: 9.5 }, textColor: C.textSecondary },
                   ],
                 },
                 { type: "image", src: createProgressBarSvg(first.remainingFraction7d, getQuotaColor(first.remainingFraction7d), 4.5), height: 4.5 },
+              ],
+            },
+            // 次级进度 (Pro显示Spark 5小时，其他显示5小时滚动)
+            {
+              type: "stack",
+              direction: "column",
+              gap: 2,
+              children: [
+                {
+                  type: "stack",
+                  direction: "row",
+                  alignItems: "center",
+                  children: [
+                    { type: "text", text: `${first.secondaryLabel} 剩余 ${remain5h}%`, font: { size: 11, weight: "bold" }, textColor: getQuotaColor(first.remainingFraction5h) },
+                    { type: "spacer" },
+                    { type: "text", text: `重置 ${first.reset5hTimeStr}`, font: { size: 9.5 }, textColor: C.textSecondary },
+                  ],
+                },
+                { type: "image", src: createProgressBarSvg(first.remainingFraction5h, getQuotaColor(first.remainingFraction5h), 4.5), height: 4.5 },
               ],
             },
           ] : [
@@ -956,7 +1000,7 @@ function renderLargeWidget(accounts, stats, updateStr, maskEmailEnabled) {
             },
           ],
         },
-        // 5小时短期滚动额度卡片
+        // 1. 全额度卡片 (周全额度 / 月全额度)
         {
           type: "stack",
           direction: "column",
@@ -972,41 +1016,7 @@ function renderLargeWidget(accounts, stats, updateStr, maskEmailEnabled) {
               direction: "row",
               alignItems: "center",
               children: [
-                { type: "text", text: "5小时滚动额度 (短期限制)", font: { size: 12, weight: "bold" } },
-                { type: "spacer" },
-                { type: "text", text: `剩余 ${remain5h}%`, font: { size: 13, weight: "heavy" }, textColor: getQuotaColor(first.remainingFraction5h) },
-              ],
-            },
-            { type: "image", src: createProgressBarSvg(first.remainingFraction5h, getQuotaColor(first.remainingFraction5h), 6.5), height: 6.5 },
-            {
-              type: "stack",
-              direction: "row",
-              alignItems: "center",
-              children: [
-                { type: "text", text: `已使用 ${used5h}% · 重置 ${first.reset5hTimeStr}`, font: { size: 10 }, textColor: C.textSecondary },
-                { type: "spacer" },
-                { type: "text", text: first.reset5hCountdownStr, font: { size: 10, weight: "bold" }, textColor: getQuotaColor(first.remainingFraction5h) },
-              ],
-            },
-          ],
-        },
-        // 7天长期周额度卡片
-        {
-          type: "stack",
-          direction: "column",
-          gap: 6,
-          padding: [10, 12, 10, 12],
-          backgroundColor: C.cardBg,
-          borderWidth: 0.5,
-          borderColor: C.cardBorder,
-          borderRadius: 12,
-          children: [
-            {
-              type: "stack",
-              direction: "row",
-              alignItems: "center",
-              children: [
-                { type: "text", text: "周全额度 (7天周期限制)", font: { size: 12, weight: "bold" } },
+                { type: "text", text: `${first.fullQuotaLabel} (主要限制)`, font: { size: 12, weight: "bold" } },
                 { type: "spacer" },
                 { type: "text", text: `剩余 ${remain7d}%`, font: { size: 13, weight: "heavy" }, textColor: getQuotaColor(first.remainingFraction7d) },
               ],
@@ -1020,6 +1030,40 @@ function renderLargeWidget(accounts, stats, updateStr, maskEmailEnabled) {
                 { type: "text", text: `已使用 ${used7d}% · 重置 ${first.reset7dTimeStr}`, font: { size: 10 }, textColor: C.textSecondary },
                 { type: "spacer" },
                 { type: "text", text: first.reset7dCountdownStr, font: { size: 10, weight: "bold" }, textColor: getQuotaColor(first.remainingFraction7d) },
+              ],
+            },
+          ],
+        },
+        // 2. 次级额度卡片 (Pro账号显示Spark 5小时，其他账号显示5小时滚动额度)
+        {
+          type: "stack",
+          direction: "column",
+          gap: 6,
+          padding: [10, 12, 10, 12],
+          backgroundColor: C.cardBg,
+          borderWidth: 0.5,
+          borderColor: C.cardBorder,
+          borderRadius: 12,
+          children: [
+            {
+              type: "stack",
+              direction: "row",
+              alignItems: "center",
+              children: [
+                { type: "text", text: `${first.secondaryLabel} (短期限制)`, font: { size: 12, weight: "bold" } },
+                { type: "spacer" },
+                { type: "text", text: `剩余 ${remain5h}%`, font: { size: 13, weight: "heavy" }, textColor: getQuotaColor(first.remainingFraction5h) },
+              ],
+            },
+            { type: "image", src: createProgressBarSvg(first.remainingFraction5h, getQuotaColor(first.remainingFraction5h), 6.5), height: 6.5 },
+            {
+              type: "stack",
+              direction: "row",
+              alignItems: "center",
+              children: [
+                { type: "text", text: `已使用 ${used5h}% · 重置 ${first.reset5hTimeStr}`, font: { size: 10 }, textColor: C.textSecondary },
+                { type: "spacer" },
+                { type: "text", text: first.reset5hCountdownStr, font: { size: 10, weight: "bold" }, textColor: getQuotaColor(first.remainingFraction5h) },
               ],
             },
           ],
