@@ -1,36 +1,34 @@
 name: "IP-Pure"
 description: "节点 IP 纯净度检测（IPPure），新式小组件，支持全部主屏与锁屏尺寸，数据源 my.ippure.com"
 
-# 统一参数入口（compat_arguments）：解析期替换到 rules/脚本 env
+# 策略组路由参数（用于规则匹配）
 compat_arguments:
-  Proxy: "DIRECT"      # 检测请求走的策略组，默认直连
-  MarkIP: "false"      # IP 打码，true/false，默认 false
+  Proxy: "DIRECT"
 compat_arguments_desc: |
   Proxy: 检测请求走的策略组，默认 DIRECT
-  MarkIP: IP 打码，填 true 或 false，默认 false
 
-# 模块编辑页 UI 控件（Toggle），值写入模块级 env 并覆盖脚本注入值
+# 模块可视化配置控件 (Egern 2.16+)
 env_schema:
   MarkIP:
     name: IP 打码
     description: "是否对 IP 地址打码显示"
     options:
-      - "true"
       - "false"
+      - "true"
 
 scriptings:
-- generic:
-    name: IP-Pure
-    script_url: https://raw.githubusercontent.com/Likhixang/Egerny/main/js/IPPure-widget.js
-    timeout: 15
-    env:
-      MarkIP: "{{{MarkIP}}}"
+  - generic:
+      name: IP-Pure
+      script_url: https://raw.githubusercontent.com/Likhixang/Egerny/main/js/IPPure-widget.js
+      timeout: 15
+      env:
+        MarkIP: "false"
 
 widgets:
-- name: IP-Pure
-  script_name: IP-Pure
+  - name: IP-Pure
+    script_name: IP-Pure
 
 rules:
-- domain_suffix:
-    match: ippure.com
-    policy: "{{{Proxy}}}"
+  - domain_suffix:
+      match: ippure.com
+      policy: "{{{Proxy}}}"
