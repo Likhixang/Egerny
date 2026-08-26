@@ -7,6 +7,8 @@
  *   - 最小号小组件（systemSmall）：顶部两侧标题与风险胶囊 + 中间居中精致大圆环
  *   - 中号小组件（systemMedium）：经典仪表盘分栏（左侧大圆环 + 右侧结构化信息流）
  *   - 大号小组件（systemLarge）：仪表盘 Hero 面板 + 严丝合缝等宽高对称四宫格矩阵
+ *   - 锁屏圆形（accessoryCircular）：正中 48pt 高清微仪表，数值醒目居中
+ *   - 锁屏矩形（accessoryRectangular）：左侧 44pt 微圆环仪表 + 右侧大字 IP 与归属地
  *   - 环境变量：MarkIP = true 时对 IP 地址脱敏显示
  * 数据源：https://my.ippure.com/v1/info
  */
@@ -468,59 +470,102 @@ function renderSystemLarge(d) {
 // 🔒 锁屏小组件渲染 (Lock Screen Accessories)
 // ══════════════════════════════════════════════════════
 
+/**
+ * 锁屏圆形 (accessoryCircular)
+ * 48x48 正中微型高亮圆环仪表，纯净度数字清晰醒目
+ */
 function renderAccessoryCircular(purity, level) {
   return {
     type: "widget",
+    padding: 0,
     children: [
+      { type: "spacer" },
       {
-        type: "image",
-        src: createGaugeRingSvg(purity, 46, 4.5, "#FFFFFF", "PURE", true),
-        width: 46,
-        height: 46
-      }
+        type: "stack",
+        direction: "row",
+        alignItems: "center",
+        children: [
+          { type: "spacer" },
+          {
+            type: "image",
+            src: createLockScreenCircularSvg(purity, 48, 4),
+            width: 48,
+            height: 48
+          },
+          { type: "spacer" }
+        ]
+      },
+      { type: "spacer" }
     ]
   }
 }
 
+/**
+ * 锁屏矩形 (accessoryRectangular)
+ * 经典左侧微圆环仪表 + 右侧大字 IP 与归属地，视觉饱满有重心
+ */
 function renderAccessoryRectangular(displayIP, locShort, purity, level, ipType) {
   return {
     type: "widget",
-    gap: 2,
+    padding: [2, 0],
     children: [
       {
         type: "stack",
         direction: "row",
         alignItems: "center",
-        gap: 4,
+        gap: 8,
         children: [
-          { type: "image", src: "sf-symbol:shield.fill", width: 12, height: 12 },
+          // 左侧：44pt 微圆环仪表
           {
-            type: "text",
-            text: displayIP,
-            font: { size: "caption1", weight: "bold" },
-            maxLines: 1,
-            minScale: 0.65
+            type: "image",
+            src: createLockScreenGaugeSvg(purity, 44, 4),
+            width: 44,
+            height: 44
+          },
+          // 右侧：紧凑 3 行信息
+          {
+            type: "stack",
+            direction: "column",
+            flex: 1,
+            gap: 2,
+            children: [
+              // 行 1: IP 大字
+              {
+                type: "text",
+                text: displayIP,
+                font: { size: "caption1", weight: "bold" },
+                textColor: "#FFFFFF",
+                maxLines: 1,
+                minScale: 0.65
+              },
+              // 行 2: 归属地
+              {
+                type: "text",
+                text: locShort,
+                font: { size: "caption2" },
+                textColor: "rgba(255,255,255,0.7)",
+                maxLines: 1,
+                minScale: 0.75
+              },
+              // 行 3: 安全状态 · 类型
+              {
+                type: "text",
+                text: `${level.text} · ${ipType}`,
+                font: { size: 10, weight: "medium" },
+                textColor: "rgba(255,255,255,0.85)",
+                maxLines: 1
+              }
+            ]
           }
         ]
-      },
-      {
-        type: "text",
-        text: locShort,
-        font: { size: "caption2" },
-        textColor: C.textSecondary,
-        maxLines: 1,
-        minScale: 0.8
-      },
-      {
-        type: "text",
-        text: `纯净度 ${purity}% · ${ipType}`,
-        font: { size: "caption2", weight: "semibold" },
-        maxLines: 1
       }
     ]
   }
 }
 
+/**
+ * 锁屏单行 (accessoryInline)
+ */
 function renderAccessoryInline(displayIP, purity, level) {
   return {
     type: "widget",
@@ -601,7 +646,6 @@ function createMiniTag(iconSrc, text) {
 
 /**
  * 创建严格统一结构（1行标题 + 2行文本）的对称网格卡片
- * 确保所有 4 张卡片宽度 1:1、高度完全一致
  */
 function createGridCard(iconSrc, title, line1, line2) {
   return {
@@ -671,14 +715,13 @@ function renderErrorWidget(family, message) {
 }
 
 // ══════════════════════════════════════════════════════
-// 📊 SVG 经典大圆环仪表 (High-Precision Circular Gauge)
+// 📊 SVG 矢量图形渲染 (Gauges & Rings)
 // ══════════════════════════════════════════════════════
 
 /**
- * 绘制高质感居中环形进度圈
- * 采用严格基线数学对齐，彻底杜绝偏心与平台渲染偏差
+ * 主屏幕大圆环仪表
  */
-function createGaugeRingSvg(purity, size, strokeWidth, strokeColor, labelText = "纯净度", isLockScreen = false) {
+function createGaugeRingSvg(purity, size, strokeWidth, strokeColor, labelText = "纯净度") {
   const half = size / 2
   const r = half - strokeWidth / 2
   const circ = 2 * Math.PI * r
@@ -686,25 +729,65 @@ function createGaugeRingSvg(purity, size, strokeWidth, strokeColor, labelText = 
   const dash = (circ * pct).toFixed(1)
   const gap = (circ - dash).toFixed(1)
 
-  // 严格基线计算：数字视觉居中偏上，标签紧跟其下
   const numFontSize = Math.round(size * 0.30)
   const labelFontSize = Math.round(size * 0.11)
   const numY = Math.round(half - size * 0.04)
   const labelY = Math.round(half + size * 0.20)
 
-  const trackColor = isLockScreen ? "rgba(255,255,255,0.2)" : "rgba(128,128,128,0.18)"
-  const numColor = isLockScreen ? "#FFFFFF" : strokeColor
-  const subColor = isLockScreen ? "rgba(255,255,255,0.7)" : "rgba(128,128,128,0.85)"
+  const trackColor = "rgba(128,128,128,0.18)"
+  const numColor = strokeColor
+  const subColor = "rgba(128,128,128,0.85)"
 
   return `data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 ${size} ${size}'>` +
-    // 1. 底轨
     `<circle cx='${half}' cy='${half}' r='${r}' fill='none' stroke='${trackColor}' stroke-width='${strokeWidth}'/>` +
-    // 2. 顺时针进度圆弧
     `<circle cx='${half}' cy='${half}' r='${r}' fill='none' stroke='${strokeColor}' stroke-width='${strokeWidth}' stroke-linecap='round' stroke-dasharray='${dash} ${gap}' transform='rotate(-90 ${half} ${half})'/>` +
-    // 3. 中心大数字
     `<text x='${half}' y='${numY}' text-anchor='middle' font-size='${numFontSize}' font-weight='800' font-family='-apple-system, BlinkMacSystemFont, sans-serif' fill='${numColor}'>${purity}</text>` +
-    // 4. 下方居中标签
     (labelText ? `<text x='${half}' y='${labelY}' text-anchor='middle' font-size='${labelFontSize}' font-weight='600' font-family='-apple-system, BlinkMacSystemFont, sans-serif' fill='${subColor}'>${labelText}</text>` : '') +
+    `</svg>`
+}
+
+/**
+ * 锁屏圆形极简微型仪表（48pt）
+ */
+function createLockScreenCircularSvg(purity, size, strokeWidth) {
+  const half = size / 2
+  const r = half - strokeWidth / 2
+  const circ = 2 * Math.PI * r
+  const pct = Math.max(0, Math.min(100, purity)) / 100
+  const dash = (circ * pct).toFixed(1)
+  const gap = (circ - dash).toFixed(1)
+
+  const numFontSize = 17
+  const numY = half + 6
+
+  return `data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 ${size} ${size}'>` +
+    `<circle cx='${half}' cy='${half}' r='${r}' fill='none' stroke='rgba(255,255,255,0.25)' stroke-width='${strokeWidth}'/>` +
+    `<circle cx='${half}' cy='${half}' r='${r}' fill='none' stroke='#FFFFFF' stroke-width='${strokeWidth}' stroke-linecap='round' stroke-dasharray='${dash} ${gap}' transform='rotate(-90 ${half} ${half})'/>` +
+    `<text x='${half}' y='${numY}' text-anchor='middle' font-size='${numFontSize}' font-weight='800' font-family='-apple-system, BlinkMacSystemFont, sans-serif' fill='#FFFFFF'>${purity}</text>` +
+    `</svg>`
+}
+
+/**
+ * 锁屏矩形微圆环仪表（44pt）
+ */
+function createLockScreenGaugeSvg(purity, size, strokeWidth) {
+  const half = size / 2
+  const r = half - strokeWidth / 2
+  const circ = 2 * Math.PI * r
+  const pct = Math.max(0, Math.min(100, purity)) / 100
+  const dash = (circ * pct).toFixed(1)
+  const gap = (circ - dash).toFixed(1)
+
+  const numFontSize = 15
+  const labelFontSize = 7.5
+  const numY = half - 1
+  const labelY = half + 11
+
+  return `data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 ${size} ${size}'>` +
+    `<circle cx='${half}' cy='${half}' r='${r}' fill='none' stroke='rgba(255,255,255,0.22)' stroke-width='${strokeWidth}'/>` +
+    `<circle cx='${half}' cy='${half}' r='${r}' fill='none' stroke='#FFFFFF' stroke-width='${strokeWidth}' stroke-linecap='round' stroke-dasharray='${dash} ${gap}' transform='rotate(-90 ${half} ${half})'/>` +
+    `<text x='${half}' y='${numY}' text-anchor='middle' font-size='${numFontSize}' font-weight='800' font-family='-apple-system, BlinkMacSystemFont, sans-serif' fill='#FFFFFF'>${purity}</text>` +
+    `<text x='${half}' y='${labelY}' text-anchor='middle' font-size='${labelFontSize}' font-weight='600' font-family='-apple-system, BlinkMacSystemFont, sans-serif' fill='rgba(255,255,255,0.7)'>纯净度</text>` +
     `</svg>`
 }
 
