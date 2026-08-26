@@ -1,7 +1,7 @@
 /*
  * IPPure 节点 IP 纯净度 — Egern 新式小组件
  * 设计系统：Apple HIG 现代化自适应排版
- *   - Small: 上下两段式平衡布局（上：网络身份，下：纯净度仪表+特征胶囊）
+ *   - Small: 顶部 16pt 沉降 + 四段阶梯式黄金均分（纯净度进度条精确锁定在画布正中 y=77pt）
  *   - Medium: 经典宽屏仪表盘（左侧大圆环仪表 + 右侧结构化信息流）
  *   - Large: 顶部 Header + 顶部大圆环 Hero 概览 + 底部 2x2 对称等高数据卡片
  *   - 锁屏系列: accessoryCircular / accessoryRectangular / accessoryInline
@@ -145,44 +145,47 @@ const C = {
 
 /**
  * 主屏幕 Small 小尺寸 (2x2)
- * 上下两段式对称平衡排版（彻底解决字堆积在上部与间距不均的问题）：
- *  - 上半段（网络身份）：Header + 大字 IP + 详细归属
- *  - 中央：单一弹性 Spacer（自然呼吸走廊）
- *  - 下半段（纯净度与特征）：纯净度%与评级 + 水平进度条 + 双属性胶囊
+ * 彻底消除「偏上与顶格」：
+ *  - 顶部增加 16pt 沉降 padding
+ *  - Header 与 IP 紧密关联
+ *  - 纯净度水平长条进度条锁定在小组件正中黄金分割线 (y=77pt)
+ *  - 底部双胶囊贴合下底边，整体均匀舒展
  */
 function renderSystemSmall(d) {
   return {
     type: "widget",
-    padding: 13,
+    padding: [16, 14, 14, 14],
     children: [
-      // ── 1. 上半部分：网络身份区块 ──
+      // 1. 顶部 Header
+      {
+        type: "stack",
+        direction: "row",
+        alignItems: "center",
+        gap: 4,
+        children: [
+          { type: "image", src: "sf-symbol:shield.lefthalf.filled", color: d.level.color, width: 13, height: 13 },
+          { type: "text", text: "IP 纯净度", font: { size: "caption1", weight: "bold" }, textColor: C.textPrimary },
+          { type: "spacer" },
+          {
+            type: "stack",
+            padding: [2, 5],
+            borderRadius: 4,
+            backgroundColor: C.cardBg,
+            children: [
+              { type: "text", text: d.ipVer, font: { size: 9, weight: "bold" }, textColor: C.textSecondary }
+            ]
+          }
+        ]
+      },
+
+      { type: "spacer", length: 6 },
+
+      // 2. Hero 主区域 (大字 IP + 详细位置)
       {
         type: "stack",
         direction: "column",
-        gap: 3,
+        gap: 2,
         children: [
-          // 顶栏 Header
-          {
-            type: "stack",
-            direction: "row",
-            alignItems: "center",
-            gap: 4,
-            children: [
-              { type: "image", src: "sf-symbol:shield.lefthalf.filled", color: d.level.color, width: 13, height: 13 },
-              { type: "text", text: "IP 纯净度", font: { size: "caption1", weight: "bold" }, textColor: C.textPrimary },
-              { type: "spacer" },
-              {
-                type: "stack",
-                padding: [2, 5],
-                borderRadius: 4,
-                backgroundColor: C.cardBg,
-                children: [
-                  { type: "text", text: d.ipVer, font: { size: 9, weight: "bold" }, textColor: C.textSecondary }
-                ]
-              }
-            ]
-          },
-          // IP 大字
           {
             type: "text",
             text: d.displayIP,
@@ -191,7 +194,6 @@ function renderSystemSmall(d) {
             maxLines: 1,
             minScale: 0.65
           },
-          // 归属地
           {
             type: "stack",
             direction: "row",
@@ -212,16 +214,14 @@ function renderSystemSmall(d) {
         ]
       },
 
-      // ── 2. 中央弹性呼吸走廊（连接上下两大平衡区块）──
       { type: "spacer" },
 
-      // ── 3. 下半部分：纯净度与特征区块 ──
+      // 3. 核心长条状纯净度进度条 (正中黄金分割线)
       {
         type: "stack",
         direction: "column",
-        gap: 5,
+        gap: 4,
         children: [
-          // 纯净度标签与状态
           {
             type: "stack",
             direction: "row",
@@ -242,23 +242,25 @@ function renderSystemSmall(d) {
               }
             ]
           },
-          // 水平进度条
           {
             type: "image",
             src: createProgressBarSvg(d.purity, d.level.color),
             height: 5,
             resizable: true
-          },
-          // 底部双胶囊
-          {
-            type: "stack",
-            direction: "row",
-            gap: 5,
-            children: [
-              createSmallPill("sf-symbol:network", d.asnNumber, 1),
-              createSmallPill(`sf-symbol:${d.ipTypeIcon}`, d.ipType, 1)
-            ]
           }
+        ]
+      },
+
+      { type: "spacer" },
+
+      // 4. 底部双属性胶囊
+      {
+        type: "stack",
+        direction: "row",
+        gap: 5,
+        children: [
+          createSmallPill("sf-symbol:network", d.asnNumber, 1),
+          createSmallPill(`sf-symbol:${d.ipTypeIcon}`, d.ipType, 1)
         ]
       }
     ]
