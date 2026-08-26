@@ -1,19 +1,16 @@
 /*
  * Codex2API Quota 额度监控 — Egern 新式小组件
- * 功能特性：
- *   - 自动解析 Codex2API 账号池：支持 5小时滚动窗口与 7天周额度双窗口识别
- *   - 适配全部主屏与锁屏尺寸：
- *       - systemSmall: 胶囊徽标 + 核心大数字 + SVG 进度条 + 重置倒计时
- *       - systemMedium: 宽屏卡片（单账号 5h+7d 双额度仪表盘 / 多账号 Top 2 并排）
- *       - systemLarge / systemExtraLarge: 单账号 5h+7d 详尽卡片与集群数据 / 多账号 Top 4 列表
- *       - accessoryCircular / accessoryRectangular / accessoryInline: 锁屏系列
- * 
- * 环境变量配置 (兼容 compat_arguments 与 env_schema):
- *   - SERVER_URL / ServerURL: Codex2API 地址 (默认 http://127.0.0.1:8080)
- *   - ADMIN_KEY / AdminKey: Admin Secret 管理密钥 (选填)
- *   - MASK_EMAIL / MaskEmail: 是否对账号邮箱打码 (默认 false)
- *   - FILTER / Filter: 筛选指定账号名、邮箱关键字或数字序号 (选填)
+ * 核心升级：
+ *   - 官方 OpenAI / Codex 精细品牌矢量徽标
+ *   - 纯正 Apple HIG 拟物磨砂玻璃卡片（自适应浅色/深色透明度与边框）
+ *   - 智能 5h 滚动与 7d 周额度双窗口自适应
+ *   - 适配全部主屏与锁屏尺寸 (systemSmall, systemMedium, systemLarge, accessory*)
  */
+
+// ── 官方精细矢量徽标 (Lobe Icons 官方 SVG 提取) ──
+const BRAND_ICONS = {
+  openai: "data:image/svg+xml,%3Csvg%20viewBox%3D%220%200%2024%2024%22%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%3E%3Cpath%20d%3D%22M9.205%208.658v-2.26c0-.19.072-.333.238-.428l4.543-2.616c.619-.357%201.356-.523%202.117-.523%202.854%200%204.662%202.212%204.662%204.566%200%20.167%200%20.357-.024.547l-4.71-2.759a.797.797%200%2000-.856%200l-5.97%203.473zm10.609%208.8V12.06c0-.333-.143-.57-.429-.737l-5.97-3.473%201.95-1.118a.433.433%200%2001.476%200l4.543%202.617c1.309.76%202.189%202.378%202.189%203.948%200%201.808-1.07%203.473-2.76%204.163zM7.802%2012.703l-1.95-1.142c-.167-.095-.239-.238-.239-.428V5.899c0-2.545%201.95-4.472%204.591-4.472%201%200%201.927.333%202.712.928L8.23%205.067c-.285.166-.428.404-.428.737v6.898zM12%2015.128l-2.795-1.57v-3.33L12%208.658l2.795%201.57v3.33L12%2015.128zm1.796%207.23c-1%200-1.927-.332-2.712-.927l4.686-2.712c.285-.166.428-.404.428-.737v-6.898l1.974%201.142c.167.095.238.238.238.428v5.233c0%202.545-1.974%204.472-4.614%204.472zm-5.637-5.303l-4.544-2.617c-1.308-.761-2.188-2.378-2.188-3.948A4.482%204.482%200%20014.21%206.327v5.423c0%20.333.143.571.428.738l5.947%203.449-1.95%201.118a.432.432%200%2001-.476%200zm-.262%203.9c-2.688%200-4.662-2.021-4.662-4.519%200-.19.024-.38.047-.57l4.686%202.71c.286.167.571.167.856%200l5.97-3.448v2.26c0%20.19-.07.333-.237.428l-4.543%202.616c-.619.357-1.356.523-2.117.523zm5.899%202.83a5.947%205.947%200%20005.827-4.756C22.287%2018.339%2024%2015.84%2024%2013.296c0-1.665-.713-3.282-1.998-4.448.119-.5.19-.999.19-1.498%200-3.401-2.759-5.947-5.946-5.947-.642%200-1.26.095-1.88.31A5.962%205.962%200%200010.205%200a5.947%205.947%200%2000-5.827%204.757C1.713%205.447%200%207.945%200%2010.49c0%201.666.713%203.283%201.998%204.448-.119.5-.19%201-.19%201.499%200%203.401%202.759%205.946%205.946%205.946.642%200%201.26-.095%201.88-.309a5.96%205.96%200%20004.162%201.713z%22%20fill%3D%22%23FFFFFF%22/%3E%3C/svg%3E",
+};
 
 function formatTimeOnly(ts) {
   if (!ts || isNaN(ts)) return "--:--";
@@ -98,28 +95,28 @@ function getPlanBadge(plan, windowType) {
   if (p.includes("team")) {
     return {
       text: `TEAM · ${winLabel}`,
-      icon: "person.2.fill",
+      svg: BRAND_ICONS.openai,
       bg: "#AF52DE",
     };
   }
   if (p.includes("enterprise") || p.includes("ent")) {
     return {
       text: `ENT · ${winLabel}`,
-      icon: "building.2.fill",
+      svg: BRAND_ICONS.openai,
       bg: "#5856D6",
     };
   }
   return {
     text: `PRO · ${winLabel}`,
-    icon: "crown.fill",
-    bg: "#007AFF",
+    svg: BRAND_ICONS.openai,
+    bg: "#10A37F",
   };
 }
 
-function createProgressBarSvg(fraction, color, height = 5) {
+function createProgressBarSvg(fraction, color, height = 6) {
   const percent = Math.max(0, Math.min(100, Math.round(fraction * 100)));
   const svg = `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 ${height}' preserveAspectRatio='none'>
-    <rect x='0' y='0' width='100' height='${height}' rx='${height / 2}' fill='rgba(120,120,128,0.24)'/>
+    <rect x='0' y='0' width='100' height='${height}' rx='${height / 2}' fill='rgba(120,120,128,0.18)'/>
     <rect x='0' y='0' width='${percent}' height='${height}' rx='${height / 2}' fill='${color}'/>
   </svg>`.replace(/\s+/g, " ");
   return `data:image/svg+xml,${encodeURIComponent(svg)}`;
@@ -453,7 +450,7 @@ export default async function(ctx) {
   }
 }
 
-// ---------------- UI 布局渲染器 ----------------
+// ── HIG 拟物卡片式布局 ──
 
 function renderSmallWidget(account, updateTime) {
   const usedPercent = Math.round((1 - account.primaryRemainingFraction) * 100);
@@ -465,7 +462,6 @@ function renderSmallWidget(account, updateTime) {
     type: "widget",
     padding: 12,
     gap: 8,
-    backgroundColor: { light: "#F2F2F7", dark: "#1C1C1E" },
     children: [
       {
         type: "stack",
@@ -481,21 +477,23 @@ function renderSmallWidget(account, updateTime) {
             backgroundColor: badge.bg,
             borderRadius: 10,
             children: [
-              { type: "image", src: `sf-symbol:${badge.icon}`, width: 10, height: 10, color: "#FFFFFF" },
-              { type: "text", text: badge.text, font: { size: 10, weight: "bold" }, textColor: "#FFFFFF" },
+              { type: "image", src: badge.svg, width: 12, height: 12 },
+              { type: "text", text: badge.text, font: { size: 10, weight: "heavy" }, textColor: "#FFFFFF" },
             ],
           },
           { type: "spacer" },
-          { type: "text", text: updateTime, font: { size: 10 }, textColor: "#8E8E93" },
+          { type: "text", text: updateTime, font: { size: 10, weight: "medium" }, textColor: "#8E8E93" },
         ],
       },
       {
         type: "stack",
         direction: "column",
         gap: 8,
-        padding: 10,
-        backgroundColor: { light: "#FFFFFF", dark: "rgba(255,255,255,0.08)" },
-        borderRadius: 12,
+        padding: [10, 10, 10, 10],
+        backgroundColor: { light: "rgba(0,0,0,0.04)", dark: "rgba(255,255,255,0.08)" },
+        borderWidth: 0.5,
+        borderColor: { light: "rgba(0,0,0,0.06)", dark: "rgba(255,255,255,0.08)" },
+        borderRadius: 13,
         flex: 1,
         children: [
           {
@@ -509,7 +507,7 @@ function renderSmallWidget(account, updateTime) {
                 gap: 1,
                 children: [
                   { type: "text", text: "已用", font: { size: 10 }, textColor: "#8E8E93" },
-                  { type: "text", text: `${usedPercent}%`, font: { size: 16, weight: "heavy" }, textColor: { light: "#000000", dark: "#FFFFFF" } },
+                  { type: "text", text: `${usedPercent}%`, font: { size: 17, weight: "heavy" }, textColor: { light: "#1C1C1E", dark: "#FFFFFF" } },
                 ],
               },
               { type: "spacer" },
@@ -520,7 +518,7 @@ function renderSmallWidget(account, updateTime) {
                 gap: 1,
                 children: [
                   { type: "text", text: `剩余 (${account.primaryWindow})`, font: { size: 10 }, textColor: "#8E8E93" },
-                  { type: "text", text: `${remainPercent}%`, font: { size: 16, weight: "heavy" }, textColor: account.statusColor },
+                  { type: "text", text: `${remainPercent}%`, font: { size: 17, weight: "heavy" }, textColor: account.statusColor },
                 ],
               },
             ],
@@ -531,7 +529,7 @@ function renderSmallWidget(account, updateTime) {
             direction: "row",
             alignItems: "center",
             children: [
-              { type: "text", text: formatSmallResetLabel(account.primaryResetAtMs, account.primaryWindow === "7d"), font: { size: 10 }, textColor: "#8E8E93" },
+              { type: "text", text: formatSmallResetLabel(account.primaryResetAtMs, account.primaryWindow === "7d"), font: { size: 9 }, textColor: "#8E8E93" },
               { type: "spacer" },
               { type: "text", text: formatCountdown(account.primaryResetAtMs, account.primaryRemainingFraction), font: { size: 10, weight: "bold" }, textColor: account.statusColor },
             ],
@@ -560,7 +558,6 @@ function renderMediumWidget(accounts, updateStr, maskEmailEnabled) {
       type: "widget",
       padding: [12, 14, 12, 14],
       gap: 8,
-      backgroundColor: { light: "#F2F2F7", dark: "#1C1C1E" },
       children: [
         {
           type: "stack",
@@ -571,17 +568,17 @@ function renderMediumWidget(accounts, updateStr, maskEmailEnabled) {
               type: "stack",
               direction: "row",
               alignItems: "center",
-              gap: 4,
-              padding: [3, 8, 3, 8],
+              gap: 5,
+              padding: [3, 9, 3, 9],
               backgroundColor: badge.bg,
               borderRadius: 10,
               children: [
-                { type: "image", src: `sf-symbol:${badge.icon}`, width: 11, height: 11, color: "#FFFFFF" },
-                { type: "text", text: badge.text, font: { size: 11, weight: "bold" }, textColor: "#FFFFFF" },
+                { type: "image", src: badge.svg, width: 13, height: 13 },
+                { type: "text", text: badge.text, font: { size: 11, weight: "heavy" }, textColor: "#FFFFFF" },
               ],
             },
             { type: "spacer" },
-            { type: "text", text: `更新 ${updateStr}`, font: { size: 11 }, textColor: "#8E8E93" },
+            { type: "text", text: `更新 ${updateStr}`, font: { size: 11, weight: "medium" }, textColor: "#8E8E93" },
           ],
         },
         {
@@ -598,9 +595,11 @@ function renderMediumWidget(accounts, updateStr, maskEmailEnabled) {
           type: "stack",
           direction: "column",
           gap: isDual ? 6 : 8,
-          padding: [8, 12, 8, 12],
-          backgroundColor: { light: "#FFFFFF", dark: "rgba(255,255,255,0.08)" },
-          borderRadius: 12,
+          padding: [9, 12, 9, 12],
+          backgroundColor: { light: "rgba(0,0,0,0.04)", dark: "rgba(255,255,255,0.08)" },
+          borderWidth: 0.5,
+          borderColor: { light: "rgba(0,0,0,0.06)", dark: "rgba(255,255,255,0.08)" },
+          borderRadius: 13,
           flex: 1,
           children: isDual ? [
             {
@@ -652,7 +651,7 @@ function renderMediumWidget(accounts, updateStr, maskEmailEnabled) {
                   alignItems: "center",
                   children: [
                     { type: "text", text: "已用", font: { size: 11 }, textColor: "#8E8E93" },
-                    { type: "text", text: `${first.primaryWindow === "7d" ? used7d : used5h}%`, font: { size: 14, weight: "heavy" } },
+                    { type: "text", text: `${first.primaryWindow === "7d" ? used7d : used5h}%`, font: { size: 15, weight: "heavy" } },
                   ],
                 },
                 { type: "spacer" },
@@ -663,7 +662,7 @@ function renderMediumWidget(accounts, updateStr, maskEmailEnabled) {
                   alignItems: "center",
                   children: [
                     { type: "text", text: `${first.primaryWindowLabel}剩余`, font: { size: 11 }, textColor: "#8E8E93" },
-                    { type: "text", text: `${first.primaryWindow === "7d" ? remain7d : remain5h}%`, font: { size: 16, weight: "heavy" }, textColor: first.statusColor },
+                    { type: "text", text: `${first.primaryWindow === "7d" ? remain7d : remain5h}%`, font: { size: 17, weight: "heavy" }, textColor: first.statusColor },
                   ],
                 },
               ],
@@ -690,7 +689,6 @@ function renderMediumWidget(accounts, updateStr, maskEmailEnabled) {
     type: "widget",
     padding: [12, 14, 12, 14],
     gap: 7,
-    backgroundColor: { light: "#F2F2F7", dark: "#1C1C1E" },
     children: [
       {
         type: "stack",
@@ -701,17 +699,17 @@ function renderMediumWidget(accounts, updateStr, maskEmailEnabled) {
             type: "stack",
             direction: "row",
             alignItems: "center",
-            gap: 4,
-            padding: [3, 8, 3, 8],
+            gap: 5,
+            padding: [3, 9, 3, 9],
             backgroundColor: badge.bg,
             borderRadius: 10,
             children: [
-              { type: "image", src: `sf-symbol:${badge.icon}`, width: 11, height: 11, color: "#FFFFFF" },
-              { type: "text", text: badge.text, font: { size: 11, weight: "bold" }, textColor: "#FFFFFF" },
+              { type: "image", src: badge.svg, width: 13, height: 13 },
+              { type: "text", text: badge.text, font: { size: 11, weight: "heavy" }, textColor: "#FFFFFF" },
             ],
           },
           { type: "spacer" },
-          { type: "text", text: `更新 ${updateStr}`, font: { size: 11 }, textColor: "#8E8E93" },
+          { type: "text", text: `更新 ${updateStr}`, font: { size: 11, weight: "medium" }, textColor: "#8E8E93" },
         ],
       },
       ...topTwo.map((acc) => {
@@ -723,9 +721,11 @@ function renderMediumWidget(accounts, updateStr, maskEmailEnabled) {
           type: "stack",
           direction: "column",
           gap: 3,
-          padding: [6, 10, 6, 10],
-          backgroundColor: { light: "#FFFFFF", dark: "rgba(255,255,255,0.08)" },
-          borderRadius: 10,
+          padding: [7, 10, 7, 10],
+          backgroundColor: { light: "rgba(0,0,0,0.04)", dark: "rgba(255,255,255,0.08)" },
+          borderWidth: 0.5,
+          borderColor: { light: "rgba(0,0,0,0.06)", dark: "rgba(255,255,255,0.08)" },
+          borderRadius: 11,
           children: [
             {
               type: "stack",
@@ -735,14 +735,10 @@ function renderMediumWidget(accounts, updateStr, maskEmailEnabled) {
                 { type: "text", text: accountLabel, font: { size: 11, weight: "bold" }, maxLines: 1 },
                 { type: "spacer" },
                 {
-                  type: "stack",
-                  direction: "row",
-                  gap: 3,
-                  alignItems: "center",
-                  children: [
-                    { type: "image", src: "sf-symbol:circle.lefthalf.filled", width: 10, height: 10, color: acc.statusColor },
-                    { type: "text", text: `${acc.primaryWindowLabel}余 ${remainPercent}%`, font: { size: 10, weight: "bold" }, textColor: acc.statusColor },
-                  ],
+                  type: "text",
+                  text: `${acc.primaryWindowLabel}余 ${remainPercent}%`,
+                  font: { size: 11, weight: "heavy" },
+                  textColor: acc.statusColor,
                 },
               ],
             },
@@ -780,7 +776,6 @@ function renderLargeWidget(accounts, stats, updateStr, maskEmailEnabled) {
       type: "widget",
       padding: 14,
       gap: 10,
-      backgroundColor: { light: "#F2F2F7", dark: "#1C1C1E" },
       children: [
         {
           type: "stack",
@@ -791,17 +786,17 @@ function renderLargeWidget(accounts, stats, updateStr, maskEmailEnabled) {
               type: "stack",
               direction: "row",
               alignItems: "center",
-              gap: 4,
-              padding: [3, 8, 3, 8],
+              gap: 5,
+              padding: [3, 9, 3, 9],
               backgroundColor: badge.bg,
               borderRadius: 10,
               children: [
-                { type: "image", src: `sf-symbol:${badge.icon}`, width: 12, height: 12, color: "#FFFFFF" },
-                { type: "text", text: badge.text, font: { size: 12, weight: "bold" }, textColor: "#FFFFFF" },
+                { type: "image", src: badge.svg, width: 13, height: 13 },
+                { type: "text", text: badge.text, font: { size: 12, weight: "heavy" }, textColor: "#FFFFFF" },
               ],
             },
             { type: "spacer" },
-            { type: "text", text: `更新 ${updateStr}`, font: { size: 12 }, textColor: "#8E8E93" },
+            { type: "text", text: `更新 ${updateStr}`, font: { size: 12, weight: "medium" }, textColor: "#8E8E93" },
           ],
         },
         {
@@ -815,9 +810,9 @@ function renderLargeWidget(accounts, stats, updateStr, maskEmailEnabled) {
               direction: "row",
               gap: 8,
               children: [
-                { type: "text", text: `调度评分: ${first.dispatchScore}`, font: { size: 10 }, textColor: "#8E8E93" },
+                { type: "text", text: `调度: ${first.dispatchScore}`, font: { size: 10 }, textColor: "#8E8E93" },
                 { type: "text", text: `状态: ${first.healthTier}`, font: { size: 10 }, textColor: "#8E8E93" },
-                { type: "text", text: `成功请求: ${first.successRequests}`, font: { size: 10 }, textColor: "#8E8E93" },
+                { type: "text", text: `请求: ${first.successRequests}`, font: { size: 10 }, textColor: "#8E8E93" },
               ],
             },
           ],
@@ -828,8 +823,10 @@ function renderLargeWidget(accounts, stats, updateStr, maskEmailEnabled) {
           direction: "column",
           gap: 6,
           padding: [10, 12, 10, 12],
-          backgroundColor: { light: "#FFFFFF", dark: "rgba(255,255,255,0.08)" },
-          borderRadius: 10,
+          backgroundColor: { light: "rgba(0,0,0,0.04)", dark: "rgba(255,255,255,0.08)" },
+          borderWidth: 0.5,
+          borderColor: { light: "rgba(0,0,0,0.06)", dark: "rgba(255,255,255,0.08)" },
+          borderRadius: 12,
           children: [
             {
               type: "stack",
@@ -860,8 +857,10 @@ function renderLargeWidget(accounts, stats, updateStr, maskEmailEnabled) {
           direction: "column",
           gap: 6,
           padding: [10, 12, 10, 12],
-          backgroundColor: { light: "#FFFFFF", dark: "rgba(255,255,255,0.08)" },
-          borderRadius: 10,
+          backgroundColor: { light: "rgba(0,0,0,0.04)", dark: "rgba(255,255,255,0.08)" },
+          borderWidth: 0.5,
+          borderColor: { light: "rgba(0,0,0,0.06)", dark: "rgba(255,255,255,0.08)" },
+          borderRadius: 12,
           children: [
             {
               type: "stack",
@@ -891,9 +890,11 @@ function renderLargeWidget(accounts, stats, updateStr, maskEmailEnabled) {
           type: "stack",
           direction: "row",
           alignItems: "center",
-          padding: [8, 12, 8, 12],
-          backgroundColor: { light: "#FFFFFF", dark: "rgba(255,255,255,0.08)" },
-          borderRadius: 10,
+          padding: [9, 12, 9, 12],
+          backgroundColor: { light: "rgba(0,0,0,0.04)", dark: "rgba(255,255,255,0.08)" },
+          borderWidth: 0.5,
+          borderColor: { light: "rgba(0,0,0,0.06)", dark: "rgba(255,255,255,0.08)" },
+          borderRadius: 12,
           children: [
             {
               type: "stack",
@@ -926,7 +927,6 @@ function renderLargeWidget(accounts, stats, updateStr, maskEmailEnabled) {
     type: "widget",
     padding: 14,
     gap: 10,
-    backgroundColor: { light: "#F2F2F7", dark: "#1C1C1E" },
     children: [
       {
         type: "stack",
@@ -937,17 +937,17 @@ function renderLargeWidget(accounts, stats, updateStr, maskEmailEnabled) {
             type: "stack",
             direction: "row",
             alignItems: "center",
-            gap: 4,
-            padding: [3, 8, 3, 8],
+            gap: 5,
+            padding: [3, 9, 3, 9],
             backgroundColor: badge.bg,
             borderRadius: 10,
             children: [
-              { type: "image", src: `sf-symbol:${badge.icon}`, width: 12, height: 12, color: "#FFFFFF" },
-              { type: "text", text: badge.text, font: { size: 12, weight: "bold" }, textColor: "#FFFFFF" },
+              { type: "image", src: badge.svg, width: 13, height: 13 },
+              { type: "text", text: badge.text, font: { size: 12, weight: "heavy" }, textColor: "#FFFFFF" },
             ],
           },
           { type: "spacer" },
-          { type: "text", text: `更新 ${updateStr}`, font: { size: 12 }, textColor: "#8E8E93" },
+          { type: "text", text: `更新 ${updateStr}`, font: { size: 12, weight: "medium" }, textColor: "#8E8E93" },
         ],
       },
       ...topFour.map((acc) => {
@@ -959,9 +959,11 @@ function renderLargeWidget(accounts, stats, updateStr, maskEmailEnabled) {
           type: "stack",
           direction: "column",
           gap: 4,
-          padding: [8, 10, 8, 10],
-          backgroundColor: { light: "#FFFFFF", dark: "rgba(255,255,255,0.08)" },
-          borderRadius: 10,
+          padding: [9, 11, 9, 11],
+          backgroundColor: { light: "rgba(0,0,0,0.04)", dark: "rgba(255,255,255,0.08)" },
+          borderWidth: 0.5,
+          borderColor: { light: "rgba(0,0,0,0.06)", dark: "rgba(255,255,255,0.08)" },
+          borderRadius: 12,
           children: [
             {
               type: "stack",
@@ -971,14 +973,10 @@ function renderLargeWidget(accounts, stats, updateStr, maskEmailEnabled) {
                 { type: "text", text: accountLabel, font: { size: 12, weight: "bold" }, maxLines: 1 },
                 { type: "spacer" },
                 {
-                  type: "stack",
-                  direction: "row",
-                  gap: 3,
-                  alignItems: "center",
-                  children: [
-                    { type: "image", src: "sf-symbol:circle.lefthalf.filled", width: 11, height: 11, color: acc.statusColor },
-                    { type: "text", text: `${acc.primaryWindowLabel}余 ${remainPercent}%`, font: { size: 11, weight: "heavy" }, textColor: acc.statusColor },
-                  ],
+                  type: "text",
+                  text: `${acc.primaryWindowLabel}余 ${remainPercent}%`,
+                  font: { size: 12, weight: "heavy" },
+                  textColor: acc.statusColor,
                 },
               ],
             },
@@ -1000,9 +998,11 @@ function renderLargeWidget(accounts, stats, updateStr, maskEmailEnabled) {
         type: "stack",
         direction: "row",
         alignItems: "center",
-        padding: [6, 10, 6, 10],
-        backgroundColor: { light: "#FFFFFF", dark: "rgba(255,255,255,0.08)" },
-        borderRadius: 8,
+        padding: [8, 12, 8, 12],
+        backgroundColor: { light: "rgba(0,0,0,0.04)", dark: "rgba(255,255,255,0.08)" },
+        borderWidth: 0.5,
+        borderColor: { light: "rgba(0,0,0,0.06)", dark: "rgba(255,255,255,0.08)" },
+        borderRadius: 12,
         children: [
           { type: "text", text: `集群可用: ${stats.availableAccounts}/${stats.totalAccounts}`, font: { size: 10 }, textColor: "#8E8E93" },
           { type: "spacer" },
@@ -1074,7 +1074,6 @@ function renderErrorWidget(family, error, updateTime) {
     type: "widget",
     padding: 12,
     gap: 6,
-    backgroundColor: { light: "#F2F2F7", dark: "#1C1C1E" },
     children: [
       {
         type: "stack",
@@ -1103,7 +1102,7 @@ function renderErrorWidget(family, error, updateTime) {
         direction: "column",
         gap: 4,
         padding: 8,
-        backgroundColor: { light: "#FFFFFF", dark: "rgba(255,255,255,0.08)" },
+        backgroundColor: { light: "rgba(0,0,0,0.04)", dark: "rgba(255,255,255,0.08)" },
         borderRadius: 10,
         children: [
           { type: "text", text: "连接异常", font: { size: 12, weight: "bold" }, textColor: "#FF3B30" },

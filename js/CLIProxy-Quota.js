@@ -1,19 +1,19 @@
 /*
  * CLIProxy Quota 额度监控 — Egern 新式小组件
- * 功能特性：
- *   - 支持监控 CLIProxyAPI / cpa 各 AI 渠道（Gemini 5h、Claude 5h、Codex 等）额度
- *   - 适配全部主屏与锁屏尺寸：
- *       - systemSmall: 精致胶囊徽标 + 核心大数字 + SVG 进度条 + 重置倒计时
- *       - systemMedium: 宽屏卡片（单模型大字呼吸排版 / 双模型紧凑排版）
- *       - systemLarge / systemExtraLarge: 详细卡片列表（最多 4 账号）
- *       - accessoryCircular / accessoryRectangular / accessoryInline: 锁屏系列
- * 
- * 环境变量配置 (兼容 compat_arguments 与 env_schema):
- *   - SERVER_URL / ServerURL: CLIProxy API 地址 (默认 http://127.0.0.1:8317)
- *   - MANAGEMENT_KEY / ManagementKey: 管理密钥 (选填)
- *   - MASK_EMAIL / MaskEmail: 是否对账号邮箱打码 (默认 false)
- *   - FILTER / Filter: 筛选指定账号/模型关键字或数字序号 (选填)
+ * 核心升级：
+ *   - 官方精细 AI 品牌矢量徽标（Gemini、Claude、OpenAI、DeepSeek、Grok）
+ *   - 纯正 Apple HIG 拟物磨砂玻璃卡片（自适应浅色/深色透明度与边框）
+ *   - 适配全部主屏与锁屏尺寸 (systemSmall, systemMedium, systemLarge, accessory*)
  */
+
+// ── 官方精细矢量徽标 (Lobe Icons 官方 SVG 提取) ──
+const BRAND_ICONS = {
+  gemini: "data:image/svg+xml,%3Csvg%20viewBox%3D%220%200%2024%2024%22%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%3E%3Cpath%20d%3D%22M20.616%2010.835a14.147%2014.147%200%2001-4.45-3.001%2014.111%2014.111%200%2001-3.678-6.452.503.503%200%2000-.975%200%2014.134%2014.134%200%2001-3.679%206.452%2014.155%2014.155%200%2001-4.45%203.001c-.65.28-1.318.505-2.002.678a.502.502%200%20000%20.975c.684.172%201.35.397%202.002.677a14.147%2014.147%200%20014.45%203.001%2014.112%2014.112%200%20013.679%206.453.502.502%200%2000.975%200c.172-.685.397-1.351.677-2.003a14.145%2014.145%200%20013.001-4.45%2014.113%2014.113%200%20016.453-3.678.503.503%200%20000-.975%2013.245%2013.245%200%2001-2.003-.678z%22%20fill%3D%22%233186FF%22/%3E%3Cpath%20d%3D%22M20.616%2010.835a14.147%2014.147%200%2001-4.45-3.001%2014.111%2014.111%200%2001-3.678-6.452.503.503%200%2000-.975%200%2014.134%2014.134%200%2001-3.679%206.452%2014.155%2014.155%200%2001-4.45%203.001c-.65.28-1.318.505-2.002.678a.502.502%200%20000%20.975c.684.172%201.35.397%202.002.677a14.147%2014.147%200%20014.45%203.001%2014.112%2014.112%200%20013.679%206.453.502.502%200%2000.975%200c.172-.685.397-1.351.677-2.003a14.145%2014.145%200%20013.001-4.45%2014.113%2014.113%200%20016.453-3.678.503.503%200%20000-.975%2013.245%2013.245%200%2001-2.003-.678z%22%20fill%3D%22url%28%23g0%29%22/%3E%3Cpath%20d%3D%22M20.616%2010.835a14.147%2014.147%200%2001-4.45-3.001%2014.111%2014.111%200%2001-3.678-6.452.503.503%200%2000-.975%200%2014.134%2014.134%200%2001-3.679%206.452%2014.155%2014.155%200%2001-4.45%203.001c-.65.28-1.318.505-2.002.678a.502.502%200%20000%20.975c.684.172%201.35.397%202.002.677a14.147%2014.147%200%20014.45%203.001%2014.112%2014.112%200%20013.679%206.453.502.502%200%2000.975%200c.172-.685.397-1.351.677-2.003a14.145%2014.145%200%20013.001-4.45%2014.113%2014.113%200%20016.453-3.678.503.503%200%20000-.975%2013.245%2013.245%200%2001-2.003-.678z%22%20fill%3D%22url%28%23g1%29%22/%3E%3Cdefs%3E%3ClinearGradient%20id%3D%22g0%22%20x1%3D%227%22%20y1%3D%2215.5%22%20x2%3D%2211%22%20y2%3D%2212%22%20gradientUnits%3D%22userSpaceOnUse%22%3E%3Cstop%20stop-color%3D%22%2308B962%22/%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%2308B962%22%20stop-opacity%3D%220%22/%3E%3C/linearGradient%3E%3ClinearGradient%20id%3D%22g1%22%20x1%3D%228%22%20y1%3D%225.5%22%20x2%3D%2211.5%22%20y2%3D%2211%22%20gradientUnits%3D%22userSpaceOnUse%22%3E%3Cstop%20stop-color%3D%22%23F94543%22/%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%23F94543%22%20stop-opacity%3D%220%22/%3E%3C/linearGradient%3E%3C/defs%3E%3C/svg%3E",
+  claude: "data:image/svg+xml,%3Csvg%20viewBox%3D%220%200%2024%2024%22%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%3E%3Cpath%20d%3D%22M4.709%2015.955l4.72-2.647.08-.23-.08-.128H9.2l-.79-.048-2.698-.073-2.339-.097-2.266-.122-.571-.121L0%2011.784l.055-.352.48-.321.686.06%201.52.103%202.278.158%201.652.097%202.449.255h.389l.055-.157-.134-.098-.103-.097-2.358-1.596-2.552-1.688-1.336-.972-.724-.491-.364-.462-.158-1.008.656-.722.881.06.225.061.893.686%201.908%201.476%202.491%201.833.365.304.145-.103.019-.073-.164-.274-1.355-2.446-1.446-2.49-.644-1.032-.17-.619a2.97%202.97%200%2001-.104-.729L6.283.134%206.696%200l.996.134.42.364.62%201.414%201.002%202.229%201.555%203.03.456.898.243.832.091.255h.158V9.01l.128-1.706.237-2.095.23-2.695.08-.76.376-.91.747-.492.584.28.48.685-.067.444-.286%201.851-.559%202.903-.364%201.942h.212l.243-.242.985-1.306%201.652-2.064.73-.82.85-.904.547-.431h1.033l.76%201.129-.34%201.166-1.064%201.347-.881%201.142-1.264%201.7-.79%201.36.073.11.188-.02%202.856-.606%201.543-.28%201.841-.315.833.388.091.395-.328.807-1.969.486-2.309.462-3.439.813-.042.03.049.061%201.549.146.662.036h1.622l3.02.225.79.522.474.638-.079.485-1.215.62-1.64-.389-3.829-.91-1.312-.329h-.182v.11l1.093%201.068%202.006%201.81%202.509%202.33.127.578-.322.455-.34-.049-2.205-1.657-.851-.747-1.926-1.62h-.128v.17l.444.649%202.345%203.521.122%201.08-.17.353-.608.213-.668-.122-1.374-1.925-1.415-2.167-1.143-1.943-.14.08-.674%207.254-.316.37-.729.28-.607-.461-.322-.747.322-1.476.389-1.924.315-1.53.286-1.9.17-.632-.012-.042-.14.018-1.434%201.967-2.18%202.945-1.726%201.845-.414.164-.717-.37.067-.662.401-.589%202.388-3.036%201.44-1.882.93-1.086-.006-.158h-.055L4.132%2018.56l-1.13.146-.487-.456.061-.746.231-.243%201.908-1.312-.006.006z%22%20fill%3D%22%23D97757%22/%3E%3C/svg%3E",
+  openai: "data:image/svg+xml,%3Csvg%20viewBox%3D%220%200%2024%2024%22%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%3E%3Cpath%20d%3D%22M9.205%208.658v-2.26c0-.19.072-.333.238-.428l4.543-2.616c.619-.357%201.356-.523%202.117-.523%202.854%200%204.662%202.212%204.662%204.566%200%20.167%200%20.357-.024.547l-4.71-2.759a.797.797%200%2000-.856%200l-5.97%203.473zm10.609%208.8V12.06c0-.333-.143-.57-.429-.737l-5.97-3.473%201.95-1.118a.433.433%200%2001.476%200l4.543%202.617c1.309.76%202.189%202.378%202.189%203.948%200%201.808-1.07%203.473-2.76%204.163zM7.802%2012.703l-1.95-1.142c-.167-.095-.239-.238-.239-.428V5.899c0-2.545%201.95-4.472%204.591-4.472%201%200%201.927.333%202.712.928L8.23%205.067c-.285.166-.428.404-.428.737v6.898zM12%2015.128l-2.795-1.57v-3.33L12%208.658l2.795%201.57v3.33L12%2015.128zm1.796%207.23c-1%200-1.927-.332-2.712-.927l4.686-2.712c.285-.166.428-.404.428-.737v-6.898l1.974%201.142c.167.095.238.238.238.428v5.233c0%202.545-1.974%204.472-4.614%204.472zm-5.637-5.303l-4.544-2.617c-1.308-.761-2.188-2.378-2.188-3.948A4.482%204.482%200%20014.21%206.327v5.423c0%20.333.143.571.428.738l5.947%203.449-1.95%201.118a.432.432%200%2001-.476%200zm-.262%203.9c-2.688%200-4.662-2.021-4.662-4.519%200-.19.024-.38.047-.57l4.686%202.71c.286.167.571.167.856%200l5.97-3.448v2.26c0%20.19-.07.333-.237.428l-4.543%202.616c-.619.357-1.356.523-2.117.523zm5.899%202.83a5.947%205.947%200%20005.827-4.756C22.287%2018.339%2024%2015.84%2024%2013.296c0-1.665-.713-3.282-1.998-4.448.119-.5.19-.999.19-1.498%200-3.401-2.759-5.947-5.946-5.947-.642%200-1.26.095-1.88.31A5.962%205.962%200%200010.205%200a5.947%205.947%200%2000-5.827%204.757C1.713%205.447%200%207.945%200%2010.49c0%201.666.713%203.283%201.998%204.448-.119.5-.19%201-.19%201.499%200%203.401%202.759%205.946%205.946%205.946.642%200%201.26-.095%201.88-.309a5.96%205.96%200%20004.162%201.713z%22%20fill%3D%22%2310A37F%22/%3E%3C/svg%3E",
+  deepseek: "data:image/svg+xml,%3Csvg%20viewBox%3D%220%200%2024%2024%22%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%3E%3Cpath%20d%3D%22M23.748%204.482c-.254-.124-.364.113-.512.234-.051.039-.094.09-.137.136-.372.397-.806.657-1.373.626-.829-.046-1.537.214-2.163.848-.133-.782-.575-1.248-1.247-1.548-.352-.156-.708-.311-.955-.65-.172-.241-.219-.51-.305-.774-.055-.16-.11-.323-.293-.35-.2-.031-.278.136-.356.276-.313.572-.434%201.202-.422%201.84.027%201.436.633%202.58%201.838%203.393.137.093.172.187.129.323-.082.28-.18.552-.266.833-.055.179-.137.217-.329.14a5.526%205.526%200%2001-1.736-1.18c-.857-.828-1.631-1.742-2.597-2.458a11.365%2011.365%200%2000-.689-.471c-.985-.957.13-1.743.388-1.836.27-.098.093-.432-.779-.428-.872.004-1.67.295-2.687.684a3.055%203.055%200%2001-.465.137%209.597%209.597%200%2000-2.883-.102c-1.885.21-3.39%201.102-4.497%202.623C.082%208.606-.231%2010.684.152%2012.85c.403%202.284%201.569%204.175%203.36%205.653%201.858%201.533%203.997%202.284%206.438%202.14%201.482-.085%203.133-.284%204.994-1.86.47.234.962.327%201.78.397.63.059%201.236-.03%201.705-.128.735-.156.684-.837.419-.961-2.155-1.004-1.682-.595-2.113-.926%201.096-1.296%202.746-2.642%203.392-7.003.05-.347.007-.565%200-.845-.004-.17.035-.237.23-.256a4.173%204.173%200%20001.545-.475c1.396-.763%201.96-2.015%202.093-3.517.02-.23-.004-.467-.247-.588zM11.581%2018c-2.089-1.642-3.102-2.183-3.52-2.16-.392.024-.321.471-.235.763.09.288.207.486.371.739.114.167.192.416-.113.603-.673.416-1.842-.14-1.897-.167-1.361-.802-2.5-1.86-3.301-3.307-.774-1.393-1.224-2.887-1.298-4.482-.02-.386.093-.522.477-.592a4.696%204.696%200%20011.529-.039c2.132.312%203.946%201.265%205.468%202.774.868.86%201.525%201.887%202.202%202.891.72%201.066%201.494%202.082%202.48%202.914.348.292.625.514.891.677-.802.09-2.14.11-3.054-.614zm1-6.44a.306.306%200%2001.415-.287.302.302%200%2001.2.288.306.306%200%2001-.31.307.303.303%200%2001-.304-.308zm3.11%201.596c-.2.081-.399.151-.59.16a1.245%201.245%200%2001-.798-.254c-.274-.23-.47-.358-.552-.758a1.73%201.73%200%2001.016-.588c.07-.327-.008-.537-.239-.727-.187-.156-.426-.199-.688-.199a.559.559%200%2001-.254-.078c-.11-.054-.2-.19-.114-.358.028-.054.16-.186.192-.21.356-.202.767-.136%201.146.016.352.144.618.408%201.001.782.391.451.462.576.685.914.176.265.336.537.445.848.067.195-.019.354-.25.452z%22%20fill%3D%22%234D6BFE%22/%3E%3C/svg%3E",
+  grok: "data:image/svg+xml,%3Csvg%20viewBox%3D%220%200%2024%2024%22%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%3E%3Cpath%20d%3D%22M9.27%2015.29l7.978-5.897c.391-.29.95-.177%201.137.272.98%202.369.542%205.215-1.41%207.169-1.951%201.954-4.667%202.382-7.149%201.406l-2.711%201.257c3.889%202.661%208.611%202.003%2011.562-.953%202.341-2.344%203.066-5.539%202.388-8.42l.006.007c-.983-4.232.242-5.924%202.75-9.383.06-.082.12-.164.179-.248l-3.301%203.305v-.01L9.267%2015.292M7.623%2016.723c-2.792-2.67-2.31-6.801.071-9.184%201.761-1.763%204.647-2.483%207.166-1.425l2.705-1.25a7.808%207.808%200%2000-1.829-1A8.975%208.975%200%20005.984%205.83c-2.533%202.536-3.33%206.436-1.962%209.764%201.022%202.487-.653%204.246-2.34%206.022-.599.63-1.199%201.259-1.682%201.925l7.62-6.815%22%20fill%3D%22%23111111%22/%3E%3C/svg%3E"
+};
 
 function formatTimeOnly(ts) {
   if (!ts || isNaN(ts)) return "--:--";
@@ -75,28 +75,29 @@ function maskEmail(str, enabled) {
 function getBadgeConfig(provider, name) {
   const p = (provider || "").toUpperCase();
   const n = (name || "").toUpperCase();
+
   if (n.includes("ANTIGRAVITY") || n.includes("GOOGLE") || p.includes("GEMINI")) {
-    return { text: "GEMINI", icon: "sparkles", bg: "#007AFF" };
+    return { text: "GEMINI", svg: BRAND_ICONS.gemini, bg: "#1A73E8", color: "#FFFFFF" };
   }
   if (n.includes("CLAUDE") || p.includes("CLAUDE")) {
-    return { text: "CLAUDE", icon: "bolt.fill", bg: "#FF9500" };
+    return { text: "CLAUDE", svg: BRAND_ICONS.claude, bg: "#D97706", color: "#FFFFFF" };
   }
-  if (n.includes("TEAM")) {
-    return { text: "TEAM", icon: "person.2.fill", bg: "#AF52DE" };
+  if (n.includes("DEEPSEEK") || p.includes("DEEPSEEK")) {
+    return { text: "DEEPSEEK", svg: BRAND_ICONS.deepseek, bg: "#4D6BFE", color: "#FFFFFF" };
   }
-  if (n.includes("PLUS") || n.includes("CODEX") || p.includes("OPENAI")) {
-    return { text: "PLUS", icon: "atom", bg: "#34C759" };
+  if (n.includes("GROK") || p.includes("GROK")) {
+    return { text: "GROK", svg: BRAND_ICONS.grok, bg: "#333333", color: "#FFFFFF" };
   }
-  if (n.includes("GROK")) {
-    return { text: "GROK", icon: "slash.circle", bg: "#5856D6" };
+  if (n.includes("PLUS") || n.includes("CODEX") || p.includes("OPENAI") || n.includes("GPT")) {
+    return { text: "OPENAI", svg: BRAND_ICONS.openai, bg: "#10A37F", color: "#FFFFFF" };
   }
-  return { text: "AI", icon: "sparkles", bg: "#007AFF" };
+  return { text: "AI", svg: BRAND_ICONS.gemini, bg: "#007AFF", color: "#FFFFFF" };
 }
 
-function createProgressBarSvg(fraction, color, height = 5) {
+function createProgressBarSvg(fraction, color, height = 6) {
   const percent = Math.max(0, Math.min(100, Math.round(fraction * 100)));
   const svg = `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 ${height}' preserveAspectRatio='none'>
-    <rect x='0' y='0' width='100' height='${height}' rx='${height / 2}' fill='rgba(120,120,128,0.24)'/>
+    <rect x='0' y='0' width='100' height='${height}' rx='${height / 2}' fill='rgba(120,120,128,0.18)'/>
     <rect x='0' y='0' width='${percent}' height='${height}' rx='${height / 2}' fill='${color}'/>
   </svg>`.replace(/\s+/g, " ");
   return `data:image/svg+xml,${encodeURIComponent(svg)}`;
@@ -420,7 +421,7 @@ export default async function(ctx) {
   }
 }
 
-// ---------------- UI 布局渲染器 ----------------
+// ── HIG 拟物卡片式布局 ──
 
 function renderSmallWidget(model, updateTime) {
   const usedPercent = Math.round((1 - model.remainingFraction) * 100);
@@ -433,8 +434,8 @@ function renderSmallWidget(model, updateTime) {
     type: "widget",
     padding: 12,
     gap: 8,
-    backgroundColor: { light: "#F2F2F7", dark: "#1C1C1E" },
     children: [
+      // 顶栏：官方品牌 Logo 胶囊 + 更新时间
       {
         type: "stack",
         direction: "row",
@@ -449,21 +450,24 @@ function renderSmallWidget(model, updateTime) {
             backgroundColor: badge.bg,
             borderRadius: 10,
             children: [
-              { type: "image", src: `sf-symbol:${badge.icon}`, width: 10, height: 10, color: "#FFFFFF" },
-              { type: "text", text: badge.text, font: { size: 10, weight: "bold" }, textColor: "#FFFFFF" },
+              { type: "image", src: badge.svg, width: 12, height: 12 },
+              { type: "text", text: badge.text, font: { size: 10, weight: "heavy" }, textColor: "#FFFFFF" },
             ],
           },
           { type: "spacer" },
-          { type: "text", text: updateTime, font: { size: 10 }, textColor: "#8E8E93" },
+          { type: "text", text: updateTime, font: { size: 10, weight: "medium" }, textColor: { light: "#8E8E93", dark: "#8E8E93" } },
         ],
       },
+      // 核心卡片容器（iOS 磨砂质感）
       {
         type: "stack",
         direction: "column",
         gap: 8,
-        padding: 10,
-        backgroundColor: { light: "#FFFFFF", dark: "rgba(255,255,255,0.08)" },
-        borderRadius: 12,
+        padding: [10, 10, 10, 10],
+        backgroundColor: { light: "rgba(0,0,0,0.04)", dark: "rgba(255,255,255,0.08)" },
+        borderWidth: 0.5,
+        borderColor: { light: "rgba(0,0,0,0.06)", dark: "rgba(255,255,255,0.08)" },
+        borderRadius: 13,
         flex: 1,
         children: [
           {
@@ -477,7 +481,7 @@ function renderSmallWidget(model, updateTime) {
                 gap: 1,
                 children: [
                   { type: "text", text: "已用", font: { size: 10 }, textColor: "#8E8E93" },
-                  { type: "text", text: `${usedPercent}%`, font: { size: 16, weight: "heavy" }, textColor: { light: "#000000", dark: "#FFFFFF" } },
+                  { type: "text", text: `${usedPercent}%`, font: { size: 17, weight: "heavy" }, textColor: { light: "#1C1C1E", dark: "#FFFFFF" } },
                 ],
               },
               { type: "spacer" },
@@ -488,7 +492,7 @@ function renderSmallWidget(model, updateTime) {
                 gap: 1,
                 children: [
                   { type: "text", text: "剩余 (5h)", font: { size: 10 }, textColor: "#8E8E93" },
-                  { type: "text", text: `${remainPercent}%`, font: { size: 16, weight: "heavy" }, textColor: model.statusColor },
+                  { type: "text", text: `${remainPercent}%`, font: { size: 17, weight: "heavy" }, textColor: model.statusColor },
                 ],
               },
             ],
@@ -499,7 +503,7 @@ function renderSmallWidget(model, updateTime) {
             direction: "row",
             alignItems: "center",
             children: [
-              { type: "text", text: resetTime, font: { size: 10 }, textColor: "#8E8E93" },
+              { type: "text", text: `重置 ${resetTime}`, font: { size: 9 }, textColor: "#8E8E93" },
               { type: "spacer" },
               { type: "text", text: formatCountdown(model.resetAtMs, model.remainingFraction), font: { size: 10, weight: "bold" }, textColor: model.statusColor },
             ],
@@ -525,7 +529,6 @@ function renderMediumWidget(models, updateStr, maskEmailEnabled) {
       type: "widget",
       padding: [12, 14, 12, 14],
       gap: 8,
-      backgroundColor: { light: "#F2F2F7", dark: "#1C1C1E" },
       children: [
         {
           type: "stack",
@@ -536,26 +539,28 @@ function renderMediumWidget(models, updateStr, maskEmailEnabled) {
               type: "stack",
               direction: "row",
               alignItems: "center",
-              gap: 4,
+              gap: 5,
               padding: [3, 9, 3, 9],
               backgroundColor: badge.bg,
               borderRadius: 10,
               children: [
-                { type: "image", src: `sf-symbol:${badge.icon}`, width: 11, height: 11, color: "#FFFFFF" },
-                { type: "text", text: badge.text, font: { size: 11, weight: "bold" }, textColor: "#FFFFFF" },
+                { type: "image", src: badge.svg, width: 13, height: 13 },
+                { type: "text", text: badge.text, font: { size: 11, weight: "heavy" }, textColor: "#FFFFFF" },
               ],
             },
             { type: "spacer" },
-            { type: "text", text: `更新 ${updateStr}`, font: { size: 11 }, textColor: { light: "#8E8E93", dark: "#8E8E93" } },
+            { type: "text", text: `更新 ${updateStr}`, font: { size: 11, weight: "medium" }, textColor: "#8E8E93" },
           ],
         },
         {
           type: "stack",
           direction: "column",
           gap: 6,
-          padding: [8, 12, 8, 12],
-          backgroundColor: { light: "#FFFFFF", dark: "rgba(255,255,255,0.08)" },
-          borderRadius: 12,
+          padding: [9, 12, 9, 12],
+          backgroundColor: { light: "rgba(0,0,0,0.04)", dark: "rgba(255,255,255,0.08)" },
+          borderWidth: 0.5,
+          borderColor: { light: "rgba(0,0,0,0.06)", dark: "rgba(255,255,255,0.08)" },
+          borderRadius: 13,
           flex: 1,
           children: [
             { type: "text", text: accountText, font: { size: 12, weight: "bold" }, maxLines: 1 },
@@ -570,8 +575,8 @@ function renderMediumWidget(models, updateStr, maskEmailEnabled) {
                   gap: 4,
                   alignItems: "center",
                   children: [
-                    { type: "text", text: "已用", font: { size: 11 }, textColor: { light: "#8E8E93", dark: "#8E8E93" } },
-                    { type: "text", text: `${usedPercent}%`, font: { size: 14, weight: "heavy" }, textColor: { light: "#000000", dark: "#FFFFFF" } },
+                    { type: "text", text: "已用", font: { size: 11 }, textColor: "#8E8E93" },
+                    { type: "text", text: `${usedPercent}%`, font: { size: 15, weight: "heavy" }, textColor: { light: "#1C1C1E", dark: "#FFFFFF" } },
                   ],
                 },
                 { type: "spacer" },
@@ -581,8 +586,8 @@ function renderMediumWidget(models, updateStr, maskEmailEnabled) {
                   gap: 4,
                   alignItems: "center",
                   children: [
-                    { type: "text", text: "5h 剩余", font: { size: 11 }, textColor: { light: "#8E8E93", dark: "#8E8E93" } },
-                    { type: "text", text: `${remainPercent}%`, font: { size: 16, weight: "heavy" }, textColor: firstModel.statusColor },
+                    { type: "text", text: "5h 剩余", font: { size: 11 }, textColor: "#8E8E93" },
+                    { type: "text", text: `${remainPercent}%`, font: { size: 17, weight: "heavy" }, textColor: firstModel.statusColor },
                   ],
                 },
               ],
@@ -593,7 +598,7 @@ function renderMediumWidget(models, updateStr, maskEmailEnabled) {
               direction: "row",
               alignItems: "center",
               children: [
-                { type: "text", text: `重置 ${firstModel.resetTimeStr}`, font: { size: 10 }, textColor: { light: "#8E8E93", dark: "#8E8E93" } },
+                { type: "text", text: `重置 ${firstModel.resetTimeStr}`, font: { size: 10 }, textColor: "#8E8E93" },
                 { type: "spacer" },
                 { type: "text", text: `恢复倒计时 ${firstModel.resetCountdownStr}`, font: { size: 10, weight: "bold" }, textColor: firstModel.statusColor },
               ],
@@ -609,7 +614,6 @@ function renderMediumWidget(models, updateStr, maskEmailEnabled) {
     type: "widget",
     padding: [12, 14, 12, 14],
     gap: 7,
-    backgroundColor: { light: "#F2F2F7", dark: "#1C1C1E" },
     children: [
       {
         type: "stack",
@@ -620,20 +624,21 @@ function renderMediumWidget(models, updateStr, maskEmailEnabled) {
             type: "stack",
             direction: "row",
             alignItems: "center",
-            gap: 4,
+            gap: 5,
             padding: [3, 9, 3, 9],
             backgroundColor: badge.bg,
             borderRadius: 10,
             children: [
-              { type: "image", src: `sf-symbol:${badge.icon}`, width: 11, height: 11, color: "#FFFFFF" },
-              { type: "text", text: badge.text, font: { size: 11, weight: "bold" }, textColor: "#FFFFFF" },
+              { type: "image", src: badge.svg, width: 13, height: 13 },
+              { type: "text", text: badge.text, font: { size: 11, weight: "heavy" }, textColor: "#FFFFFF" },
             ],
           },
           { type: "spacer" },
-          { type: "text", text: `更新 ${updateStr}`, font: { size: 11 }, textColor: { light: "#8E8E93", dark: "#8E8E93" } },
+          { type: "text", text: `更新 ${updateStr}`, font: { size: 11, weight: "medium" }, textColor: "#8E8E93" },
         ],
       },
       ...topTwo.map((m) => {
+        const mBadge = getBadgeConfig(m.provider, m.name);
         const remainPercent = Math.round(m.remainingFraction * 100);
         const accountText = maskEmail(m.account && m.account !== "默认账号" ? m.account : m.name, maskEmailEnabled);
         const progressSvg = createProgressBarSvg(m.remainingFraction, m.statusColor, 5);
@@ -642,26 +647,25 @@ function renderMediumWidget(models, updateStr, maskEmailEnabled) {
           type: "stack",
           direction: "column",
           gap: 3,
-          padding: [6, 10, 6, 10],
-          backgroundColor: { light: "#FFFFFF", dark: "rgba(255,255,255,0.08)" },
-          borderRadius: 10,
+          padding: [7, 10, 7, 10],
+          backgroundColor: { light: "rgba(0,0,0,0.04)", dark: "rgba(255,255,255,0.08)" },
+          borderWidth: 0.5,
+          borderColor: { light: "rgba(0,0,0,0.06)", dark: "rgba(255,255,255,0.08)" },
+          borderRadius: 11,
           children: [
             {
               type: "stack",
               direction: "row",
               alignItems: "center",
               children: [
-                { type: "text", text: accountText, font: { size: 11, weight: "bold" }, maxLines: 1 },
+                { type: "image", src: mBadge.svg, width: 11, height: 11 },
+                { type: "text", text: ` ${accountText}`, font: { size: 11, weight: "bold" }, maxLines: 1 },
                 { type: "spacer" },
                 {
-                  type: "stack",
-                  direction: "row",
-                  gap: 3,
-                  alignItems: "center",
-                  children: [
-                    { type: "image", src: "sf-symbol:circle.lefthalf.filled", width: 10, height: 10, color: m.statusColor },
-                    { type: "text", text: `剩余 ${remainPercent}%`, font: { size: 10, weight: "bold" }, textColor: m.statusColor },
-                  ],
+                  type: "text",
+                  text: `余 ${remainPercent}%`,
+                  font: { size: 11, weight: "heavy" },
+                  textColor: m.statusColor,
                 },
               ],
             },
@@ -671,7 +675,7 @@ function renderMediumWidget(models, updateStr, maskEmailEnabled) {
               direction: "row",
               alignItems: "center",
               children: [
-                { type: "text", text: `重置 ${m.resetTimeStr}`, font: { size: 9 }, textColor: { light: "#8E8E93", dark: "#8E8E93" } },
+                { type: "text", text: `重置 ${m.resetTimeStr}`, font: { size: 9 }, textColor: "#8E8E93" },
                 { type: "spacer" },
                 { type: "text", text: m.resetCountdownStr, font: { size: 9, weight: "semibold" }, textColor: m.statusColor },
               ],
@@ -690,9 +694,8 @@ function renderLargeWidget(models, updateStr, maskEmailEnabled) {
 
   return {
     type: "widget",
-    padding: 16,
+    padding: 14,
     gap: 10,
-    backgroundColor: { light: "#F2F2F7", dark: "#1C1C1E" },
     children: [
       {
         type: "stack",
@@ -703,20 +706,21 @@ function renderLargeWidget(models, updateStr, maskEmailEnabled) {
             type: "stack",
             direction: "row",
             alignItems: "center",
-            gap: 4,
-            padding: [3, 10, 3, 10],
+            gap: 5,
+            padding: [3, 9, 3, 9],
             backgroundColor: badge.bg,
             borderRadius: 10,
             children: [
-              { type: "image", src: `sf-symbol:${badge.icon}`, width: 12, height: 12, color: "#FFFFFF" },
-              { type: "text", text: badge.text, font: { size: 12, weight: "bold" }, textColor: "#FFFFFF" },
+              { type: "image", src: badge.svg, width: 13, height: 13 },
+              { type: "text", text: badge.text, font: { size: 12, weight: "heavy" }, textColor: "#FFFFFF" },
             ],
           },
           { type: "spacer" },
-          { type: "text", text: `更新 ${updateStr}`, font: { size: 12 }, textColor: { light: "#8E8E93", dark: "#8E8E93" } },
+          { type: "text", text: `更新 ${updateStr}`, font: { size: 12, weight: "medium" }, textColor: "#8E8E93" },
         ],
       },
       ...topFour.map((m) => {
+        const mBadge = getBadgeConfig(m.provider, m.name);
         const remainPercent = Math.round(m.remainingFraction * 100);
         const accountText = maskEmail(m.account && m.account !== "默认账号" ? m.account : m.name, maskEmailEnabled);
         const progressSvg = createProgressBarSvg(m.remainingFraction, m.statusColor, 6);
@@ -724,9 +728,11 @@ function renderLargeWidget(models, updateStr, maskEmailEnabled) {
         return {
           type: "stack",
           direction: "column",
-          gap: 6,
-          padding: [10, 12, 10, 12],
-          backgroundColor: { light: "#FFFFFF", dark: "rgba(255,255,255,0.08)" },
+          gap: 5,
+          padding: [9, 11, 9, 11],
+          backgroundColor: { light: "rgba(0,0,0,0.04)", dark: "rgba(255,255,255,0.08)" },
+          borderWidth: 0.5,
+          borderColor: { light: "rgba(0,0,0,0.06)", dark: "rgba(255,255,255,0.08)" },
           borderRadius: 12,
           children: [
             {
@@ -734,17 +740,14 @@ function renderLargeWidget(models, updateStr, maskEmailEnabled) {
               direction: "row",
               alignItems: "center",
               children: [
-                { type: "text", text: accountText, font: { size: 13, weight: "bold" }, maxLines: 1 },
+                { type: "image", src: mBadge.svg, width: 13, height: 13 },
+                { type: "text", text: `  ${accountText}`, font: { size: 12, weight: "bold" }, maxLines: 1 },
                 { type: "spacer" },
                 {
-                  type: "stack",
-                  direction: "row",
-                  gap: 4,
-                  alignItems: "center",
-                  children: [
-                    { type: "image", src: "sf-symbol:circle.lefthalf.filled", width: 12, height: 12, color: m.statusColor },
-                    { type: "text", text: `剩余 ${remainPercent}%`, font: { size: 12, weight: "heavy" }, textColor: m.statusColor },
-                  ],
+                  type: "text",
+                  text: `余 ${remainPercent}%`,
+                  font: { size: 12, weight: "heavy" },
+                  textColor: m.statusColor,
                 },
               ],
             },
@@ -754,7 +757,7 @@ function renderLargeWidget(models, updateStr, maskEmailEnabled) {
               direction: "row",
               alignItems: "center",
               children: [
-                { type: "text", text: `重置 ${m.resetTimeStr}`, font: { size: 10 }, textColor: { light: "#8E8E93", dark: "#8E8E93" } },
+                { type: "text", text: `重置 ${m.resetTimeStr}`, font: { size: 10 }, textColor: "#8E8E93" },
                 { type: "spacer" },
                 { type: "text", text: m.resetCountdownStr, font: { size: 10, weight: "bold" }, textColor: m.statusColor },
               ],
@@ -827,7 +830,6 @@ function renderErrorWidget(family, error, updateTime) {
     type: "widget",
     padding: 12,
     gap: 6,
-    backgroundColor: { light: "#F2F2F7", dark: "#1C1C1E" },
     children: [
       {
         type: "stack",
@@ -856,7 +858,7 @@ function renderErrorWidget(family, error, updateTime) {
         direction: "column",
         gap: 4,
         padding: 8,
-        backgroundColor: { light: "#FFFFFF", dark: "rgba(255,255,255,0.08)" },
+        backgroundColor: { light: "rgba(0,0,0,0.04)", dark: "rgba(255,255,255,0.08)" },
         borderRadius: 10,
         children: [
           { type: "text", text: "连接异常", font: { size: 12, weight: "bold" }, textColor: "#FF3B30" },
