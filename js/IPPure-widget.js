@@ -1,7 +1,7 @@
 /*
  * IPPure 节点 IP 纯净度 — Egern 新式小组件
  * 设计系统：Apple HIG 现代化自适应排版
- *   - Small: 顶部 16pt 沉降 + 四段阶梯式黄金均分（纯净度进度条精确锁定在画布正中 y=77pt）
+ *   - Small: 显式固定精密间距控制（彻底解决弹性 Spacer 塌陷导致的上下间距失衡）
  *   - Medium: 经典宽屏仪表盘（左侧大圆环仪表 + 右侧结构化信息流）
  *   - Large: 顶部 Header + 顶部大圆环 Hero 概览 + 底部 2x2 对称等高数据卡片
  *   - 锁屏系列: accessoryCircular / accessoryRectangular / accessoryInline
@@ -145,16 +145,14 @@ const C = {
 
 /**
  * 主屏幕 Small 小尺寸 (2x2)
- * 彻底消除「偏上与顶格」：
- *  - 顶部增加 16pt 沉降 padding
- *  - Header 与 IP 紧密关联
- *  - 纯净度水平长条进度条锁定在小组件正中黄金分割线 (y=77pt)
- *  - 底部双胶囊贴合下底边，整体均匀舒展
+ * 精确间距控制（彻底解决弹性 Spacer 塌陷导致上面贴在一起、下面隔几公里的问题）：
+ *  - 统一 padding: 14pt
+ *  - 4 个模块之间显式指定精确像素间距 (8pt, 11pt, 11pt)
  */
 function renderSystemSmall(d) {
   return {
     type: "widget",
-    padding: [16, 14, 14, 14],
+    padding: 14,
     children: [
       // 1. 顶部 Header
       {
@@ -178,7 +176,7 @@ function renderSystemSmall(d) {
         ]
       },
 
-      { type: "spacer", length: 6 },
+      { type: "spacer", length: 8 },
 
       // 2. Hero 主区域 (大字 IP + 详细位置)
       {
@@ -214,9 +212,9 @@ function renderSystemSmall(d) {
         ]
       },
 
-      { type: "spacer" },
+      { type: "spacer", length: 11 },
 
-      // 3. 核心长条状纯净度进度条 (正中黄金分割线)
+      // 3. 核心长条状纯净度进度条（与上方位置保留精准 11pt 留白，与下方保留 11pt 留白）
       {
         type: "stack",
         direction: "column",
@@ -251,7 +249,7 @@ function renderSystemSmall(d) {
         ]
       },
 
-      { type: "spacer" },
+      { type: "spacer", length: 11 },
 
       // 4. 底部双属性胶囊
       {
