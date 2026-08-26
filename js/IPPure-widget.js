@@ -1,11 +1,15 @@
 /*
  * IPPure 节点 IP 纯净度 — Egern 新式小组件
  * 设计系统：Apple HIG 现代化自适应排版
+ *   - 官方 IPPure 高清品牌徽标
  *   - Small: 显式固定精密间距控制
  *   - Medium: 经典宽屏仪表盘（左侧大圆环仪表 + 右侧结构化信息流）
  *   - Large / ExtraLarge: 顶部 Header + 顶部大圆环 Hero 概览 + 底部 2x2 对称等高数据卡片
  * 数据源：https://my.ippure.com/v1/info
  */
+
+// ── IPPure 官方品牌高清徽标 ──
+const IPPURE_LOGO = "data:image/png;base64,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";
 
 export default async function(ctx) {
   const apiUrl = "https://my.ippure.com/v1/info"
@@ -139,15 +143,15 @@ function renderSystemSmall(d) {
     type: "widget",
     padding: 14,
     children: [
-      // 1. 顶部 Header
+      // 1. 顶部 Header (官方高清 Logo)
       {
         type: "stack",
         direction: "row",
         alignItems: "center",
-        gap: 4,
+        gap: 5,
         children: [
-          { type: "image", src: "sf-symbol:shield.lefthalf.filled", color: d.level.color, width: 13, height: 13 },
-          { type: "text", text: "IP 纯净度", font: { size: "caption1", weight: "bold" }, textColor: C.textPrimary },
+          { type: "image", src: IPPURE_LOGO, width: 14, height: 14, borderRadius: 3.5 },
+          { type: "text", text: "IPPure", font: { size: "caption1", weight: "heavy" }, textColor: C.textPrimary },
           { type: "spacer" },
           {
             type: "stack",
@@ -259,15 +263,15 @@ function renderSystemMedium(d) {
     padding: 14,
     gap: 6,
     children: [
-      // 1. Header 顶栏
+      // 1. Header 顶栏 (官方高清 Logo)
       {
         type: "stack",
         direction: "row",
         alignItems: "center",
         gap: 6,
         children: [
-          { type: "image", src: "sf-symbol:shield.lefthalf.filled", color: d.level.color, width: 14, height: 14 },
-          { type: "text", text: "节点 IP 纯净度", font: { size: "footnote", weight: "bold" }, textColor: C.textPrimary },
+          { type: "image", src: IPPURE_LOGO, width: 15, height: 15, borderRadius: 3.5 },
+          { type: "text", text: "IPPure 纯净度", font: { size: "footnote", weight: "heavy" }, textColor: C.textPrimary },
           {
             type: "stack",
             padding: [2, 5],
@@ -381,15 +385,15 @@ function renderSystemLarge(d) {
     padding: 16,
     gap: 12,
     children: [
-      // 1. Header 顶栏
+      // 1. Header 顶栏 (官方高清 Logo)
       {
         type: "stack",
         direction: "row",
         alignItems: "center",
         gap: 6,
         children: [
-          { type: "image", src: "sf-symbol:shield.lefthalf.filled", color: d.level.color, width: 15, height: 15 },
-          { type: "text", text: "节点 IP 纯净度检测", font: { size: "subheadline", weight: "bold" }, textColor: C.textPrimary },
+          { type: "image", src: IPPURE_LOGO, width: 16, height: 16, borderRadius: 4 },
+          { type: "text", text: "IPPure 节点纯净度检测", font: { size: "subheadline", weight: "heavy" }, textColor: C.textPrimary },
           {
             type: "stack",
             padding: [2, 5],
@@ -510,7 +514,7 @@ function createPillBadge(text, textColor, bgColor, icon) {
   if (icon) {
     children.push({
       type: "image",
-      src: `sf-symbol:${icon}` ,
+      src: `sf-symbol:${icon}`,
       color: textColor,
       width: 10,
       height: 10
@@ -608,8 +612,8 @@ function renderErrorWidget(family, errorMsg) {
         alignItems: "center",
         gap: 4,
         children: [
-          { type: "image", src: "sf-symbol:exclamationmark.triangle.fill", color: "rgb(255,59,48)", width: 13, height: 13 },
-          { type: "text", text: "IP 纯净度检测", font: { size: "caption1", weight: "bold" }, textColor: C.textPrimary }
+          { type: "image", src: IPPURE_LOGO, width: 14, height: 14 },
+          { type: "text", text: "IPPure 纯净度检测", font: { size: "caption1", weight: "bold" }, textColor: C.textPrimary }
         ]
       },
       { type: "spacer" },
