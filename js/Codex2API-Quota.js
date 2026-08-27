@@ -595,7 +595,7 @@ function renderSmallWidget(account, updateTime) {
     padding: 12,
     gap: 8,
     children: [
-      // 顶部 Header (Codex2API 官方 Logo)
+      // 顶部 Header (Codex2API 官方 Logo + 徽标)
       {
         type: "stack",
         direction: "row",
@@ -603,7 +603,7 @@ function renderSmallWidget(account, updateTime) {
         gap: 5,
         children: [
           { type: "image", src: CODEX2API_LOGO, width: 14, height: 14, borderRadius: 3.5 },
-          { type: "text", text: "Codex2API", font: { size: "caption1", weight: "heavy" }, textColor: C.textPrimary },
+          createMicroBadge(accBadge),
           { type: "spacer" },
           { type: "text", text: updateTime, font: { size: 10, weight: "medium" }, textColor: C.textSecondary },
         ],
@@ -620,17 +620,6 @@ function renderSmallWidget(account, updateTime) {
         borderRadius: 13,
         flex: 1,
         children: [
-          // 账号前微型徽标色条 + 全额度标识
-          {
-            type: "stack",
-            direction: "row",
-            alignItems: "center",
-            gap: 4,
-            children: [
-              createMicroBadge(accBadge),
-              { type: "text", text: accountLabel, font: { size: 11, weight: "bold" }, maxLines: 1 },
-            ],
-          },
           {
             type: "stack",
             direction: "row",

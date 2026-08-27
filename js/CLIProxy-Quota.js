@@ -623,7 +623,7 @@ function renderSmallWidget(model, updateTime) {
     padding: 12,
     gap: 8,
     children: [
-      // 顶部 Header (CLIProxy 官方 Logo)
+      // 顶部 Header (CLIProxy 官方 Logo + 徽标)
       {
         type: "stack",
         direction: "row",
@@ -631,7 +631,7 @@ function renderSmallWidget(model, updateTime) {
         gap: 5,
         children: [
           { type: "image", src: CLIPROXY_LOGO, width: 14, height: 14, borderRadius: 3.5 },
-          { type: "text", text: "CLIProxy", font: { size: "caption1", weight: "heavy" }, textColor: C.textPrimary },
+          createMicroBadge(mBadge),
           { type: "spacer" },
           { type: "text", text: updateTime, font: { size: 10, weight: "medium" }, textColor: C.textTertiary },
         ],
@@ -648,17 +648,6 @@ function renderSmallWidget(model, updateTime) {
         borderRadius: 13,
         flex: 1,
         children: [
-          // 账号前微型徽标色条
-          {
-            type: "stack",
-            direction: "row",
-            alignItems: "center",
-            gap: 4,
-            children: [
-              createMicroBadge(mBadge),
-              { type: "text", text: accountText, font: { size: 11, weight: "bold" }, maxLines: 1 },
-            ],
-          },
           {
             type: "stack",
             direction: "row",
