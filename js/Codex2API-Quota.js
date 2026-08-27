@@ -586,7 +586,6 @@ function renderSmallWidget(account, updateTime) {
   const resetCountdownStr = account.smallResetCountdownStr || account.primaryResetCountdownStr;
   const accBadge = getAccountBadge(account);
   const progressSvg = createProgressBarSvg(fraction, statusColor, 6);
-  const accountLabel = maskEmail(account.email || account.name, true);
   const windowTag = account.smallLabel || account.primaryWindowLabel;
 
   return {
@@ -595,7 +594,7 @@ function renderSmallWidget(account, updateTime) {
     padding: 12,
     gap: 8,
     children: [
-      // 顶部 Header (Codex2API 官方 Logo + 徽标)
+      // 顶部 Header (Codex2API 官方 Logo + 标题)
       {
         type: "stack",
         direction: "row",
@@ -603,7 +602,7 @@ function renderSmallWidget(account, updateTime) {
         gap: 5,
         children: [
           { type: "image", src: CODEX2API_LOGO, width: 14, height: 14, borderRadius: 3.5 },
-          createMicroBadge(accBadge),
+          { type: "text", text: "Codex2API", font: { size: "caption1", weight: "heavy" }, textColor: C.textPrimary },
           { type: "spacer" },
           { type: "text", text: updateTime, font: { size: 10, weight: "medium" }, textColor: C.textSecondary },
         ],
@@ -620,6 +619,16 @@ function renderSmallWidget(account, updateTime) {
         borderRadius: 13,
         flex: 1,
         children: [
+          // 账号方案徽标 (放于卡片首行，不显示邮箱)
+          {
+            type: "stack",
+            direction: "row",
+            alignItems: "center",
+            children: [
+              createMicroBadge(accBadge),
+              { type: "spacer" },
+            ],
+          },
           {
             type: "stack",
             direction: "row",

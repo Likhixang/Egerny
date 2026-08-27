@@ -614,7 +614,6 @@ function renderSmallWidget(model, updateTime) {
   const mBadge = getBadgeConfig(model.provider, model.name);
   const resetTime = isWeekly ? (model.resetAtMs ? formatShortDate(model.resetAtMs) : "--/--") : formatTimeOnly(model.resetAtMs);
   const progressSvg = createProgressBarSvg(model.remainingFraction, model.statusColor, 6);
-  const accountText = maskEmail(model.account && model.account !== "默认账号" ? model.account : model.name, true);
   const windowTag = isWeekly ? "7D" : (model.isSpark ? "Spark 5H" : "5H");
 
   return {
@@ -623,7 +622,7 @@ function renderSmallWidget(model, updateTime) {
     padding: 12,
     gap: 8,
     children: [
-      // 顶部 Header (CLIProxy 官方 Logo + 徽标)
+      // 顶部 Header (CLIProxy 官方 Logo + 标题)
       {
         type: "stack",
         direction: "row",
@@ -631,7 +630,7 @@ function renderSmallWidget(model, updateTime) {
         gap: 5,
         children: [
           { type: "image", src: CLIPROXY_LOGO, width: 14, height: 14, borderRadius: 3.5 },
-          createMicroBadge(mBadge),
+          { type: "text", text: "CLIProxy", font: { size: "caption1", weight: "heavy" }, textColor: C.textPrimary },
           { type: "spacer" },
           { type: "text", text: updateTime, font: { size: 10, weight: "medium" }, textColor: C.textTertiary },
         ],
@@ -648,6 +647,16 @@ function renderSmallWidget(model, updateTime) {
         borderRadius: 13,
         flex: 1,
         children: [
+          // 账号方案徽标 (放于卡片首行，不显示邮箱)
+          {
+            type: "stack",
+            direction: "row",
+            alignItems: "center",
+            children: [
+              createMicroBadge(mBadge),
+              { type: "spacer" },
+            ],
+          },
           {
             type: "stack",
             direction: "row",
