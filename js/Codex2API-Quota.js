@@ -538,13 +538,7 @@ export default async function(ctx) {
     accounts = filterAccounts(accounts, filterParam);
   }
 
-  if (family === "accessoryCircular") {
-    return renderAccessoryCircular(accounts[0]);
-  } else if (family === "accessoryRectangular") {
-    return renderAccessoryRectangular(accounts[0]);
-  } else if (family === "accessoryInline") {
-    return renderAccessoryInline(accounts[0]);
-  } else if (family === "systemSmall") {
+  if (family === "systemSmall") {
     return renderSmallWidget(accounts[0], updateTimeStr);
   } else if (family === "systemLarge" || family === "systemExtraLarge") {
     return renderLargeWidget(accounts, snapshot?.stats, updateDateStr, maskEmailEnabled);
@@ -1412,48 +1406,6 @@ function renderLargeWidget(accounts, stats, updateStr, maskEmailEnabled) {
           { type: "text", text: `今日: ${stats.todayRequests} 次 · RPM: ${stats.rpm ?? 0}`, font: { size: 10 }, textColor: C.textSecondary },
         ],
       }] : []),
-    ],
-  };
-}
-
-function renderAccessoryCircular(account) {
-  const percent = Math.round(account.primaryRemainingFraction * 100);
-  return {
-    type: "widget",
-    children: [
-      {
-        type: "stack",
-        direction: "column",
-        alignItems: "center",
-        gap: 1,
-        children: [
-          { type: "text", text: account.primaryWindow.toUpperCase(), font: { size: 9, weight: "heavy" }, textColor: C.textPrimary },
-          { type: "text", text: `${percent}%`, font: { size: 13, weight: "bold" }, textColor: C.textPrimary },
-        ],
-      },
-    ],
-  };
-}
-
-function renderAccessoryRectangular(account) {
-  const remainPercent = Math.round(account.primaryRemainingFraction * 100);
-  return {
-    type: "widget",
-    padding: [4, 6, 4, 6],
-    children: [
-      { type: "text", text: account.name, font: { size: 12, weight: "bold" }, maxLines: 1 },
-      { type: "text", text: `${account.primaryWindowLabel}剩余: ${remainPercent}% · ${account.primaryResetCountdownStr}`, font: { size: 10 }, maxLines: 1 },
-      { type: "text", text: `重置时间: ${account.primaryResetTimeStr}`, font: { size: 9 }, maxLines: 1 },
-    ],
-  };
-}
-
-function renderAccessoryInline(account) {
-  const remainPercent = Math.round(account.primaryRemainingFraction * 100);
-  return {
-    type: "widget",
-    children: [
-      { type: "text", text: `${account.name}: 余${remainPercent}% (${account.primaryResetCountdownStr})` },
     ],
   };
 }

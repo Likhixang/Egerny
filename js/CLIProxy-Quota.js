@@ -565,13 +565,7 @@ export default async function(ctx) {
     models = filterModels(models, filterParam);
   }
 
-  if (family === "accessoryCircular") {
-    return renderAccessoryCircular(models[0]);
-  } else if (family === "accessoryRectangular") {
-    return renderAccessoryRectangular(models[0]);
-  } else if (family === "accessoryInline") {
-    return renderAccessoryInline(models[0]);
-  } else if (family === "systemSmall") {
+  if (family === "systemSmall") {
     // Small 小组件：非 Pro 优先展示 5小时滚动限制；Pro 展示周全额度；Antigravity/Claude 展示 5h 配额
     const shortModels = models.filter((m) => m.window === "5h" && !m.isSpark);
     const targetModel = shortModels.length > 0 ? shortModels[0] : models[0];
@@ -1252,49 +1246,6 @@ function renderLargeWidget(models, updateStr, maskEmailEnabled) {
           ],
         };
       }),
-    ],
-  };
-}
-
-function renderAccessoryCircular(model) {
-  const percent = Math.round(model.remainingFraction * 100);
-  const label = (model.shortName || model.provider || "AI").slice(0, 3).toUpperCase();
-  return {
-    type: "widget",
-    children: [
-      {
-        type: "stack",
-        direction: "column",
-        alignItems: "center",
-        gap: 1,
-        children: [
-          { type: "text", text: label, font: { size: 9, weight: "heavy" }, textColor: C.textPrimary },
-          { type: "text", text: `${percent}%`, font: { size: 13, weight: "bold" }, textColor: C.textPrimary },
-        ],
-      },
-    ],
-  };
-}
-
-function renderAccessoryRectangular(model) {
-  const remainPercent = Math.round(model.remainingFraction * 100);
-  return {
-    type: "widget",
-    padding: [4, 6, 4, 6],
-    children: [
-      { type: "text", text: model.name, font: { size: 12, weight: "bold" }, maxLines: 1 },
-      { type: "text", text: `5h 剩余 ${remainPercent}% · ${model.resetCountdownStr}`, font: { size: 10 }, maxLines: 1 },
-      { type: "text", text: `重置时间: ${model.resetTimeStr}`, font: { size: 9 }, maxLines: 1 },
-    ],
-  };
-}
-
-function renderAccessoryInline(model) {
-  const remainPercent = Math.round(model.remainingFraction * 100);
-  return {
-    type: "widget",
-    children: [
-      { type: "text", text: `${model.shortName}: 5h余${remainPercent}% (${model.resetCountdownStr})` },
     ],
   };
 }
