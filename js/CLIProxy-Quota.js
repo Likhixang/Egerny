@@ -674,7 +674,7 @@ function renderSmallWidget(model, updateTime) {
                 type: "stack",
                 direction: "row",
                 gap: 3,
-                alignItems: "baseline",
+                alignItems: "center",
                 children: [
                   { type: "text", text: "已用", font: { size: 10 }, textColor: C.textSecondary },
                   { type: "text", text: `${usedPercent}%`, font: { size: 15, weight: "heavy" }, textColor: C.textPrimary },
@@ -685,7 +685,7 @@ function renderSmallWidget(model, updateTime) {
                 type: "stack",
                 direction: "row",
                 gap: 3,
-                alignItems: "baseline",
+                alignItems: "center",
                 children: [
                   { type: "text", text: windowTag, font: { size: 9.5, weight: "bold" }, textColor: C.textSecondary },
                   { type: "text", text: `${remainPercent}%`, font: { size: 16, weight: "heavy" }, textColor: model.statusColor },
@@ -1258,14 +1258,19 @@ function renderLargeWidget(models, updateStr, maskEmailEnabled) {
 
 function renderAccessoryCircular(model) {
   const percent = Math.round(model.remainingFraction * 100);
+  const label = (model.shortName || model.provider || "AI").slice(0, 3).toUpperCase();
   return {
     type: "widget",
     children: [
       {
-        type: "gauge",
-        value: model.remainingFraction,
-        label: { type: "text", text: model.shortName.slice(0, 3).toUpperCase(), font: { size: 9, weight: "heavy" } },
-        currentValueLabel: { type: "text", text: `${percent}`, font: { size: 12, weight: "bold" } },
+        type: "stack",
+        direction: "column",
+        alignItems: "center",
+        gap: 1,
+        children: [
+          { type: "text", text: label, font: { size: 9, weight: "heavy" }, textColor: C.textPrimary },
+          { type: "text", text: `${percent}%`, font: { size: 13, weight: "bold" }, textColor: C.textPrimary },
+        ],
       },
     ],
   };

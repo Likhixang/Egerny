@@ -646,7 +646,7 @@ function renderSmallWidget(account, updateTime) {
                 type: "stack",
                 direction: "row",
                 gap: 3,
-                alignItems: "baseline",
+                alignItems: "center",
                 children: [
                   { type: "text", text: "已用", font: { size: 10 }, textColor: C.textSecondary },
                   { type: "text", text: `${usedPercent}%`, font: { size: 15, weight: "heavy" }, textColor: C.textPrimary },
@@ -657,7 +657,7 @@ function renderSmallWidget(account, updateTime) {
                 type: "stack",
                 direction: "row",
                 gap: 3,
-                alignItems: "baseline",
+                alignItems: "center",
                 children: [
                   { type: "text", text: windowTag, font: { size: 9.5, weight: "bold" }, textColor: C.textSecondary },
                   { type: "text", text: `${remainPercent}%`, font: { size: 16, weight: "heavy" }, textColor: statusColor },
@@ -1422,10 +1422,14 @@ function renderAccessoryCircular(account) {
     type: "widget",
     children: [
       {
-        type: "gauge",
-        value: account.primaryRemainingFraction,
-        label: { type: "text", text: account.primaryWindow.toUpperCase(), font: { size: 9, weight: "heavy" } },
-        currentValueLabel: { type: "text", text: `${percent}`, font: { size: 12, weight: "bold" } },
+        type: "stack",
+        direction: "column",
+        alignItems: "center",
+        gap: 1,
+        children: [
+          { type: "text", text: account.primaryWindow.toUpperCase(), font: { size: 9, weight: "heavy" }, textColor: C.textPrimary },
+          { type: "text", text: `${percent}%`, font: { size: 13, weight: "bold" }, textColor: C.textPrimary },
+        ],
       },
     ],
   };
