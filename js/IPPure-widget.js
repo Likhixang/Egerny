@@ -102,14 +102,15 @@ export default async function(ctx) {
     : 100;
   const overallLevel = getPurityLevel(overallPurity);
 
-  // 网络与地理归属 (纯文本，不加 Emoji)
+  // 网络与地理归属 (优雅搭配原生国旗与排版)
   const asnNumber = ippureData?.asn ? `AS${ippureData.asn}` : (ipApiData?.as ? ipApiData.as.split(" ")[0] : (iplogsData?.ip_info?.asn || "AS --"));
   const asnOrg = (ippureData?.asOrganization || ipApiData?.isp || iplogsData?.ip_info?.org || "").trim();
   const countryCode = (ippureData?.countryCode || ipApiData?.countryCode || iplogsData?.ip_info?.country_code || "").toUpperCase();
   const city = ippureData?.city || ipApiData?.city || iplogsData?.ip_info?.city || "";
   const country = ippureData?.country || ipApiData?.country || iplogsData?.ip_info?.country || "";
-  const locShort = [city, countryCode].filter(Boolean).join(", ") || country || "未知位置";
-  const locFull = [city, country, countryCode ? `(${countryCode})` : ""].filter(Boolean).join(" ") || "未知位置";
+  const flag = flagEmoji(countryCode);
+  const locShort = [flag, city || country, countryCode].filter(Boolean).join(" ").trim() || "未知位置";
+  const locFull = [flag, city, country, countryCode ? `(${countryCode})` : ""].filter(Boolean).join(" ").trim() || "未知位置";
 
   const family = ctx.widgetFamily || "systemMedium";
 
@@ -783,4 +784,17 @@ function maskIP(ip) {
   }
   const p6 = ip.split(":");
   return `${p6[0]}:${p6[1]}:*:*:*:*:*:*`;
+}
+
+function flagEmoji(cc) {
+  if (!cc || cc.length !== 2) return "";
+  let code = cc.toUpperCase();
+  if (code === "TW") code = "CN";
+  try {
+    return String.fromCodePoint(
+      ...code.split("").map(c => 127397 + c.charCodeAt(0))
+    );
+  } catch (e) {
+    return "";
+  }
 }
