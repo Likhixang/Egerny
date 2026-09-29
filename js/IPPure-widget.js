@@ -213,9 +213,9 @@ function renderSystemSmall(d) {
         ]
       },
 
-      { type: "spacer", length: 8 },
+      { type: "spacer", length: 5 },
 
-      // 2. IP 与归属地展示
+      // 2. IP 与归属地及网络展示 (微调上移，ASN 独立成行防截断)
       {
         type: "stack",
         direction: "column",
@@ -224,7 +224,7 @@ function renderSystemSmall(d) {
           {
             type: "text",
             text: d.displayIP,
-            font: { size: 16, weight: "heavy" },
+            font: { size: 15, weight: "heavy" },
             textColor: C.textPrimary,
             maxLines: 1
           },
@@ -237,9 +237,25 @@ function renderSystemSmall(d) {
               { type: "image", src: "sf-symbol:mappin.and.ellipse", color: C.textTertiary, width: 9, height: 9 },
               {
                 type: "text",
-                text: `${d.locShort} · ${d.asnNumber}`,
+                text: d.locShort,
                 font: { size: 10, weight: "medium" },
                 textColor: C.textSecondary,
+                maxLines: 1
+              }
+            ]
+          },
+          {
+            type: "stack",
+            direction: "row",
+            alignItems: "center",
+            gap: 3,
+            children: [
+              { type: "image", src: "sf-symbol:network", color: C.textTertiary, width: 8, height: 8 },
+              {
+                type: "text",
+                text: d.asnOrg ? `${d.asnNumber} · ${d.asnOrg}` : d.asnNumber,
+                font: { size: 8, weight: "medium" },
+                textColor: C.textTertiary,
                 maxLines: 1
               }
             ]
@@ -247,7 +263,7 @@ function renderSystemSmall(d) {
         ]
       },
 
-      { type: "spacer", length: 10 },
+      { type: "spacer", length: 6 },
 
       // 3. 三源指标微卡片 (轻量半透明背景与细边框)
       {
