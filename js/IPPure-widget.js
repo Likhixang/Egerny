@@ -291,8 +291,7 @@ function renderSystemMedium(d) {
   return {
     type: "widget",
     backgroundColor: C.widgetBg,
-    padding: [13, 16, 13, 16],
-    gap: 8,
+    padding: [11, 14, 11, 14],
     children: [
       // 1. 顶部 Header (保持全尺寸统一标题: 绿叶 + IP纯净度 + 综合分)
       {
@@ -313,7 +312,9 @@ function renderSystemMedium(d) {
         ]
       },
 
-      // 2. 出口网络信息独立行 (移至标题下方，不拥挤在标题行)
+      { type: "spacer", length: 4 },
+
+      // 2. 出口网络信息独立行 (紧贴标题行，消除过宽间隙)
       {
         type: "stack",
         direction: "row",
@@ -323,7 +324,7 @@ function renderSystemMedium(d) {
           {
             type: "text",
             text: d.displayIP,
-            font: { size: 14, weight: "bold" },
+            font: { size: 13, weight: "bold" },
             textColor: C.textPrimary
           },
           {
@@ -338,7 +339,7 @@ function renderSystemMedium(d) {
           {
             type: "text",
             text: `· ${d.locShort}`,
-            font: { size: 11, weight: "medium" },
+            font: { size: 10, weight: "medium" },
             textColor: C.textSecondary,
             maxLines: 1
           },
@@ -352,6 +353,8 @@ function renderSystemMedium(d) {
           }
         ]
       },
+
+      { type: "spacer", length: 6 },
 
       // 3. 核心区：3 列数据源微遮罩并列卡片 (HIG 优雅轻磨砂层级，清晰留白)
       {
@@ -393,14 +396,16 @@ function renderSystemMedium(d) {
         ]
       },
 
-      // 3. 底部极轻状态条 (左侧显示网络组织，右侧提示三源)
+      { type: "spacer", length: 5 },
+
+      // 4. 底部极轻状态条 (左侧显示网络组织，右侧提示三源)
       {
         type: "stack",
         direction: "row",
         alignItems: "center",
         gap: 4,
         children: [
-          { type: "image", src: "sf-symbol:network", color: C.textTertiary, width: 10, height: 10 },
+          { type: "image", src: "sf-symbol:network", color: C.textTertiary, width: 9, height: 9 },
           {
             type: "text",
             text: d.asnOrg || "未知组织",
