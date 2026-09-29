@@ -215,11 +215,10 @@ function renderSystemSmall(d) {
 
       { type: "spacer", length: 5 },
 
-      // 2. IP 与归属地及网络展示 (独立卡片容器框住，整体完美居中)
+      // 2. IP 与归属地及网络展示 (行内双 spacer 撑满卡片宽度，严格水平绝对居中)
       {
         type: "stack",
         direction: "column",
-        alignItems: "center",
         gap: 2,
         padding: [6, 8, 6, 8],
         backgroundColor: C.cardBg,
@@ -228,42 +227,55 @@ function renderSystemSmall(d) {
         borderColor: C.cardBorder,
         children: [
           {
-            type: "text",
-            text: d.displayIP,
-            font: { size: 15, weight: "heavy" },
-            textColor: C.textPrimary,
-            maxLines: 1
-          },
-          {
             type: "stack",
             direction: "row",
             alignItems: "center",
-            gap: 4,
             children: [
-              { type: "image", src: "sf-symbol:mappin.and.ellipse", color: C.textTertiary, width: 9, height: 9 },
+              { type: "spacer" },
               {
                 type: "text",
-                text: d.locShort,
-                font: { size: 9, weight: "medium" },
-                textColor: C.textSecondary,
+                text: d.displayIP,
+                font: { size: 15, weight: "heavy" },
+                textColor: C.textPrimary,
                 maxLines: 1
-              }
+              },
+              { type: "spacer" }
             ]
           },
           {
             type: "stack",
             direction: "row",
             alignItems: "center",
-            gap: 4,
             children: [
+              { type: "spacer" },
+              { type: "image", src: "sf-symbol:mappin.and.ellipse", color: C.textTertiary, width: 9, height: 9 },
+              { type: "spacer", length: 4 },
+              {
+                type: "text",
+                text: d.locShort,
+                font: { size: 9, weight: "medium" },
+                textColor: C.textSecondary,
+                maxLines: 1
+              },
+              { type: "spacer" }
+            ]
+          },
+          {
+            type: "stack",
+            direction: "row",
+            alignItems: "center",
+            children: [
+              { type: "spacer" },
               { type: "image", src: "sf-symbol:network", color: C.textTertiary, width: 8, height: 8 },
+              { type: "spacer", length: 4 },
               {
                 type: "text",
                 text: d.asnOrg ? `${d.asnNumber} · ${d.asnOrg}` : d.asnNumber,
                 font: { size: 8, weight: "medium" },
                 textColor: C.textTertiary,
                 maxLines: 1
-              }
+              },
+              { type: "spacer" }
             ]
           }
         ]
