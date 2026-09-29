@@ -215,17 +215,16 @@ function renderSystemSmall(d) {
 
       { type: "spacer", length: 5 },
 
-      // 2. IP 与归属地及网络展示 (居中对称对齐，视觉更舒适平衡)
+      // 2. IP 与归属地及网络展示 (左对齐流式排版，与顶部/底部视觉边缘自然对齐)
       {
         type: "stack",
         direction: "column",
-        alignItems: "center",
         gap: 2,
         children: [
           {
             type: "text",
             text: d.displayIP,
-            font: { size: 15, weight: "heavy" },
+            font: { size: 16, weight: "heavy" },
             textColor: C.textPrimary,
             maxLines: 1
           },
@@ -233,7 +232,7 @@ function renderSystemSmall(d) {
             type: "stack",
             direction: "row",
             alignItems: "center",
-            gap: 3,
+            gap: 4,
             children: [
               { type: "image", src: "sf-symbol:mappin.and.ellipse", color: C.textTertiary, width: 9, height: 9 },
               {
@@ -249,7 +248,7 @@ function renderSystemSmall(d) {
             type: "stack",
             direction: "row",
             alignItems: "center",
-            gap: 3,
+            gap: 4,
             children: [
               { type: "image", src: "sf-symbol:network", color: C.textTertiary, width: 8, height: 8 },
               {
