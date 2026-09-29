@@ -7,6 +7,8 @@
 [Rule]
 # 确保检测请求走选定的代理策略
 DOMAIN-SUFFIX,ippure.com,{{{Proxy}}}
+DOMAIN-SUFFIX,iplogs.com,{{{Proxy}}}
+DOMAIN-SUFFIX,ip-api.com,{{{Proxy}}}
 
 [Panel]
 IP-Pure = script-name=IP-Pure, title=IP 纯净度, content=刷新中…, style=info, update-interval=300

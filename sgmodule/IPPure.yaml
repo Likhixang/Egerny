@@ -1,5 +1,5 @@
 name: "IP-Pure"
-description: "节点 IP 纯净度检测（IPPure），新式小组件，支持主屏全部尺寸，数据源 my.ippure.com"
+description: "节点多源 IP 纯净度检测（IPPure + IPLogs + ip-api），新式小组件，支持主屏全部尺寸，多源并列展示"
 
 # 策略组路由参数（用于规则匹配）
 compat_arguments:
@@ -31,4 +31,10 @@ widgets:
 rules:
   - domain_suffix:
       match: ippure.com
+      policy: "{{{Proxy}}}"
+  - domain_suffix:
+      match: iplogs.com
+      policy: "{{{Proxy}}}"
+  - domain_suffix:
+      match: ip-api.com
       policy: "{{{Proxy}}}"
