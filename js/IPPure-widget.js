@@ -197,7 +197,7 @@ function renderSystemSmall(d) {
   return {
     type: "widget",
     backgroundColor: C.widgetBg,
-    padding: 14,
+    padding: 12,
     children: [
       // 1. 顶部 Header
       {
@@ -215,16 +215,22 @@ function renderSystemSmall(d) {
 
       { type: "spacer", length: 5 },
 
-      // 2. IP 与归属地及网络展示 (左对齐流式排版，与顶部/底部视觉边缘自然对齐)
+      // 2. IP 与归属地及网络展示 (独立卡片容器框住，整体完美居中)
       {
         type: "stack",
         direction: "column",
+        alignItems: "center",
         gap: 2,
+        padding: [6, 8, 6, 8],
+        backgroundColor: C.cardBg,
+        borderRadius: 9,
+        borderWidth: 0.5,
+        borderColor: C.cardBorder,
         children: [
           {
             type: "text",
             text: d.displayIP,
-            font: { size: 16, weight: "heavy" },
+            font: { size: 15, weight: "heavy" },
             textColor: C.textPrimary,
             maxLines: 1
           },
@@ -238,7 +244,7 @@ function renderSystemSmall(d) {
               {
                 type: "text",
                 text: d.locShort,
-                font: { size: 10, weight: "medium" },
+                font: { size: 9, weight: "medium" },
                 textColor: C.textSecondary,
                 maxLines: 1
               }
@@ -263,13 +269,13 @@ function renderSystemSmall(d) {
         ]
       },
 
-      { type: "spacer", length: 6 },
+      { type: "spacer", length: 5 },
 
       // 3. 三源指标微卡片 (轻量半透明背景与细边框)
       {
         type: "stack",
         direction: "column",
-        gap: 5,
+        gap: 4,
         padding: [6, 8, 6, 8],
         backgroundColor: C.cardBg,
         borderRadius: 9,
