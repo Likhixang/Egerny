@@ -207,7 +207,7 @@ function renderSystemSmall(d) {
         children: [
           { type: "image", src: IPPURE_LOGO, width: 14, height: 14, borderRadius: 3.5 },
           { type: "spacer", length: 5 },
-          { type: "text", text: "IP 纯净度", font: { size: "caption1", weight: "heavy" }, textColor: C.textPrimary },
+          { type: "text", text: "IP纯净度", font: { size: "caption1", weight: "heavy" }, textColor: C.textPrimary },
           { type: "spacer" },
           createPillBadge(`${d.overallPurity}分`, d.overallLevel.color, d.overallLevel.badgeBg, d.overallLevel.icon)
         ]
@@ -288,34 +288,50 @@ function renderSystemMedium(d) {
   return {
     type: "widget",
     backgroundColor: C.widgetBg,
-    padding: [14, 16, 14, 16],
-    gap: 10,
+    padding: [13, 16, 13, 16],
+    gap: 8,
     children: [
-      // 1. 顶部 Header (出口网络信息)
+      // 1. 顶部 Header (保持全尺寸统一标题: 绿叶 + IP纯净度 + 综合分)
       {
         type: "stack",
         direction: "row",
         alignItems: "center",
         children: [
-          { type: "image", src: IPPURE_LOGO, width: 15, height: 15, borderRadius: 3.5 },
+          { type: "image", src: IPPURE_LOGO, width: 14, height: 14, borderRadius: 3.5 },
           { type: "spacer", length: 6 },
           {
             type: "text",
-            text: d.displayIP,
+            text: "IP纯净度",
             font: { size: "subheadline", weight: "heavy" },
             textColor: C.textPrimary
           },
-          { type: "spacer", length: 6 },
+          { type: "spacer" },
+          createPillBadge(`综合 ${d.overallPurity}分`, d.overallLevel.color, d.overallLevel.badgeBg, d.overallLevel.icon)
+        ]
+      },
+
+      // 2. 出口网络信息独立行 (移至标题下方，不拥挤在标题行)
+      {
+        type: "stack",
+        direction: "row",
+        alignItems: "center",
+        gap: 6,
+        children: [
+          {
+            type: "text",
+            text: d.displayIP,
+            font: { size: 14, weight: "bold" },
+            textColor: C.textPrimary
+          },
           {
             type: "stack",
-            padding: [1.5, 4.5],
-            borderRadius: 4,
+            padding: [1, 4],
+            borderRadius: 3.5,
             backgroundColor: C.pillBg,
             children: [
-              { type: "text", text: d.ipVer, font: { size: 9, weight: "bold" }, textColor: C.textSecondary }
+              { type: "text", text: d.ipVer, font: { size: 8.5, weight: "bold" }, textColor: C.textSecondary }
             ]
           },
-          { type: "spacer", length: 6 },
           {
             type: "text",
             text: `· ${d.locShort}`,
@@ -324,11 +340,17 @@ function renderSystemMedium(d) {
             maxLines: 1
           },
           { type: "spacer" },
-          createPillBadge(`综合 ${d.overallPurity}分`, d.overallLevel.color, d.overallLevel.badgeBg, d.overallLevel.icon)
+          {
+            type: "text",
+            text: d.asnNumber,
+            font: { size: 10, weight: "medium" },
+            textColor: C.textTertiary,
+            maxLines: 1
+          }
         ]
       },
 
-      // 2. 核心区：3 列数据源纯净并列分栏 (零沉重灰底遮罩，清晰留白与文字层级)
+      // 3. 核心区：3 列数据源纯净并列分栏 (零沉重灰底遮罩，清晰留白与文字层级)
       {
         type: "stack",
         direction: "row",
@@ -446,8 +468,7 @@ function createVerticalDivider() {
   return {
     type: "stack",
     width: 0.5,
-    backgroundColor: C.divider,
-    margin: [4, 2, 4, 2]
+    backgroundColor: C.divider
   };
 }
 
@@ -469,7 +490,7 @@ function renderSystemLarge(d) {
         children: [
           { type: "image", src: IPPURE_LOGO, width: 16, height: 16, borderRadius: 4 },
           { type: "spacer", length: 6 },
-          { type: "text", text: "IP 纯净度多源安全看板", font: { size: "subheadline", weight: "heavy" }, textColor: C.textPrimary },
+          { type: "text", text: "IP纯净度", font: { size: "subheadline", weight: "heavy" }, textColor: C.textPrimary },
           { type: "spacer", length: 6 },
           {
             type: "stack",
@@ -518,14 +539,14 @@ function renderSystemLarge(d) {
               },
               {
                 type: "text",
-                text: `${d.locFull} · ${d.asnNumber}`,
+                text: d.locFull,
                 font: { size: 11, weight: "medium" },
                 textColor: C.textSecondary,
                 maxLines: 1
               },
               {
                 type: "text",
-                text: d.asnOrg || "未知组织",
+                text: `${d.asnNumber} · ${d.asnOrg || "未知组织"}`,
                 font: { size: 10 },
                 textColor: C.textTertiary,
                 maxLines: 1
@@ -647,7 +668,7 @@ function renderErrorWidget(family, errorMsg) {
         gap: 4,
         children: [
           { type: "image", src: IPPURE_LOGO, width: 14, height: 14 },
-          { type: "text", text: "IP 纯净度检测", font: { size: "caption1", weight: "bold" }, textColor: C.textPrimary }
+          { type: "text", text: "IP纯净度", font: { size: "caption1", weight: "bold" }, textColor: C.textPrimary }
         ]
       },
       { type: "spacer" },
