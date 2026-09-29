@@ -215,10 +215,11 @@ function renderSystemSmall(d) {
 
       { type: "spacer", length: 5 },
 
-      // 2. IP 与归属地及网络展示 (微调上移，ASN 独立成行防截断)
+      // 2. IP 与归属地及网络展示 (居中对称对齐，视觉更舒适平衡)
       {
         type: "stack",
         direction: "column",
+        alignItems: "center",
         gap: 2,
         children: [
           {
