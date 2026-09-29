@@ -226,8 +226,7 @@ function renderSystemSmall(d) {
             text: d.displayIP,
             font: { size: 16, weight: "heavy" },
             textColor: C.textPrimary,
-            maxLines: 1,
-            minScale: 0.7
+            maxLines: 1
           },
           {
             type: "stack",
@@ -241,8 +240,7 @@ function renderSystemSmall(d) {
                 text: `${d.locShort} · ${d.asnNumber}`,
                 font: { size: 10, weight: "medium" },
                 textColor: C.textSecondary,
-                maxLines: 1,
-                minScale: 0.75
+                maxLines: 1
               }
             ]
           }
@@ -354,7 +352,7 @@ function renderSystemMedium(d) {
       {
         type: "stack",
         direction: "row",
-        alignItems: "stretch",
+        alignItems: "center",
         flex: 1,
         children: [
           // 第一列: IPPure
@@ -466,9 +464,8 @@ function createCleanColumn({ sourceName, scoreVal, scoreColor, tagPrimary, tagSe
 
 function createVerticalDivider() {
   return {
-    type: "stack",
-    width: 0.5,
-    backgroundColor: C.divider
+    type: "spacer",
+    length: 6
   };
 }
 
@@ -534,8 +531,7 @@ function renderSystemLarge(d) {
                 text: d.displayIP,
                 font: { size: 19, weight: "bold" },
                 textColor: C.textPrimary,
-                maxLines: 1,
-                minScale: 0.7
+                maxLines: 1
               },
               {
                 type: "text",
