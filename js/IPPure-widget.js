@@ -178,16 +178,16 @@ export default async function(ctx) {
   });
 }
 
-// ── 设计系统色彩规范 (Apple HIG 极简纯净) ──
+// ── 设计系统色彩规范 (Apple HIG 优雅微遮罩) ──
 const C = {
   textPrimary: { light: "#151515", dark: "#FFFFFF" },
   textSecondary: { light: "#6E6E73", dark: "#98989D" },
   textTertiary: { light: "#8E8E93", dark: "#636366" },
 
   widgetBg: { light: "#FFFFFF", dark: "#151515" },
-  divider: { light: "rgba(0, 0, 0, 0.08)", dark: "rgba(255, 255, 255, 0.12)" },
-  pillBg: { light: "rgba(0, 0, 0, 0.05)", dark: "rgba(255, 255, 255, 0.10)" },
-  cardBorder: { light: "rgba(0, 0, 0, 0.06)", dark: "rgba(255, 255, 255, 0.08)" }
+  cardBg: { light: "rgba(0, 0, 0, 0.04)", dark: "rgba(255, 255, 255, 0.08)" },
+  cardBorder: { light: "rgba(0, 0, 0, 0.06)", dark: "rgba(255, 255, 255, 0.08)" },
+  pillBg: { light: "rgba(0, 0, 0, 0.05)", dark: "rgba(255, 255, 255, 0.10)" }
 };
 
 /**
@@ -249,11 +249,16 @@ function renderSystemSmall(d) {
 
       { type: "spacer", length: 10 },
 
-      // 3. 三源指标微列表 (纯文字与层级对齐，干净轻盈)
+      // 3. 三源指标微卡片 (轻量半透明背景与细边框)
       {
         type: "stack",
         direction: "column",
         gap: 5,
+        padding: [6, 8, 6, 8],
+        backgroundColor: C.cardBg,
+        borderRadius: 9,
+        borderWidth: 0.5,
+        borderColor: C.cardBorder,
         children: [
           createSmallSourceRow("IPPure", d.ippureScore !== null ? `${d.ippureScore}分` : "N/A", d.ipType, getPurityColor(d.ippureScore || 100)),
           createSmallSourceRow("IPLogs", d.iplogsPurity !== null ? `${d.iplogsPurity}分` : "N/A", d.iplogsVerdictText, getPurityColor(d.iplogsPurity || 100)),
@@ -348,11 +353,12 @@ function renderSystemMedium(d) {
         ]
       },
 
-      // 3. 核心区：3 列数据源纯净并列分栏 (零沉重灰底遮罩，清晰留白与文字层级)
+      // 3. 核心区：3 列数据源微遮罩并列卡片 (HIG 优雅轻磨砂层级，清晰留白)
       {
         type: "stack",
         direction: "row",
         alignItems: "center",
+        gap: 6,
         flex: 1,
         children: [
           // 第一列: IPPure
@@ -365,8 +371,6 @@ function renderSystemMedium(d) {
             subline: d.rawFraudScore !== null ? `欺诈分: ${d.rawFraudScore}` : "原生评估源"
           }),
 
-          createVerticalDivider(),
-
           // 第二列: IPLogs
           createCleanColumn({
             sourceName: "IPLogs",
@@ -376,8 +380,6 @@ function renderSystemMedium(d) {
             tagSecondary: "行为风控",
             subline: d.iplogsPurity !== null ? "信誉度检测" : "未获取到评分"
           }),
-
-          createVerticalDivider(),
 
           // 第三列: ip-api
           createCleanColumn({
@@ -391,7 +393,7 @@ function renderSystemMedium(d) {
         ]
       },
 
-      // 3. 底部极轻 ASN 状态条
+      // 3. 底部极轻状态条 (左侧显示网络组织，右侧提示三源)
       {
         type: "stack",
         direction: "row",
@@ -401,7 +403,7 @@ function renderSystemMedium(d) {
           { type: "image", src: "sf-symbol:network", color: C.textTertiary, width: 10, height: 10 },
           {
             type: "text",
-            text: d.asnOrg ? `${d.asnNumber} ${d.asnOrg}` : d.asnNumber,
+            text: d.asnOrg || "未知组织",
             font: { size: 10 },
             textColor: C.textTertiary,
             maxLines: 1
@@ -420,7 +422,11 @@ function createCleanColumn({ sourceName, scoreVal, scoreColor, tagPrimary, tagSe
     direction: "column",
     flex: 1,
     gap: 3,
-    padding: [2, 6, 2, 6],
+    padding: [7, 8, 7, 8],
+    backgroundColor: C.cardBg,
+    borderRadius: 9,
+    borderWidth: 0.5,
+    borderColor: C.cardBorder,
     children: [
       {
         type: "text",
@@ -459,13 +465,6 @@ function createCleanColumn({ sourceName, scoreVal, scoreColor, tagPrimary, tagSe
         maxLines: 1
       }
     ]
-  };
-}
-
-function createVerticalDivider() {
-  return {
-    type: "spacer",
-    length: 6
   };
 }
 
@@ -510,6 +509,7 @@ function renderSystemLarge(d) {
         alignItems: "center",
         gap: 12,
         padding: 10,
+        backgroundColor: C.cardBg,
         borderRadius: 12,
         borderWidth: 0.5,
         borderColor: C.cardBorder,
@@ -619,6 +619,7 @@ function createMatrixCard(icon, title, items, flexVal) {
     direction: "column",
     gap: 4,
     padding: [8, 10],
+    backgroundColor: C.cardBg,
     borderRadius: 10,
     borderWidth: 0.5,
     borderColor: C.cardBorder,
