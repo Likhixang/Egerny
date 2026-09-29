@@ -274,7 +274,7 @@ function createSmallSourceRow(name, scoreText, label, color) {
     children: [
       { type: "text", text: name, font: { size: 10, weight: "bold" }, textColor: C.textSecondary },
       { type: "spacer" },
-      { type: "text", text: label, font: { size: 9.5, weight: "medium" }, textColor: C.textTertiary },
+      { type: "text", text: label, font: { size: 10, weight: "medium" }, textColor: C.textTertiary },
       { type: "spacer", length: 5 },
       { type: "text", text: scoreText, font: { size: 10, weight: "heavy" }, textColor: color }
     ]
@@ -329,7 +329,7 @@ function renderSystemMedium(d) {
             borderRadius: 3.5,
             backgroundColor: C.pillBg,
             children: [
-              { type: "text", text: d.ipVer, font: { size: 8.5, weight: "bold" }, textColor: C.textSecondary }
+              { type: "text", text: d.ipVer, font: { size: 8, weight: "bold" }, textColor: C.textSecondary }
             ]
           },
           {
@@ -404,12 +404,12 @@ function renderSystemMedium(d) {
           {
             type: "text",
             text: d.asnOrg ? `${d.asnNumber} ${d.asnOrg}` : d.asnNumber,
-            font: { size: 9.5 },
+            font: { size: 10 },
             textColor: C.textTertiary,
             maxLines: 1
           },
           { type: "spacer" },
-          { type: "text", text: "三源实时比对", font: { size: 9.5 }, textColor: C.textTertiary }
+          { type: "text", text: "数据源: IPPure · IPLogs · ip-api", font: { size: 10 }, textColor: C.textTertiary }
         ]
       }
     ]
@@ -427,7 +427,7 @@ function createCleanColumn({ sourceName, scoreVal, scoreColor, tagPrimary, tagSe
       {
         type: "text",
         text: sourceName,
-        font: { size: 10.5, weight: "bold" },
+        font: { size: 10, weight: "bold" },
         textColor: C.textSecondary,
         maxLines: 1
       },
@@ -442,21 +442,21 @@ function createCleanColumn({ sourceName, scoreVal, scoreColor, tagPrimary, tagSe
       {
         type: "text",
         text: tagPrimary,
-        font: { size: 10.5, weight: "bold" },
+        font: { size: 10, weight: "bold" },
         textColor: C.textPrimary,
         maxLines: 1
       },
       {
         type: "text",
         text: tagSecondary,
-        font: { size: 9.5, weight: "medium" },
+        font: { size: 10, weight: "medium" },
         textColor: C.textSecondary,
         maxLines: 1
       },
       {
         type: "text",
         text: subline,
-        font: { size: 8.5 },
+        font: { size: 8 },
         textColor: C.textTertiary,
         maxLines: 1
       }
@@ -610,9 +610,7 @@ function renderSystemLarge(d) {
         direction: "row",
         alignItems: "center",
         children: [
-          { type: "text", text: "数据源: IPPure · IPLogs · ip-api", font: { size: 10 }, textColor: C.textTertiary },
-          { type: "spacer" },
-          { type: "date", date: new Date().toISOString(), format: "relative", font: { size: 10 }, textColor: C.textTertiary }
+          { type: "text", text: "数据源: IPPure · IPLogs · ip-api", font: { size: 10 }, textColor: C.textTertiary }
         ]
       }
     ]
