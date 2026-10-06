@@ -38,3 +38,6 @@ rules:
   - domain_suffix:
       match: ip-api.com
       policy: "{{{Proxy}}}"
+  - domain_suffix:
+      match: cleanip.io
+      policy: "{{{Proxy}}}"
