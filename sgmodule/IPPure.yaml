@@ -41,3 +41,6 @@ rules:
   - domain_suffix:
       match: cleanip.io
       policy: "{{{Proxy}}}"
+  - domain_suffix:
+      match: ip.cx
+      policy: "{{{Proxy}}}"
