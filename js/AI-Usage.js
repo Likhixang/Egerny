@@ -2,6 +2,7 @@
  * AI Usage 聚合监控小组件 — Egern 2.16+ 新式小组件 (Widget DSL)
  * 7 大平台万能聚合监控：
  *   - CLIProxy / Codex2API / AxonHub / Sub2API / New API (One API) / DeepSeek / Agy Tools
+ * 严格对齐 Scripting (StarYunLee 1.3.0) 鉴权标准、双端点回退及配额解析引擎
  * 设计系统：Apple HIG 现代拟物磨砂玻璃看板，全尺寸主屏自适应 (Small, Medium, Large)
  */
 
@@ -119,7 +120,7 @@ function createProgressBarSvg(fraction, color, height = 6) {
   return `data:image/svg+xml,${encodeURIComponent(svg)}`;
 }
 
-async function fetchWithTimeout(ctx, url, options = {}, timeoutMs = 5000) {
+async function fetchWithTimeout(ctx, url, options = {}, timeoutMs = 7000) {
   try {
     return await ctx.http.get(url, { ...options, timeout: timeoutMs });
   } catch (e) {
@@ -127,7 +128,7 @@ async function fetchWithTimeout(ctx, url, options = {}, timeoutMs = 5000) {
   }
 }
 
-async function fetchPostWithTimeout(ctx, url, body, options = {}, timeoutMs = 5000) {
+async function fetchPostWithTimeout(ctx, url, body, options = {}, timeoutMs = 7000) {
   try {
     return await ctx.http.post(url, { ...options, body, timeout: timeoutMs });
   } catch (e) {
@@ -176,10 +177,115 @@ function createMicroBadge(badge) {
   };
 }
 
+// ── Scripting 核心解析工具 ──
+function toNumber(v) {
+  if (typeof v === "number" && Number.isFinite(v)) return v;
+  if (typeof v === "string" && v.trim() && Number.isFinite(Number(v))) return Number(v);
+  return null;
+}
+
+function parseDateValue(value) {
+  if (value == null || value === "") return { iso: null, ms: null };
+  const numeric = typeof value === "number" ? value : Number(value);
+  const ms = Number.isFinite(numeric)
+    ? (numeric > 1e12 ? numeric : numeric * 1000)
+    : new Date(String(value)).getTime();
+  return Number.isFinite(ms)
+    ? { iso: new Date(ms).toISOString(), ms }
+    : { iso: null, ms: null };
+}
+
+function parseQuotaWindow(usedValue, resetValue) {
+  const used = toNumber(usedValue);
+  const reset = parseDateValue(resetValue);
+  if (used == null && !reset.iso) return null;
+  return {
+    usedPercent: used == null ? null : Math.max(0, Math.min(100, used)),
+    resetAt: reset.iso,
+    resetAtMs: reset.ms,
+  };
+}
+
+function detectCodex2apiChannel(account) {
+  const b = (v) => v === true || v === 1 || v === "true" || v === "1";
+  if (b(account.claude_api)) return "claude";
+  if (b(account.grok_api)) return "grok";
+  if (b(account.antigravity_api)) return "antigravity";
+  if (b(account.openai_responses_api)) return "codex";
+
+  const type = String(account.upstream_type || account.account_type || "").trim().toLowerCase();
+  if (type.includes("claude")) return "claude";
+  if (type.includes("grok")) return "grok";
+  if (type.includes("antigravity")) return "antigravity";
+  if (type.includes("codex") || type.includes("openai")) return "codex";
+  return "codex";
+}
+
+function parseAccountQuotaWindow(account, channel, hours) {
+  const fallback = parseQuotaWindow(
+    hours === 5 ? account.usage_percent_5h : account.usage_percent_7d,
+    hours === 5 ? account.reset_5h_at : account.reset_7d_at
+  );
+
+  if (channel === "claude" && Array.isArray(account.claude_usage_windows)) {
+    for (const item of account.claude_usage_windows) {
+      if (!item) continue;
+      const name = String(item.name || item.label || "").toLowerCase();
+      const matches = hours === 5 ? /five|5.?hour|5h/.test(name) : /seven|7.?day|7d|week/.test(name);
+      if (matches) {
+        const parsed = parseQuotaWindow(item.utilization ?? item.usage_percent, item.reset_at ?? item.resets_at);
+        if (parsed) return parsed;
+      }
+    }
+  }
+
+  if (channel === "grok" && hours === 168 && account.grok_billing) {
+    const b = account.grok_billing;
+    const parsed = parseQuotaWindow(b.weekly_percent ?? b.credit_usage_percent, b.weekly_period_end ?? b.billing_period_end);
+    if (parsed) return parsed;
+  }
+
+  if (channel === "antigravity") {
+    const quota = account.antigravity_quota;
+    const groups = quota ? (quota.groups || quota.quota_groups) : null;
+    if (Array.isArray(groups)) {
+      let selected = null;
+      for (const g of groups) {
+        if (!g || !Array.isArray(g.buckets)) continue;
+        for (const bucket of g.buckets) {
+          if (!bucket) continue;
+          const identity = `${String(g.displayName || g.name || "")} ${String(bucket.bucket_id || bucket.id || "")}`.toLowerCase();
+          if (!identity.includes("gemini") && !identity.includes("google")) continue;
+          const bWin = String(bucket.window || "");
+          const isTarget = hours === 5 ? (/5h|five/.test(bWin) || !bWin) : (/7d|week|168/.test(bWin));
+          if (!isTarget) continue;
+
+          const fraction = toNumber(bucket.remaining_fraction ?? bucket.remainingFraction ?? bucket.remaining);
+          const remaining = fraction == null ? null : (fraction <= 1 ? fraction * 100 : fraction);
+          const parsed = parseQuotaWindow(remaining == null ? undefined : 100 - remaining, bucket.reset_time ?? bucket.resetTime);
+          if (parsed && (!selected || (parsed.usedPercent ?? -1) > (selected.usedPercent ?? -1))) {
+            selected = parsed;
+          }
+        }
+      }
+      if (selected) return selected;
+    }
+  }
+
+  return fallback;
+}
+
 // ── 1. CLIProxy 聚合拉取逻辑 ──
 async function fetchCLIProxyData(ctx, baseUrl, apiKey) {
-  const headers = { "Content-Type": "application/json" };
-  if (apiKey) headers["Authorization"] = `Bearer ${apiKey}`;
+  const cleanKey = (apiKey || "").trim().replace(/^Bearer\s+/i, "");
+  const headers = {
+    "Content-Type": "application/json",
+    Accept: "application/json",
+  };
+  if (cleanKey) {
+    headers["Authorization"] = `Bearer ${cleanKey}`;
+    headers["X-Management-Key"] = cleanKey;
+  }
 
   let authRes = [];
   let fetchError = null;
@@ -192,12 +298,6 @@ async function fetchCLIProxyData(ctx, baseUrl, apiKey) {
     fetchError = authFetchRes.status === 401 ? "401 密钥错误" : `HTTP ${authFetchRes.status}`;
   } else {
     fetchError = "连接超时/无法访问";
-  }
-
-  let usageRes = {};
-  const usageFetchRes = await fetchWithTimeout(ctx, `${baseUrl}/v0/management/api-key-usage`, { headers }, 4000);
-  if (usageFetchRes && usageFetchRes.status === 200) {
-    usageRes = await usageFetchRes.json().catch(() => ({}));
   }
 
   const modelList = [];
@@ -356,83 +456,188 @@ async function fetchCLIProxyData(ctx, baseUrl, apiKey) {
   return { models: modelList, error: fetchError };
 }
 
-// ── 2. Codex2API 聚合拉取逻辑 ──
+// ── 2. Codex2API 聚合拉取逻辑 (完全对照 Scripting 源码：双端点与降级) ──
 async function fetchCodex2APIData(ctx, baseUrl, apiKey) {
-  const headers = { "Content-Type": "application/json" };
-  if (apiKey) {
-    headers["X-Admin-Key"] = apiKey;
-    headers["Authorization"] = `Bearer ${apiKey}`;
+  const cleanKey = (apiKey || "").trim().replace(/^Bearer\s+/i, "");
+  if (!cleanKey) {
+    return { models: [], error: "未填写 Codex2API 管理密钥 / API Key" };
   }
 
-  let accRes = null;
-  let fetchError = null;
+  const headers = {
+    Authorization: `Bearer ${cleanKey}`,
+    "X-Admin-Key": cleanKey,
+    "x-api-key": cleanKey,
+    Accept: "application/json",
+  };
 
-  const accFetch = await fetchWithTimeout(ctx, `${baseUrl}/api/admin/accounts`, { headers }, 5000);
-  if (accFetch && accFetch.status === 200) {
-    accRes = await accFetch.json().catch(() => null);
-  } else if (accFetch) {
-    fetchError = accFetch.status === 401 ? "401 密钥错误" : `HTTP ${accFetch.status}`;
-  } else {
-    fetchError = "连接超时/无法访问";
+  // 1. 尝试管理员端点 /api/admin/accounts (支持各路由前缀)
+  const candidateAccountUrls = [
+    `${baseUrl}/api/admin/accounts`,
+    `${baseUrl}/admin/accounts`,
+    `${baseUrl}/api/accounts`,
+  ];
+
+  for (const accUrl of candidateAccountUrls) {
+    try {
+      const accFetch = await fetchWithTimeout(ctx, accUrl, { headers }, 5000);
+      if (accFetch && accFetch.status === 200) {
+        const accData = await accFetch.json().catch(() => null);
+        let rawAccounts = [];
+        if (Array.isArray(accData)) rawAccounts = accData;
+        else if (accData && Array.isArray(accData.accounts)) rawAccounts = accData.accounts;
+        else if (accData && Array.isArray(accData.data)) rawAccounts = accData.data;
+
+        if (rawAccounts.length > 0) {
+          const modelList = [];
+          for (let idx = 0; idx < rawAccounts.length; idx++) {
+            const acc = rawAccounts[idx];
+            const channel = detectCodex2apiChannel(acc);
+            const name = String(acc.name || `account-${acc.id || idx + 1}`);
+            const email = String(acc.email || name);
+            const fiveHour = parseAccountQuotaWindow(acc, channel, 5);
+            const sevenDay = parseAccountQuotaWindow(acc, channel, 168);
+
+            if (fiveHour && fiveHour.usedPercent != null) {
+              const fraction = Math.max(0, Math.min(1, (100 - fiveHour.usedPercent) / 100));
+              modelList.push({
+                id: `c2a-${acc.id || idx}-5h`,
+                name: `${channel.toUpperCase()} 5H`,
+                shortName: "5H",
+                provider: channel,
+                account: email,
+                window: "5h",
+                remainingFraction: fraction,
+                resetAtMs: fiveHour.resetAtMs,
+              });
+            }
+
+            if (sevenDay && sevenDay.usedPercent != null) {
+              const fraction = Math.max(0, Math.min(1, (100 - sevenDay.usedPercent) / 100));
+              modelList.push({
+                id: `c2a-${acc.id || idx}-7d`,
+                name: `${channel.toUpperCase()} 7D`,
+                shortName: "7D",
+                provider: channel,
+                account: email,
+                window: "7d",
+                remainingFraction: fraction,
+                resetAtMs: sevenDay.resetAtMs,
+              });
+            }
+          }
+
+          if (modelList.length > 0) return { models: modelList, error: null };
+        }
+      }
+    } catch (e) {}
   }
 
-  let rawAccounts = [];
-  if (Array.isArray(accRes)) rawAccounts = accRes;
-  else if (accRes && Array.isArray(accRes.accounts)) rawAccounts = accRes.accounts;
-  else if (accRes && Array.isArray(accRes.data)) rawAccounts = accRes.data;
+  // 2. 管理员接口未通过或返回 401/404 时，自动回退到普通 Key Usage 接口 /api/key-usage/summary
+  const candidateKeyUrls = [
+    `${baseUrl}/api/key-usage/summary`,
+    `${baseUrl}/key-usage/summary`,
+    `${baseUrl}/api/v1/key-usage/summary`,
+  ];
 
-  const modelList = [];
-  for (const acc of rawAccounts) {
-    const name = acc.name || `account-${acc.id}`;
-    const email = acc.email || name;
-    const channel = (acc.channel || "codex").toUpperCase();
+  for (const keyUrl of candidateKeyUrls) {
+    try {
+      const keyFetch = await fetchWithTimeout(ctx, keyUrl, { headers }, 5000);
+      if (keyFetch && keyFetch.status === 200) {
+        const data = await keyFetch.json().catch(() => null);
+        if (data && (data.key || data.usage)) {
+          const keyRaw = data.key || {};
+          const usageRaw = data.usage || {};
+          const summaryRaw = usageRaw.summary || {};
+          const windowsRaw = usageRaw.windows || {};
 
-    // 5h
-    if (acc.usage_percent_5h != null || acc.remaining_fraction_5h != null) {
-      const remainingFraction = acc.remaining_fraction_5h != null
-        ? Math.max(0, Math.min(1, Number(acc.remaining_fraction_5h)))
-        : Math.max(0, Math.min(1, (100 - Number(acc.usage_percent_5h || 0)) / 100));
-      const resetAtMs = acc.reset_5h_at ? new Date(acc.reset_5h_at).getTime() : null;
-      modelList.push({
-        id: `codex2api-${acc.id}-5h`,
-        name: `${channel} 5H`,
-        shortName: "5H",
-        provider: channel,
-        account: email,
-        window: "5h",
-        remainingFraction,
-        resetAtMs,
-      });
-    }
+          const modelList = [];
+          const keyName = String(keyRaw.name || "API Key");
+          const quotaLimit = toNumber(keyRaw.quota_limit) ?? 0;
+          const quotaUsed = toNumber(keyRaw.quota_used) ?? 0;
 
-    // 7d
-    if (acc.usage_percent_7d != null || acc.remaining_fraction_7d != null) {
-      const remainingFraction = acc.remaining_fraction_7d != null
-        ? Math.max(0, Math.min(1, Number(acc.remaining_fraction_7d)))
-        : Math.max(0, Math.min(1, (100 - Number(acc.usage_percent_7d || 0)) / 100));
-      const resetAtMs = acc.reset_7d_at ? new Date(acc.reset_7d_at).getTime() : null;
-      modelList.push({
-        id: `codex2api-${acc.id}-7d`,
-        name: `${channel} 7D`,
-        shortName: "7D",
-        provider: channel,
-        account: email,
-        window: "7d",
-        remainingFraction,
-        resetAtMs,
-      });
-    }
+          // 总配额窗口
+          if (quotaLimit > 0) {
+            const fraction = Math.max(0, Math.min(1, (quotaLimit - quotaUsed) / quotaLimit));
+            modelList.push({
+              id: "c2a-key-total",
+              name: "API Key 总配额",
+              shortName: "总配额",
+              provider: "Codex",
+              account: keyName,
+              window: "总额",
+              remainingFraction: fraction,
+              resetAtMs: keyRaw.expires_at ? new Date(keyRaw.expires_at).getTime() : null,
+              displayDetail: `余 ${formatCost(quotaLimit - quotaUsed)} / ${formatCost(quotaLimit)}`,
+            });
+          }
+
+          // 5H 时窗
+          if (windowsRaw.last_5h) {
+            const w5 = windowsRaw.last_5h;
+            const billed = toNumber(w5.user_billed) ?? 0;
+            const decay = w5.decay_at ? new Date(w5.decay_at).getTime() : null;
+            modelList.push({
+              id: "c2a-key-5h",
+              name: "Codex 5H 消耗",
+              shortName: "5H",
+              provider: "Codex",
+              account: keyName,
+              window: "5h",
+              remainingFraction: 1.0,
+              resetAtMs: decay,
+              displayDetail: `5H 消耗 ${formatCost(billed)}`,
+            });
+          }
+
+          // 7D 时窗
+          if (windowsRaw.last_7d) {
+            const w7 = windowsRaw.last_7d;
+            const billed = toNumber(w7.user_billed) ?? 0;
+            const decay = w7.decay_at ? new Date(w7.decay_at).getTime() : null;
+            modelList.push({
+              id: "c2a-key-7d",
+              name: "Codex 7D 消耗",
+              shortName: "7D",
+              provider: "Codex",
+              account: keyName,
+              window: "7d",
+              remainingFraction: 1.0,
+              resetAtMs: decay,
+              displayDetail: `7D 消耗 ${formatCost(billed)}`,
+            });
+          }
+
+          // 今日消耗
+          if (windowsRaw.today && modelList.length === 0) {
+            const wt = windowsRaw.today;
+            const billed = toNumber(wt.user_billed) ?? 0;
+            modelList.push({
+              id: "c2a-key-today",
+              name: "今日用量",
+              shortName: "今日",
+              provider: "Codex",
+              account: keyName,
+              window: "今日",
+              remainingFraction: 1.0,
+              resetAtMs: null,
+              displayDetail: `今日消耗 ${formatCost(billed)}`,
+            });
+          }
+
+          if (modelList.length > 0) return { models: modelList, error: null };
+        }
+      }
+    } catch (e) {}
   }
 
-  return { models: modelList, error: fetchError };
+  return { models: [], error: "Codex2API 鉴权失败或端点不可达 (请核对 Key / 密钥)" };
 }
 
 // ── 3. AxonHub 聚合拉取逻辑 ──
 async function fetchAxonHubData(ctx, baseUrl, apiKey, email, password) {
-  let token = apiKey;
-  const headers = { "Content-Type": "application/json" };
+  let token = (apiKey || "").trim().replace(/^Bearer\s+/i, "");
+  const headers = { "Content-Type": "application/json", Accept: "application/json" };
 
-  // 尝试自动登录
   if (!token && email && password) {
     try {
       const signinRes = await fetchPostWithTimeout(ctx, `${baseUrl}/admin/auth/signin`, JSON.stringify({ email, password }), { headers }, 4000);
@@ -443,7 +648,7 @@ async function fetchAxonHubData(ctx, baseUrl, apiKey, email, password) {
     } catch (e) {}
   }
 
-  if (token) headers["Authorization"] = `Bearer ${token.replace(/^Bearer\s+/i, "")}`;
+  if (token) headers["Authorization"] = `Bearer ${token}`;
 
   const query = `query GetStats {
     dashboardOverview {
@@ -459,7 +664,7 @@ async function fetchAxonHubData(ctx, baseUrl, apiKey, email, password) {
 
   const gqlRes = await fetchPostWithTimeout(ctx, `${baseUrl}/admin/graphql`, JSON.stringify({ query }), { headers }, 5000);
   if (!gqlRes || gqlRes.status !== 200) {
-    return { models: [], error: gqlRes ? `HTTP ${gqlRes.status}` : "连接超时" };
+    return { models: [], error: gqlRes ? (gqlRes.status === 401 ? "401 密钥或登录错误" : `HTTP ${gqlRes.status}`) : "连接超时" };
   }
 
   const data = await gqlRes.json().catch(() => null);
@@ -480,7 +685,7 @@ async function fetchAxonHubData(ctx, baseUrl, apiKey, email, password) {
     window: "今日",
     remainingFraction: 1.0,
     resetAtMs: null,
-    displayDetail: `${reqToday.toLocaleString()} 次 · ${formatNumber(tokensToday)} Tokens`,
+    displayDetail: `${reqToday.toLocaleString()} 次 · ${formatNumber(tokensToday)} Tk`,
   });
 
   for (const m of models.slice(0, 3)) {
@@ -502,13 +707,13 @@ async function fetchAxonHubData(ctx, baseUrl, apiKey, email, password) {
 
 // ── 4. Sub2API 聚合拉取逻辑 ──
 async function fetchSub2APIData(ctx, baseUrl, apiKey) {
-  const headers = { "Content-Type": "application/json" };
-  if (apiKey) {
-    headers["Authorization"] = `Bearer ${apiKey}`;
-    headers["x-api-key"] = apiKey;
+  const cleanKey = (apiKey || "").trim().replace(/^Bearer\s+/i, "");
+  const headers = { "Content-Type": "application/json", Accept: "application/json" };
+  if (cleanKey) {
+    headers["Authorization"] = `Bearer ${cleanKey}`;
+    headers["x-api-key"] = cleanKey;
   }
 
-  // 1. 用户 /v1/usage
   const userRes = await fetchWithTimeout(ctx, `${baseUrl}/v1/usage`, { headers }, 4000);
   if (userRes && userRes.status === 200) {
     const data = await userRes.json();
@@ -564,14 +769,10 @@ async function fetchSub2APIData(ctx, baseUrl, apiKey) {
     if (modelList.length > 0) return { models: modelList, error: null };
   }
 
-  // 2. 管理员看板 /api/v1/admin/dashboard/stats
   const adminRes = await fetchWithTimeout(ctx, `${baseUrl}/api/v1/admin/dashboard/stats`, { headers }, 4000);
   if (adminRes && adminRes.status === 200) {
     const data = await adminRes.json();
     const stats = data.data || data;
-    const todayReq = stats.todayRequests || 0;
-    const todayTokens = stats.todayTokens || 0;
-    const todayCost = stats.todayCost || 0;
     return {
       models: [{
         id: "sub2api-admin-today",
@@ -582,7 +783,7 @@ async function fetchSub2APIData(ctx, baseUrl, apiKey) {
         window: "今日",
         remainingFraction: 1.0,
         resetAtMs: null,
-        displayDetail: `${todayReq.toLocaleString()} 次 · ${formatNumber(todayTokens)} Tk · ${formatCost(todayCost)}`,
+        displayDetail: `${(stats.todayRequests || 0).toLocaleString()} 次 · ${formatNumber(stats.todayTokens || 0)} Tk`,
       }],
       error: null,
     };
@@ -593,12 +794,12 @@ async function fetchSub2APIData(ctx, baseUrl, apiKey) {
 
 // ── 5. New API / One API 聚合拉取逻辑 ──
 async function fetchNewAPIData(ctx, baseUrl, apiKey) {
-  const headers = { "Content-Type": "application/json" };
-  if (apiKey) headers["Authorization"] = `Bearer ${apiKey}`;
+  const cleanKey = (apiKey || "").trim().replace(/^Bearer\s+/i, "");
+  const headers = { "Content-Type": "application/json", Accept: "application/json" };
+  if (cleanKey) headers["Authorization"] = `Bearer ${cleanKey}`;
 
   const modelList = [];
 
-  // /api/user/self 查账户余额
   const selfRes = await fetchWithTimeout(ctx, `${baseUrl}/api/user/self`, { headers }, 4000);
   if (selfRes && selfRes.status === 200) {
     const raw = await selfRes.json();
@@ -607,23 +808,20 @@ async function fetchNewAPIData(ctx, baseUrl, apiKey) {
     const usedQuota = u.used_quota || 0;
     const total = quota + usedQuota;
     const fraction = total > 0 ? quota / total : 1.0;
-    const remUSD = quota / 500000;
-    const usedUSD = usedQuota / 500000;
 
     modelList.push({
       id: "newapi-user",
       name: "账户可用余额",
       shortName: "账户余额",
       provider: "New API",
-      account: u.username || u.display_name || "New API 用户",
+      account: u.username || u.display_name || "New API",
       window: "余额",
       remainingFraction: fraction,
       resetAtMs: null,
-      displayDetail: `余额 ${formatCost(remUSD)} (已用 ${formatCost(usedUSD)})`,
+      displayDetail: `余额 ${formatCost(quota / 500000)} (已用 ${formatCost(usedQuota / 500000)})`,
     });
   }
 
-  // /api/usage/token 查令牌额度
   const tokenRes = await fetchWithTimeout(ctx, `${baseUrl}/api/usage/token`, { headers }, 4000);
   if (tokenRes && tokenRes.status === 200) {
     const raw = await tokenRes.json();
@@ -653,9 +851,10 @@ async function fetchNewAPIData(ctx, baseUrl, apiKey) {
 // ── 6. DeepSeek 官方余额聚合拉取逻辑 ──
 async function fetchDeepSeekData(ctx, baseUrl, apiKey) {
   const endpoint = baseUrl || "https://api.deepseek.com";
+  const cleanKey = (apiKey || "").trim().replace(/^Bearer\s+/i, "");
   const headers = {
     "Content-Type": "application/json",
-    Authorization: `Bearer ${apiKey}`,
+    Authorization: `Bearer ${cleanKey}`,
   };
 
   const res = await fetchWithTimeout(ctx, `${endpoint}/user/balance`, { headers }, 5000);
@@ -691,10 +890,11 @@ async function fetchDeepSeekData(ctx, baseUrl, apiKey) {
 
 // ── 7. Agy Tools (Antigravity) 聚合拉取逻辑 ──
 async function fetchAgyData(ctx, baseUrl, apiKey) {
-  const headers = { "Content-Type": "application/json" };
-  if (apiKey) {
-    headers["X-Admin-Token"] = apiKey;
-    headers["Authorization"] = `Bearer ${apiKey}`;
+  const cleanKey = (apiKey || "").trim().replace(/^Bearer\s+/i, "");
+  const headers = { "Content-Type": "application/json", Accept: "application/json" };
+  if (cleanKey) {
+    headers["X-Admin-Token"] = cleanKey;
+    headers["Authorization"] = `Bearer ${cleanKey}`;
   }
 
   const candidates = [
@@ -1059,7 +1259,6 @@ function renderMediumWidget(models, updateStr, maskEmailEnabled, providerMeta) {
     };
   }
 
-  // 双列 / 多项平衡排版 (最多取 2 项)
   const displayPair = models.slice(0, 2);
   return {
     type: "widget",
@@ -1143,7 +1342,6 @@ function renderMediumWidget(models, updateStr, maskEmailEnabled, providerMeta) {
 // ── 渲染层：大尺寸组件 (Large) ──
 function renderLargeWidget(models, updateStr, maskEmailEnabled, providerMeta) {
   const isSingle = models.length === 1;
-  const isDual = models.length === 2;
   const firstModel = models[0];
 
   if (isSingle && firstModel) {
@@ -1264,7 +1462,6 @@ function renderLargeWidget(models, updateStr, maskEmailEnabled, providerMeta) {
     };
   }
 
-  // 4 账号高密度列表排版
   const displayList = models.slice(0, 4);
   return {
     type: "widget",
