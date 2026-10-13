@@ -1,0 +1,62 @@
+name: "AI Usage 聚合监控"
+description: "AI 配额与用量多服务万能聚合监控（CLIProxy, Codex2API, AxonHub, Sub2API, New API, DeepSeek, Agy Tools），Apple HIG 现代拟物看板，支持主屏全部尺寸"
+
+# 模块可视化配置控件 (Egern 2.16+)
+env_schema:
+  PROVIDER:
+    name: 服务平台
+    description: "选择监控的服务平台类型"
+    options:
+      - "cliproxyapi"
+      - "codex2api"
+      - "axonhub"
+      - "sub2api"
+      - "newapi"
+      - "deepseek"
+      - "agy"
+    default_value: "cliproxyapi"
+  SERVER_URL:
+    name: 服务地址
+    description: "服务端点 URL，例如 http://127.0.0.1:8317 或公网/局域网地址；DeepSeek 默认 https://api.deepseek.com"
+    default_value: "http://127.0.0.1:8317"
+  API_KEY:
+    name: 密钥 / 令牌
+    description: "Management Key / Admin Key / API Key / Token（根据平台填写）"
+    default_value: ""
+  EMAIL:
+    name: 账号 / 邮箱
+    description: "登录邮箱或用户名（AxonHub/Sub2API/NewAPI 自动登录时使用，选填）"
+    default_value: ""
+  PASSWORD:
+    name: 密码
+    description: "登录密码（AxonHub/Sub2API/NewAPI 自动登录时使用，选填）"
+    default_value: ""
+  MASK_ACCOUNT:
+    name: 账号邮箱打码
+    description: "是否对账号和邮箱进行脱敏隐藏"
+    options:
+      - "true"
+      - "false"
+    default_value: "false"
+  FILTER:
+    name: 过滤筛选
+    description: "筛选指定模型、账号关键字或序号（选填）"
+    default_value: ""
+
+scriptings:
+  - generic:
+      name: AI-Usage
+      script_url: https://raw.githubusercontent.com/Likhixang/Egerny/main/js/AI-Usage.js
+      timeout: 20
+      env:
+        PROVIDER: "cliproxyapi"
+        SERVER_URL: "http://127.0.0.1:8317"
+        API_KEY: ""
+        EMAIL: ""
+        PASSWORD: ""
+        MASK_ACCOUNT: "false"
+        FILTER: ""
+
+widgets:
+  - name: AI-Usage
+    script_name: AI-Usage
