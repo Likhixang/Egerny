@@ -17,8 +17,8 @@ env_schema:
     default_value: "cliproxyapi"
   SERVER_URL:
     name: 服务地址
-    description: "服务端点 URL，例如 http://127.0.0.1:8317 或公网/局域网地址；DeepSeek 默认 https://api.deepseek.com"
-    default_value: "http://127.0.0.1:8317"
+    description: "服务端点 URL（留空将自动根据平台匹配：Codex2API 默认 2004/8080，CLIProxy 8317，AxonHub 8090，DeepSeek 官方 API）"
+    default_value: ""
   API_KEY:
     name: 密钥 / 令牌
     description: "Management Key / Admin Key / API Key / Token（根据平台填写）"
@@ -50,7 +50,7 @@ scriptings:
       timeout: 20
       env:
         PROVIDER: "cliproxyapi"
-        SERVER_URL: "http://127.0.0.1:8317"
+        SERVER_URL: ""
         API_KEY: ""
         EMAIL: ""
         PASSWORD: ""

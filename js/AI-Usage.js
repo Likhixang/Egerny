@@ -1,10 +1,12 @@
 /*
  * AI Usage 聚合监控小组件 — Egern 2.16+ (Widget DSL)
- * 1:1 原生还原 Scripting (StarYunLee 1.3.0) 布局规范与视觉系统
- * 支持平台：Codex2API, CLIProxy, AxonHub, Sub2API, New API, DeepSeek, Agy Tools
+ * 完美融合：
+ *   - 原生拟物磨砂玻璃卡片看板系统 (双时窗 7D/5H 进度条、官方矢量徽标、健康状态指示)
+ *   - 7 大平台聚合支持 (Codex2API, CLIProxy, AxonHub, Sub2API, New API, DeepSeek, Agy Tools)
+ *   - 智能端口回退 (Codex2API 支持 2004 与 8080 自适应探测)
  */
 
-// ── 7 大官方高清徽标 ──
+// ── 7 大服务官方高清徽标 ──
 const PROVIDER_LOGOS = {
   "cliproxyapi": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAAAwCAYAAABXAvmHAAABWmlDQ1BJQ0MgUHJvZmlsZQAAeJx1kE1LAlEUht+xCSsMI1wWDNTChYXY99IsKhAa7IM+IBivowY6Xa9TEbSKfkB/oF27dm2KVrVvJwhBP6DWgQQlt3O1Gi06cDgPL+89nPsCvi6L84IOoOi4IrUwa2xsbhn+F3TDDx+m4bNYmcdNM0kWfM/2qlWhqVkZUbtEr16NnVROL5/D/WL46uyvv616MnaZ0fygjjIuXECLEJuHLld8TBwSdBSx2hXKNflCcbrJNw3PaipB/EDcx/JWhviJOJJu0XMtXCzss68b1PUB21lbUXuoB2BiEUkYiGEKk5inHNb/8Y83/AnsgeMIArvIIQ+X3sZJ4SjAJl6CA4ZRRBo7o9QTKuff+XkaXwZmDkDxe9rOHHA9BARLnham/wSzwP02t4T1k6pW08vZsViTAwLofJPydRDw3wJ1IeX7uZR1yrDjEbgrfQKWpmBGeTnGRwAAFHRJREFUeNpVmnmwFdd17n9r7+5zzp25E3DhMs/DBSQGCYEGS8hSPY2xZCvPErGl2LGSuOrlVfxeKi4noVJJXHG5kpQTuyw7shPrabSNngaQNYAskABfkJiRQAIECDGI8c73dO+98sfe51xSRXP7dO/evaa99re+1XJwz9e17FMyLEYdickRFTxg8VgDGFAFAAFQxYhHUEQUAyAKCkbiQBQRB6oILl5XUB+eFYfxGQaHkGNxCCNzgscQnjGACCiKBHFQCefJZVdP7g2pyTF4MpeCKIl4vFi8CKigHkzlBSZMJaIIguLBK4jgdUQAcYIYMAheAXFIuIN4E6yhBoliBUU9Rh2CwaMIHi+E92IAj6/YSyDpyUqUbBlVw7CmiHgKRtFoG5wEy4niwxsRjROqJ7xeiP+CkhoUK5YUlzu8T0F8FMCE50RRFTweIwmeHKM5XnOsGkQ8Ih6Q4AkFwWFFohThvyS4Vhj2CVY8qYE8OCk+FEfiAeJkGl0dQk3iS4RgFgGSVPnwgNLWXkdjSz/qw5zBYy4KHrynGCyGYA4TPZVjMBgcGj2v1aDSKBcYL5YhLaBiMMbgNSVzNhxqybBkJOQ+wWFx2GA5NTi1OA2Rm6vgvJA7wSYJl/sczz/9Cac+qkFF8E5QlaimRTXOhQW1ODU4UrwUcJLiSXFq8VhUTVwR5sqVAghJWVNKkmHEkKuJ9tZoV494QtSKYD3kCEbiPQ2jVCvBpaiHUiHh0PYBjh09y55dp5l+VQtOelBvEaOIKkgIpZHoDl72GrysCIjg1KBiothhfRD9JoBJUIxYck3JNCUjCRbHRA8YPBZftZjBabjmotsdFo8hxyBJSm+/Z/ub5/CmzDs7PuDUkRIUUjJvcBUramXFBCt7SfAS5vck8XrwiCfFk6DVI44TMCKGsiZkWHIMuVqcD8IGoYUsJroshpBHcN5UQ8qpJRdL7oRCbZHut85weN95vvjIbMbNgLXPHIThZrxVvDNVAYIhQkg5ErymUWgblUlQsThJcaTh3ZV7EuYxmSbkWMoajswHSzofQsprVESDOzNvyH1UxodxXgx5BoWaGo593MfGXx5lwfVjWLxyArffPZMDHx/i7ZcvUyzUU1aCkaIHnQ+KqK94NVh5ZL0Z0CCslyQoouEIChCsn6klj8rkasg0uLrqCY0Cq40CBEVzLHluMGmRgWHl/z+2l2J9wqovzWR4WJgwqY07HpjK2ue3c+TdlKRUJPNSnUexeBVcNY8ZvCaoJmhFcII3IL3id5DLZAiZj9ZQIVcT98UQUpmPIaRJdKEhlwSvCU4Tyt7gJMGlKet/vofPTvRyx9e7qG2sIXPBEMtvmsacFbU89sO36TnWiC1YspyYieLzEozjtbKmErwEg3oJayzcT0FsGE+CybwhKCHkCF4khAsG522IfbXkSNVTXmOYqUElReqKvPrETnZsPMyqhxcyac5YBgdBTVC67Cx3P7CIlmmen/xzN0NnRiFFyDxxfhPXWzBeyDc2pFVSfPSUxvgPYZaG1J/FuHdqyFWq50GhcO6iVcKYoETZCU4strbIxid3sWXt+9zw4ELmrZhMf68LoYXBJykUUqSQ8qVHrqK/eIbHvvc78vOtSNHinKAajOV1JJt5TAghNWglC6mpZiLiYYKA0bo+Ifcxfaol85W1UVmwUQknqC2gxSKvPr6VDb/YzsovX8XyexcxlAnOJpiaIkgJd7GG/EIdRR1Fc3szX/1fy+ktnOOx73UzfLIJW7I4p2HeiuA+wXuDVzOyYVZSawyjsA5S5Kdb/rW6PwZ44COSlDgdERF6rIDmjkJtCqr89qdv0v3yLm754xu46b6rKZ8bIsVQakg4tOMIe14/wtkzfRhraG5pYOm1s5l3fTMX+s/w+D9vwV6s59FvraRlZkZ5cBgrBmM8VhUjDiNx5zERX0lIuBDvkyM/euffVKpoTxEh5oOQoU2ErSIKeU6pocRQTz+v/tM6Dm0/yp3fup3OKe10P7WNC6f7SdOUUY11XPzsEg0d9Uy5rp3aupQLn15m16ZPmNUxkTv/aBbDZpinH+vm4oeehx9dwZRrU4aHB7FesDbkJCOKFV/xC1b8FZDbh53ptj+8a40HvIzsjgpo9VxAwTml1FTHZx+f5cW/XcunR89y53fuplRX4Lm/WosvWSYun0Tb3BZ6/SCnzlyitVTH0gVzmb14EpPnj2Hq/HY2bdyPuyBMX97BvAUdnLl0jhee2kOLbWfS7Ga8zdAcEFMpKwJcCVauwjgBVAz21ofvWeORuFlExKEa6gAj+FzBJhSb6jj41l5e/NtnsTUp9/71A4ydNo5nv/0M4+d1ct9ff4G5y2Yyrq2F+VfPYPLi8Xz86Rle+9V2Lrzfy+iWVjpmtpLWWd7beJRlV8+l0GKZMaedpNaz7ld76DsZfzcoeVkRtYgETBSUMQE7qQmoVwR78yP3rCFuIAqx8BBUDHnmSWpKeISt//Eab//kFaasmMct//seRk8fx85Xd3Fm91G++HerMcWEHb/cxoYf/5bh44NMmjyG2TfMYMy8dvbuP0z3y+8zdno7o8Y18d6bhziw9RTJYEr71GamzhvN2Em1vP7aPg5uu8iUCeNpGl8g9y5EhUQPVEF0+C0C9qaHf29NCJ2wB/hYPalCYVQjF0+c5fV/eIIj7+zl2odvZ+nqVdi0hIhh/6a9yECZtgmjee37L7Lnrf20LOzk4wvn2bfxAKNNAzMXTmHsgg62/WYn0xdMpH50A+++sh8zWtnz3jHceWV8VxvtHU3MvWoMBw+d4I3nP6TeNDBhZjMUFJfH0JErwykoY2/4yn1rEGK+EbxTpFDAlEp89EY3v/3H/8SI4cb/+2UmX38VftjjnWJrSpw7cZbjb+/jwOb9pKMbWfXn97DkjqXUGuFQ9wfs3H6IT/edojWp5/zJ83QuGEd9az3d6/Zy71dWMHHRaNY90c2kqWNon9JCmljmLx7HkA7wytp9XDzqmTx1DHVtltwFqC5GItQPnkhyFQy2iu+LDY0MfHaOPf+xlsMbu5l+81IWf/UualoaKQ+UsdZik5TLFwc48tZepKHE8oduZdaNXQydOs+2H7/OR92HGDNjAtM+N4/zx87ym/VbGbowgErYWxQYzDwLrpvN5on72Lv9BLNumEpOmaRQ4vNfuIrJ09t56YndfPDtT7n/wUV0fa6NpBbyoTIiPtbeQpJhMd4jWJKC5cimHbz//15goG+AxY8+wLRbr0UwDA85EpvifUahsZa9v/4t5z48zv0/+DNaO1rZ+dRGdr+8ld6L/cy7cQE3/dk9FK1hzrLZdM6byLrvrgVjSWtKZOWccg62VEupscTlngGcGpAENYrznlkLJ9A+poEXn93JT3+ymZvfn8uS28bROb0O5xwayQITkGfEPljef30Ll44cZ8U9NzPtrtsY0gLlzONMQlnB2wL9AznHtu6j63+soK1rFpuf3MC2J99g+ueX0j5/EpIkJDV1DA86Mm9o6mintrmOwVM97H1uB76cUWquY6jsuHy2h6axjXgTUIDXBG8s5dzQMqGV3//adSxeOplX1u9m2ztHSYvpSEGlgslVyEnIVChnngUPP8CYO1bx3gsbOfvvT1Obe7KaBsqZkOcWlQJ9PUOUBwZpntxJ7iz9F/sYPWsCyx+5i/rmJppsSqFQS7lYxNbV4wcdWs7Z9OwWdu78iLv+8h5mLJ/N1hd3cfbkBebdOIfhYY+TWHd4Q9pQou9MzsafH+T4R+e442sLuf3LCxgcdKiRKqROMpKYRA3eewotbcx78D4OT+zkrV+9TNfR48z/+oP0TZxANtCHyRVvEtJiAfqHGXRhn0ySFOcTKBQ48t5BRj++nkmfX8LR9z7kvac34L1nyt1LuOb3llFrDLue20H3s91c96VrGDe9g8GBoUDRJEJNMeXE1k9Y97Nt9Jcy7v3mMroWdpIPlcm9IzEWVR/em6lBFGyV9xFICky/9UbaZk5j/y+e49RffZ+VX72fwk0r6Rsaora2jsLkCZzaspNJX7gdXyyizpOLBeBsXmbjlt20vb2bwf4BRs2ZwDWr72fitDF8+s4BdjyzmWNHz1CoS5lzzSwyJ+Q5FOtSGM7Y8tS7bHplD7NunsLq1UtobCjS21OmYA1YcBEXeQS7cPX/XKMIXgJkUzFgDM55Sk0NjFmyiHPDZQ788mXaey7TNHcmfYUiaUMdh17dzIQ84+KlHvou9zL1tuv5aMM2xrQ3s/wvHuHsQB/nPjnL+IZ6OtpGsfWJDWx5djOjFkxiyvVzOLbrCDOXz6JpTDNJTYGBk5dZ//3X2LnnCDd/YwWrvrgE8UI27DDWgJEqY2FEMQJ2/uoH1yAGFSrwDS+CSCgsTJowev4c6BjLey+8Rrp3P+NmTCWdPg3b1syulzdyef+H1E8cz4SblnNy5wGyQ0eZNqWTibcsobVrKkc/PM67z28iSxOW/eHtXP8Hq7h89Awn9xzlmgdWUtNcy/FNh3jxe+sYrLPc9+07mX3VFAZ7s1DyGxnJ/KKR1glX7NzVD61R4YriIXChAQvZQH04palzHE0L5vL+u3voee1NxrY1U7NkEQ1dc+jt6SU5f4H2FddS6mjj9KnPOPTSm5ROnqNz9lQ6P3c1466ZR9dd1zFx4VQunzjLK999hpnXz2fxHdfyu8c3sP6x39B5wyzu/dYdNI9qYKg/wyYV3lQiKzgiuCGEvZ390Oo1qiZijcg5Clf8Dop45yk1NTJ6ySJOnD7HsV+/zISaEi3XXUPaMYbj695g7KgGmq5dyuiuWdiJ49i7fR+n3tpBi4fWsW3IcM7Z3x3k9e8/S9LawE1/dBvv/HAd3eu3c903Ps+Nq29CMkeee6yNaDQy0yZyrzbKZaxiEOyMh1avUYnVgAheTJUJ1aizCqgN7IEppIxe1EV/UuDwr1+i6fJFmq5dxiURTq9dR4c1FBsbaBnXRn1NkYNvv8snh05wZv9RDm/exdE9hxhzzTyuf+gW3vnRC7y/8zC3fvv3WbhqEeX+cohvUyGUg/AVH5j4w0RiWwwkuVpEQ/FgVLBxLVgUNYHEM2pGJsBggKl33s6J5lFs/fkTLOrppesrq/mgVMPbr2xg1BubEWPpHxigc8k8Jty6kqQ2xfX10zZ1DDXG88aan9HXN8g9//go46Z10Hd5kDSxCEqmDo8hJcjkBZwINhLBioR+hRcShwnMrypeFNXgLiK0NmLClqHEYk5QAz7PmLBiOcX6evb++N+ZU/4ZMx79Gj1XdzF84hNMnjO2tYHmzg5qSwWsH6amsZbB02dY939+gE9Tbv/7R2npaGawb4g0TfDqQ89Bg+EcgYY3GDweH2XxXlGjYfyq9RsDmBawsaSxphI8nqR6PXoJjwWMOMgzksTy2b79fPyDH7Jg6QJGf/MbZOopVNJcniE+Iy2l+MuX2PSdf4E05eY136CxtR4/OESaShgbyJJYRoaaOBUlkchFiCc1kR01jlQ8JiPwQg7IIHAzagNdHmnzEZZOIuUXiC6fFMlyT+v8uUz800c50L2bS08+A1JgcMiTlT2ZCr5YwueOt//+MQZzx8q/+RNKraMYHszRJI00vcEp5BAoe6mk9CsqRQxeK+eBWDNOQy2cq4nEklSFd5H0yuEKjkgIna3wIk0KuFxpXbiA1j94iN0vvUb5jQ2YhkZyp4Gyt0V2/+hJek99xnXf+Sal5maG+zOwaaAVVWLPIfCvTkL/IdCMFaFNjP/I13pD2UcoYQWMjqwDS1gL1giiikooJhCN3ZJKgR16AtYWISvTsXIl5dNn2P+Lp1g0dQr55KkUioaPX1rPkTc2s2zNn9M0eSLDvb2kaYr3HsSCeJzGrINGrlQQFYwJPTKjoTfmsOHdPvQsjFOJcFqqvH2OiTSiVNFhoNm5wvqBvXaRS/VJAa8w/u67KE+Zxkc/fpzUCD2fnOLDXzzLlC/eTeuyxQz2DqG2EMhdAmUZoHw4KsKHtG6qPQj9bxypYUhTnFhMEDoSuwi5VJQhXrsy/ivrIoSaj2OcBJrRS4KUahn7wAOcPnmaC+t/w+Hnnidta2Xy/feSD5QjuxznEvlvjZJKnCthPsUgYquNEI3U45CmASkAiY/QAZGYvgyqkaETEykWxSsReGtsQWns3frYDwwboc1z6qbPYNQtq/jg6V+SI8z+468jdY243l4ktRAZzlwJ3Ui1OFzYY8TjsTG1C6ou5j1BxTPsUwSlYByoYALvCHnk/r0nhpIlV6qNjTyOqWSkHCFTquSvj3yNw4It0LRyJcMKDZ3jaVyymHyojNqRdraLjHQeM5CKHeH+VcBL7OJYclJyLEMuJdMES8BuXg2J08BwVRqYlb6sVvdcrbJjeaVLjiVRFxFsoGAMhARgDOSOwviJjOrqomXWTKhvIu+5BIlF1OFEYoffRH9KNSEQdhnAkQOeJCSYOKoGR2w7hr727Be2K6KxTTcCnKr9EgmoDzRkq5jMbPWZuPGIVM8tYHyODvZSU1dLmpjwGYMoFkiMhgOPNR6jSiqhlZeKJzEae89UeVmrStHkpJKTRMTQ72zwgFXwJrT2rYabKgG+RnwaLKzhGwVVDVs7Hqvhr0Exqjh11d5jkpYoZw5fzsJLRaOBQ8oMTGGsrkwIXTEGDR8GVGFzIo6C+ADzsZRV6XOhO5Qo4UEbPw/w0ZIaha2wdKoe9SHBOR8+1HDeIT7D5A7jy0ieY1werqnDeEcikCRCYoQ0NaTWkiZCmhhSY8gToWAFZyC3BmNN4J4EEgMF42NvP2SdTC2DLiH3kBgXslCwboxLJZSXIkG1aAkNSwGjOrIuvEecIt7hnQvfOvgMcTniXSi8RXGAWBsR7whAdFYRSSir4qzBioRMpyBJ5QOHsO8ElApDzuIUCuLiWvQSkF013uJSVhDCS8PXJya0deLnMsbnGIrB0hoye+LDucGTSFgriYTGiBXCGjBCKmBD6R2O0LAOChqwIWvihKiwkHth2IXaJBFPRoJ3lv8CjZ8jlNpYwhAAAAAASUVORK5CYII=",
   "codex2api": "data:image/png;base64,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",
@@ -15,7 +17,7 @@ const PROVIDER_LOGOS = {
   "agy": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAAAwBAMAAAClLOS0AAAAJFBMVEVMaXEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAB/eFplAAAAC3RSTlMAEyq8ntZFgGPr9xkf/HEAAADxSURBVHjapZIxjsIwEEUfwwJazSX2CLkEEhKNG+6TI+xRptpm74BouEeaaAskROHEsceBFeAq8Zv/53s08OxZTJ9q9CH9SX6P2gwwAK2BZrgATcEz0LpUgqu0qvkdhbkQ/yvANRHX+4HiLvgowDQ8Nk9bFUDrvK9aFUczYO9ZZQNYAXDo4BfAwqhYA/QdMLdwAaAvQTtdhTGvjDs1mPTe6q9wHIACVz9GcYXJq37gKcaXqJxi0sYHSyrLvb5AYm+3698g0BZOEEBBoMlHlHLJzHYChrhMyUsU5xTrTKgEEOBz+QN7Dy7H3UJgW/c+88K5AUIKK+4yaBibAAAAAElFTkSuQmCC"
 };
 
-// ── 官方品牌徽标 SVG ──
+// ── 官方品牌矢量徽标 SVG ──
 const BRAND_ICONS = {
   cliproxy: "data:image/svg+xml,%3Csvg%20viewBox%3D%220%200%2024%2024%22%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%3E%3Cpath%20d%3D%22M4%205h16a2%202%200%200%201%202%202v2a2%202%200%200%201-2%202H4a2%202%200%200%201-2-2V7a2%202%200%200%201%202-2zm0%208h16a2%202%200%200%201%202%202v2a2%202%200%200%201-2%202H4a2%202%200%200%201-2-2v-2a2%202%200%200%201%202-2zm2-5h2v2H6V8zm0%208h2v2H6v-2zm12-8h-2v2h2V8zm0%208h-2v2h2v-2z%22%20fill%3D%22%23FFFFFF%22/%3E%3C/svg%3E",
   antigravity: "data:image/svg+xml,%3Csvg%20viewBox%3D%220%200%2024%2024%22%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%3E%3Cpath%20d%3D%22M21.751%2022.607c1.34%201.005%203.35.335%201.508-1.508C17.73%2015.74%2018.904%201%2012.037%201%205.17%201%206.342%2015.74.815%2021.1c-2.01%202.009.167%202.511%201.507%201.506%205.192-3.517%204.857-9.714%209.715-9.714%204.857%200%204.522%206.197%209.714%209.715z%22%20fill%3D%22%23FFFFFF%22/%3E%3C/svg%3E",
@@ -28,61 +30,38 @@ const BRAND_ICONS = {
 
 // ── 服务平台定义 ──
 const PROVIDER_METAS = {
-  codex2api:   { title: "Codex2API", logo: PROVIDER_LOGOS.codex2api, defaultUrl: "http://127.0.0.1:8080" },
-  cliproxyapi: { title: "CLIProxy", logo: PROVIDER_LOGOS.cliproxyapi, defaultUrl: "http://127.0.0.1:8317" },
-  axonhub:     { title: "AxonHub", logo: PROVIDER_LOGOS.axonhub, defaultUrl: "http://127.0.0.1:8090" },
+  codex2api:   { title: "Codex2API", logo: PROVIDER_LOGOS.codex2api, defaultPort: 2004 },
+  cliproxyapi: { title: "CLIProxy", logo: PROVIDER_LOGOS.cliproxyapi, defaultPort: 8317 },
+  axonhub:     { title: "AxonHub", logo: PROVIDER_LOGOS.axonhub, defaultPort: 8090 },
   sub2api:     { title: "Sub2API", logo: PROVIDER_LOGOS.sub2api, defaultUrl: "https://your-sub2api-domain.com" },
   newapi:      { title: "New API", logo: PROVIDER_LOGOS.newapi, defaultUrl: "https://your-newapi-domain.com" },
   deepseek:    { title: "DeepSeek", logo: PROVIDER_LOGOS.deepseek, defaultUrl: "https://api.deepseek.com" },
-  agy:         { title: "Agy Tools", logo: PROVIDER_LOGOS.agy, defaultUrl: "http://127.0.0.1:8088" },
+  agy:         { title: "Agy Tools", logo: PROVIDER_LOGOS.agy, defaultPort: 8088 },
 };
 
-// ── Scripting 规范颜色与样式体系 ──
+// ── HIG 磨砂玻璃与高对比度色彩 ──
 const C = {
-  widgetBg: { light: "#FFFFFF", dark: "#1C1C1E" },
-  cardBg: { light: "rgba(120,120,128,0.08)", dark: "rgba(255,255,255,0.08)" },
-  textPrimary: { light: "#000000", dark: "#FFFFFF" },
-  textSecondary: { light: "#8E8E93", dark: "#8E8E93" },
-  trackBg: { light: "rgba(80,85,95,0.11)", dark: "rgba(220,225,235,0.14)" },
+  textPrimary: { light: "#151515", dark: "#FFFFFF" },
+  textSecondary: { light: "#6E6E73", dark: "#98989D" },
+  textTertiary: { light: "#8E8E93", dark: "#636366" },
+
+  widgetBg: { light: "#FFFFFF", dark: "#151515" },
+  cardBg: { light: "rgba(0, 0, 0, 0.04)", dark: "rgba(255, 255, 255, 0.08)" },
+  cardBorder: { light: "rgba(0, 0, 0, 0.06)", dark: "rgba(255, 255, 255, 0.08)" },
 };
 
-function usageTint(remaining) {
-  if (remaining == null) return "#8E8E93";
-  if (remaining <= 15) return "#FF3B30"; // systemRed
-  if (remaining <= 40) return "#FF9500"; // systemOrange
-  return "#34C759"; // systemGreen
+// ── 格式化工具函数 ──
+function formatTimeOnly(ts) {
+  if (!ts || isNaN(ts)) return "--:--";
+  const d = new Date(ts);
+  const h = d.getHours().toString().padStart(2, "0");
+  const min = d.getMinutes().toString().padStart(2, "0");
+  return `${h}:${min}`;
 }
 
-// ── Scripting 格式化函数 ──
-function formatNumber(n) {
-  if (n == null || !Number.isFinite(n)) return "0";
-  if (Math.abs(n) >= 1_000_000_000) return `${(n / 1_000_000_000).toFixed(2).replace(/\.?0+$/, "")}B`;
-  if (Math.abs(n) >= 1_000_000) return `${(n / 1_000_000).toFixed(2).replace(/\.?0+$/, "")}M`;
-  if (Math.abs(n) >= 1_000) return `${(n / 1_000).toFixed(1).replace(/\.?0+$/, "")}k`;
-  return n.toLocaleString();
-}
-
-function formatPercent(val) {
-  if (val == null || !Number.isFinite(val)) return "0%";
-  return `${Math.round(val)}%`;
-}
-
-function formatCost(n) {
-  if (n == null || !Number.isFinite(n)) return "$0.00";
-  if (n >= 100) return `$${n.toFixed(1)}`;
-  return `$${n.toFixed(2)}`;
-}
-
-function formatCurrency(n, cur = "CNY") {
-  const symbol = cur.toUpperCase() === "USD" ? "$" : "¥";
-  return `${symbol}${Number(n || 0).toFixed(2)}`;
-}
-
-function formatSmallDate(dateString) {
-  if (!dateString) return "--/--";
-  const ms = typeof dateString === "number" ? dateString : new Date(dateString).getTime();
-  if (isNaN(ms)) return "--/--";
-  const d = new Date(ms);
+function formatShortDate(ts) {
+  if (!ts || isNaN(ts)) return "--/--";
+  const d = new Date(ts);
   const m = (d.getMonth() + 1).toString().padStart(2, "0");
   const day = d.getDate().toString().padStart(2, "0");
   const h = d.getHours().toString().padStart(2, "0");
@@ -90,124 +69,91 @@ function formatSmallDate(dateString) {
   return `${m}-${day} ${h}:${min}`;
 }
 
-function timeText(value) {
-  const date = value ? new Date(value) : null;
-  if (!date || !Number.isFinite(date.getTime())) return "时间未知";
-  const now = new Date();
-  const h = date.getHours().toString().padStart(2, "0");
-  const min = date.getMinutes().toString().padStart(2, "0");
-  return date.toLocaleDateString() === now.toLocaleDateString()
-    ? `${h}:${min}`
-    : `${date.getMonth() + 1}/${date.getDate()} ${h}:${min}`;
+function formatCountdown(resetAtMs, fallback = 1.0) {
+  if (!resetAtMs || isNaN(resetAtMs)) {
+    return fallback >= 0.99 ? "配额充沛" : "恢复中";
+  }
+  const diffMs = resetAtMs - Date.now();
+  if (diffMs <= 0) return "已重置";
+  const mins = Math.floor(diffMs / 60000);
+  const h = Math.floor(mins / 60);
+  const m = mins % 60;
+  if (h > 0) return `${h}h ${m}m`;
+  return `${m}m`;
+}
+
+function getQuotaColor(fraction) {
+  if (fraction >= 0.4) return "#34C759";
+  if (fraction >= 0.15) return "#FF9500";
+  return "#FF3B30";
 }
 
 function maskEmail(str, enabled) {
   if (!enabled || !str) return str;
   if (!str.includes("@")) {
     if (str.length <= 4) return str;
-    return `${str.slice(0, 2)}•••${str.slice(-2)}`;
+    return `${str.slice(0, 2)}***${str.slice(-2)}`;
   }
   const atIdx = str.indexOf("@");
   const name = str.slice(0, atIdx);
   const domain = str.slice(atIdx);
-  return `${name.slice(0, 1)}•••${domain}`;
+  if (name.length <= 1) return `${name}***${domain}`;
+  if (name.length <= 3) return `${name[0]}***${domain}`;
+  if (name.length <= 6) return `${name.slice(0, 1)}***${name.slice(-1)}${domain}`;
+  return `${name.slice(0, 2)}***${name.slice(-2)}${domain}`;
 }
 
-function toNumber(v) {
-  if (typeof v === "number" && Number.isFinite(v)) return v;
-  if (typeof v === "string" && v.trim() && Number.isFinite(Number(v))) return Number(v);
-  return null;
-}
-
-function parseDateValue(value) {
-  if (value == null || value === "") return { iso: null, ms: null };
-  const numeric = typeof value === "number" ? value : Number(value);
-  const ms = Number.isFinite(numeric)
-    ? (numeric > 1e12 ? numeric : numeric * 1000)
-    : new Date(String(value)).getTime();
-  return Number.isFinite(ms)
-    ? { iso: new Date(ms).toISOString(), ms }
-    : { iso: null, ms: null };
-}
-
-function parseQuotaWindow(usedValue, resetValue) {
-  const used = toNumber(usedValue);
-  const reset = parseDateValue(resetValue);
-  if (used == null && !reset.iso) return null;
-  return {
-    usedPercent: used == null ? null : Math.max(0, Math.min(100, used)),
-    resetAt: reset.iso,
-    resetAtMs: reset.ms,
-  };
-}
-
-// ── Scripting 规范组件：WidgetBar (圆角进度条) ──
-function WidgetBar(remaining, height = 10) {
-  const fraction = remaining != null ? Math.max(0, Math.min(100, remaining)) / 100 : 0;
-  const color = usageTint(remaining);
-  const percent = Math.round(fraction * 100);
+function createProgressBarSvg(fraction, color, height = 6) {
+  const percent = Math.max(0, Math.min(100, Math.round(fraction * 100)));
   const svg = `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 ${height}' preserveAspectRatio='none'>
     <rect x='0' y='0' width='100' height='${height}' rx='${height / 2}' fill='rgba(120,120,128,0.18)'/>
     <rect x='0' y='0' width='${percent}' height='${height}' rx='${height / 2}' fill='${color}'/>
   </svg>`.replace(/\s+/g, " ");
-  return {
-    type: "image",
-    src: `data:image/svg+xml,${encodeURIComponent(svg)}`,
-    height,
-  };
+  return `data:image/svg+xml,${encodeURIComponent(svg)}`;
 }
 
-// ── Scripting 规范组件：PlanBadge (右侧方案胶囊) ──
-function PlanBadge(label, badgeLogo) {
-  if (!label) return { type: "spacer" };
-  let iconSvg = null;
-  const l = label.toLowerCase();
-  if (badgeLogo === "claude" || l.includes("claude")) iconSvg = BRAND_ICONS.claude;
-  else if (badgeLogo === "antigravity" || l.includes("antigravity")) iconSvg = BRAND_ICONS.antigravity;
-  else if (badgeLogo === "gemini" || l.includes("gemini")) iconSvg = BRAND_ICONS.gemini;
-  else if (badgeLogo === "grok" || l.includes("grok")) iconSvg = BRAND_ICONS.grok;
-  else if (badgeLogo === "openai" || badgeLogo === "codex" || l.includes("codex") || l.includes("pro") || l.includes("plus")) iconSvg = BRAND_ICONS.openai;
-  else if (l.includes("deepseek")) iconSvg = BRAND_ICONS.deepseek;
+function getBadgeConfig(provider, name) {
+  const p = (provider || "").toUpperCase();
+  const n = (name || "").toUpperCase();
 
-  const children = [];
-  if (iconSvg) {
-    children.push({ type: "image", src: iconSvg, width: 9, height: 9 });
+  if (n.includes("ANTIGRAVITY") || p.includes("ANTIGRAVITY")) {
+    return { text: "ANTIGRAVITY", svg: BRAND_ICONS.antigravity, bg: "#1A73E8" };
   }
-  children.push({
-    type: "text",
-    text: label,
-    font: { size: 9, weight: "bold" },
-    textColor: { light: "#48484A", dark: "#E5E5EA" },
-  });
+  if (n.includes("GOOGLE") || p.includes("GEMINI") || n.includes("GEMINI")) {
+    return { text: "GEMINI", svg: BRAND_ICONS.gemini, bg: "#1A73E8" };
+  }
+  if (n.includes("CLAUDE") || p.includes("CLAUDE")) {
+    return { text: "CLAUDE", svg: BRAND_ICONS.claude, bg: "#D97706" };
+  }
+  if (n.includes("DEEPSEEK") || p.includes("DEEPSEEK")) {
+    return { text: "DEEPSEEK", svg: BRAND_ICONS.deepseek, bg: "#4D6BFE" };
+  }
+  if (n.includes("GROK") || p.includes("GROK")) {
+    return { text: "GROK", svg: BRAND_ICONS.grok, bg: "#151515" };
+  }
+  if (n.includes("PLUS") || n.includes("CODEX") || p.includes("OPENAI") || n.includes("GPT") || p.includes("PRO")) {
+    return { text: "OPENAI", svg: BRAND_ICONS.openai, bg: "#10A37F" };
+  }
+  return { text: "AI", svg: BRAND_ICONS.cliproxy, bg: "#007AFF" };
+}
 
+function createMicroBadge(badge) {
   return {
     type: "stack",
     direction: "row",
     alignItems: "center",
     gap: 3,
-    padding: [2, 6],
+    padding: [2, 5],
+    backgroundColor: badge.bg,
     borderRadius: 5,
-    backgroundColor: C.cardBg,
-    children,
+    children: [
+      { type: "image", src: badge.svg, width: 9, height: 9 },
+      { type: "text", text: badge.text, font: { size: 8.5, weight: "heavy" }, textColor: "#FFFFFF" },
+    ],
   };
 }
 
-// ── Scripting 规范组件：Status (账号状态标签) ──
-function statusInfo(status, healthTier) {
-  const values = [status, healthTier].map(v => (v || "").trim().toLowerCase().replace(/[ -]+/g, "_"));
-  if (values.some(v => ["error", "failed", "disabled", "unavailable", "unhealthy", "inactive", "invalid", "expired", "revoked", "unauthorized"].includes(v))) {
-    return { label: "异常", color: "#FF3B30" };
-  }
-  if (values.some(v => ["cooling", "rate_limited", "warning", "degraded"].includes(v))) {
-    return { label: "受限", color: "#FF9500" };
-  }
-  if (values.some(v => ["ready", "active", "healthy", "ok", "valid", "enabled"].includes(v))) {
-    return { label: "正常", color: "#34C759" };
-  }
-  return { label: "正常", color: "#34C759" };
-}
-
-async function fetchWithTimeout(ctx, url, options = {}, timeoutMs = 7000) {
+async function fetchWithTimeout(ctx, url, options = {}, timeoutMs = 5000) {
   try {
     return await ctx.http.get(url, { ...options, timeout: timeoutMs });
   } catch (e) {
@@ -215,7 +161,7 @@ async function fetchWithTimeout(ctx, url, options = {}, timeoutMs = 7000) {
   }
 }
 
-async function fetchPostWithTimeout(ctx, url, body, options = {}, timeoutMs = 7000) {
+async function fetchPostWithTimeout(ctx, url, body, options = {}, timeoutMs = 5000) {
   try {
     return await ctx.http.post(url, { ...options, body, timeout: timeoutMs });
   } catch (e) {
@@ -223,138 +169,145 @@ async function fetchPostWithTimeout(ctx, url, body, options = {}, timeoutMs = 70
   }
 }
 
-// ── 渠道识别 ──
-function detectChannel(account) {
-  const b = (v) => v === true || v === 1 || v === "true" || v === "1";
-  if (b(account.claude_api)) return "claude";
-  if (b(account.grok_api)) return "grok";
-  if (b(account.antigravity_api)) return "antigravity";
-  if (b(account.openai_responses_api)) return "codex";
-  const type = String(account.upstream_type || account.account_type || "").trim().toLowerCase();
-  if (type.includes("claude")) return "claude";
-  if (type.includes("grok")) return "grok";
-  if (type.includes("antigravity")) return "antigravity";
-  if (type.includes("codex") || type.includes("openai")) return "codex";
-  return "codex";
+// ── 账号模型归一化解析器 ──
+function parseAccount(acc) {
+  const name = acc.name || `account-${acc.id}`;
+  const email = acc.email || name;
+  const planType = (acc.plan_type || acc.plan || "pro").toLowerCase();
+  const status = acc.status || "ready";
+  const healthTier = acc.health_tier || "healthy";
+
+  // 5H Window
+  const has5h = acc.usage_percent_5h !== undefined && acc.usage_percent_5h !== null && !isNaN(Number(acc.usage_percent_5h));
+  const usage5h = has5h ? Number(acc.usage_percent_5h) : 0;
+  const remainingFraction5h = has5h ? Math.max(0, Math.min(1, (100 - usage5h) / 100)) : 1.0;
+  const reset5hAtMs = acc.reset_5h_at ? new Date(acc.reset_5h_at).getTime() : null;
+  const reset5hTimeStr = reset5hAtMs ? formatTimeOnly(reset5hAtMs) : "--:--";
+  const reset5hCountdownStr = formatCountdown(reset5hAtMs, remainingFraction5h);
+
+  // 7D Window
+  const has7d = acc.usage_percent_7d !== undefined && acc.usage_percent_7d !== null && !isNaN(Number(acc.usage_percent_7d));
+  const usage7d = has7d ? Number(acc.usage_percent_7d) : 0;
+  const remainingFraction7d = has7d ? Math.max(0, Math.min(1, (100 - usage7d) / 100)) : 1.0;
+  const reset7dAtMs = acc.reset_7d_at ? new Date(acc.reset_7d_at).getTime() : null;
+  const reset7dTimeStr = reset7dAtMs ? formatShortDate(reset7dAtMs) : "--/--";
+  const reset7dCountdownStr = formatCountdown(reset7dAtMs, remainingFraction7d);
+
+  // 主窗口：优先周配额 7D
+  const isDual = has7d || has5h;
+  const primaryRemainingFraction = has7d ? remainingFraction7d : remainingFraction5h;
+  const statusColor = getQuotaColor(primaryRemainingFraction);
+
+  return {
+    id: acc.id || name,
+    name,
+    email,
+    planType,
+    status,
+    healthTier,
+    provider: (acc.channel || "codex").toUpperCase(),
+    has5h,
+    usagePercent5h: usage5h,
+    remainingFraction5h,
+    reset5hAtMs,
+    reset5hTimeStr,
+    reset5hCountdownStr,
+    has7d,
+    usagePercent7d: usage7d,
+    remainingFraction7d,
+    reset7dAtMs,
+    reset7dTimeStr,
+    reset7dCountdownStr,
+    primaryRemainingFraction,
+    statusColor,
+  };
 }
 
-// ── 1. Codex2API 数据抓取 (带管理员和普通 Key 双端点回退) ──
+// ── 1. Codex2API 数据抓取 (支持 2004 与 8080 自适应探测) ──
 async function fetchCodex2APIData(ctx, baseUrl, apiKey) {
   const cleanKey = (apiKey || "").trim().replace(/^Bearer\s+/i, "");
-  if (!cleanKey) return { ok: false, error: "未配置管理密钥 / API Key" };
-
-  const headers = {
-    Authorization: `Bearer ${cleanKey}`,
-    "X-Admin-Key": cleanKey,
-    "x-api-key": cleanKey,
-    Accept: "application/json",
-  };
-
-  // 1. 尝试 /api/admin/accounts
-  for (const path of ["/api/admin/accounts", "/admin/accounts", "/api/accounts"]) {
-    try {
-      const res = await fetchWithTimeout(ctx, `${baseUrl}${path}`, { headers }, 5000);
-      if (res && res.status === 200) {
-        const raw = await res.json().catch(() => null);
-        let list = [];
-        if (Array.isArray(raw)) list = raw;
-        else if (raw && Array.isArray(raw.accounts)) list = raw.accounts;
-        else if (raw && Array.isArray(raw.data)) list = raw.data;
-
-        if (list.length > 0) {
-          const accounts = list.map((acc, idx) => {
-            const channel = detectChannel(acc);
-            const name = String(acc.name || `account-${acc.id || idx + 1}`);
-            const email = String(acc.email || name);
-            const planType = acc.plan_type || acc.plan || (channel === "codex" ? "Pro 20x" : channel);
-            const w5 = parseAccountQuotaWindow(acc, channel, 5);
-            const w7 = parseAccountQuotaWindow(acc, channel, 168);
-
-            const metrics = [];
-            if (w5 && w5.usedPercent != null) {
-              const rem = Math.max(0, 100 - w5.usedPercent);
-              metrics.push({ key: "five_hour", label: "5 小时", remaining: rem, resetAt: w5.resetAt });
-            }
-            if (w7 && w7.usedPercent != null) {
-              const rem = Math.max(0, 100 - w7.usedPercent);
-              metrics.push({ key: "seven_day", label: "7 天", remaining: rem, resetAt: w7.resetAt });
-            }
-
-            return {
-              id: acc.id || idx,
-              name,
-              email,
-              channel,
-              planType,
-              status: acc.status || "ready",
-              healthTier: acc.health_tier || "healthy",
-              metrics,
-            };
-          });
-
-          return {
-            ok: true,
-            provider: "codex2api",
-            planLabel: accounts[0]?.planType || "Codex2API",
-            badgeLogo: accounts[0]?.channel,
-            accounts,
-          };
-        }
-      }
-    } catch (e) {}
+  const headers = { "Content-Type": "application/json", Accept: "application/json" };
+  if (cleanKey) {
+    headers["Authorization"] = `Bearer ${cleanKey}`;
+    headers["X-Admin-Key"] = cleanKey;
   }
 
-  // 2. 尝试回退至 /api/key-usage/summary
-  for (const path of ["/api/key-usage/summary", "/key-usage/summary"]) {
+  // 候选 URL 探测列表
+  const candidateUrls = [baseUrl];
+  if (baseUrl.includes("127.0.0.1") || baseUrl.includes("localhost")) {
+    if (!candidateUrls.includes("http://127.0.0.1:2004")) candidateUrls.push("http://127.0.0.1:2004");
+    if (!candidateUrls.includes("http://127.0.0.1:8080")) candidateUrls.push("http://127.0.0.1:8080");
+  }
+
+  let lastError = null;
+
+  for (const bUrl of candidateUrls) {
+    // 1. 尝试 /api/admin/accounts
     try {
-      const res = await fetchWithTimeout(ctx, `${baseUrl}${path}`, { headers }, 5000);
-      if (res && res.status === 200) {
-        const data = await res.json().catch(() => null);
+      const accFetch = await fetchWithTimeout(ctx, `${bUrl}/api/admin/accounts`, { headers }, 4000);
+      if (accFetch && accFetch.status === 200) {
+        const accRes = await accFetch.json().catch(() => null);
+        let raw = [];
+        if (Array.isArray(accRes)) raw = accRes;
+        else if (accRes && Array.isArray(accRes.accounts)) raw = accRes.accounts;
+        else if (accRes && Array.isArray(accRes.data)) raw = accRes.data;
+
+        if (raw.length > 0) {
+          return { accounts: raw.map(parseAccount), error: null };
+        }
+      } else if (accFetch) {
+        lastError = accFetch.status === 401 ? "401 管理密钥无效或缺失" : `HTTP ${accFetch.status}`;
+      }
+    } catch (e) {
+      lastError = "连接失败";
+    }
+
+    // 2. 尝试回退至 /api/key-usage/summary
+    try {
+      const keyFetch = await fetchWithTimeout(ctx, `${bUrl}/api/key-usage/summary`, { headers }, 4000);
+      if (keyFetch && keyFetch.status === 200) {
+        const data = await keyFetch.json().catch(() => null);
         if (data && (data.key || data.usage)) {
           const keyRaw = data.key || {};
           const usageRaw = data.usage || {};
           const windowsRaw = usageRaw.windows || {};
-          const limit = toNumber(keyRaw.quota_limit) ?? 0;
-          const used = toNumber(keyRaw.quota_used) ?? 0;
-          const remPercent = limit > 0 ? Math.max(0, (limit - used) / limit * 100) : 100;
-
-          const metrics = [];
-          if (limit > 0) {
-            metrics.push({ key: "total", label: "总配额", remaining: remPercent, resetAt: keyRaw.expires_at || null });
-          }
-          if (windowsRaw.last_5h) {
-            const billed = toNumber(windowsRaw.last_5h.user_billed) ?? 0;
-            metrics.push({ key: "5h", label: "5 小时", remaining: 100, resetAt: windowsRaw.last_5h.decay_at || null, text: formatCost(billed) });
-          }
-          if (windowsRaw.last_7d) {
-            const billed = toNumber(windowsRaw.last_7d.user_billed) ?? 0;
-            metrics.push({ key: "7d", label: "7 天", remaining: 100, resetAt: windowsRaw.last_7d.decay_at || null, text: formatCost(billed) });
-          }
+          const limit = Number(keyRaw.quota_limit) || 0;
+          const used = Number(keyRaw.quota_used) || 0;
+          const remFrac = limit > 0 ? Math.max(0, (limit - used) / limit) : 1.0;
 
           return {
-            ok: true,
-            provider: "codex2api",
-            planLabel: limit > 0 ? `$${limit.toFixed(2)} QUOTA` : "CODEX2API",
-            badgeLogo: "openai",
             accounts: [{
-              id: "key-account",
+              id: "key-quota",
               name: String(keyRaw.name || "API Key"),
               email: String(keyRaw.name || "API Key"),
-              channel: "codex",
-              planType: limit > 0 ? `$${limit.toFixed(2)}` : "Active",
+              planType: limit > 0 ? `$${limit.toFixed(2)}` : "ACTIVE",
               status: "ready",
-              metrics,
+              healthTier: "healthy",
+              provider: "CODEX",
+              has5h: Boolean(windowsRaw.last_5h),
+              usagePercent5h: 0,
+              remainingFraction5h: 1.0,
+              reset5hTimeStr: "--:--",
+              reset5hCountdownStr: "滚动时窗",
+              has7d: limit > 0,
+              usagePercent7d: Math.round((1 - remFrac) * 100),
+              remainingFraction7d: remFrac,
+              reset7dTimeStr: keyRaw.expires_at ? formatShortDate(new Date(keyRaw.expires_at).getTime()) : "--/--",
+              reset7dCountdownStr: "配额充沛",
+              primaryRemainingFraction: remFrac,
+              statusColor: getQuotaColor(remFrac),
             }],
+            error: null,
           };
         }
       }
     } catch (e) {}
   }
 
-  return { ok: false, error: "Codex2API 鉴权失败或端点不可达" };
+  return { accounts: [], error: lastError || "无法连接到 Codex2API (请检查端口与密钥)" };
 }
 
-// ── 2. CLIProxy 聚合拉取逻辑 (标准对齐 Scripting) ──
+// ── 2. CLIProxy 数据抓取 ──
 async function fetchCLIProxyData(ctx, baseUrl, apiKey) {
   const cleanKey = (apiKey || "").trim().replace(/^Bearer\s+/i, "");
   const headers = { "Content-Type": "application/json", Accept: "application/json" };
@@ -363,636 +316,517 @@ async function fetchCLIProxyData(ctx, baseUrl, apiKey) {
     headers["X-Management-Key"] = cleanKey;
   }
 
-  const res = await fetchWithTimeout(ctx, `${baseUrl}/v0/management/auth-files`, { headers }, 5000);
-  if (!res || res.status !== 200) {
-    return { ok: false, error: res ? `HTTP ${res.status}` : "连接超时" };
+  const authFetch = await fetchWithTimeout(ctx, `${baseUrl}/v0/management/auth-files`, { headers }, 5000);
+  if (!authFetch || authFetch.status !== 200) {
+    return { accounts: [], error: authFetch ? (authFetch.status === 401 ? "401 管理密钥错误" : `HTTP ${authFetch.status}`) : "连接失败" };
   }
 
-  const data = await res.json().catch(() => null);
+  const data = await authFetch.json().catch(() => null);
   const files = Array.isArray(data?.files) ? data.files : [];
   const validFiles = files.filter(f => !f.disabled && !f.unavailable && f.status !== "disabled");
 
-  const accounts = [];
-  const quotaTasks = validFiles.map(async (file, idx) => {
-    const authIndex = file.auth_index || file.authIndex || file.name;
+  const accounts = validFiles.map((file, idx) => {
     const name = file.email || (file.name || "").replace(/\.json$/, "");
-    const provider = file.provider || file.type || "AI";
-    const pLower = provider.toLowerCase();
-
-    const metrics = [];
-
-    // Antigravity / Gemini
-    if (pLower.includes("antigravity") || pLower.includes("gemini")) {
-      try {
-        const reqBody = {
-          authIndex,
-          method: "POST",
-          url: "https://cloudcode-pa.googleapis.com/v1internal:retrieveUserQuotaSummary",
-          header: {
-            Authorization: "Bearer $TOKEN$",
-            "Content-Type": "application/json",
-            "User-Agent": "antigravity/cli/1.0.13 (aidev_client; os_type=darwin; arch=arm64)",
-          },
-          data: JSON.stringify({ project: file.project_id || "" }),
-        };
-        const r = await fetchPostWithTimeout(ctx, `${baseUrl}/v0/management/api-call`, reqBody, { headers }, 4000);
-        if (r && r.status === 200) {
-          const b = await r.json();
-          const body = typeof b.body === "string" ? JSON.parse(b.body) : b.body || {};
-          const groups = Array.isArray(body.groups) ? body.groups : [];
-          for (const g of groups) {
-            const buckets = Array.isArray(g.buckets) ? g.buckets : [];
-            const b5 = buckets.find(b => (b.window || "").includes("5h") || (b.window || "").includes("five")) || buckets[0];
-            if (b5) {
-              const frac = Number(b5.remainingFraction ?? b5.remaining_fraction ?? 1);
-              metrics.push({ key: "5h", label: "5 小时", remaining: Math.round(frac * 100), resetAt: b5.resetTime || b5.reset_time });
-            }
-          }
-        }
-      } catch (e) {}
-    }
-
-    // Claude
-    if (pLower.includes("claude")) {
-      try {
-        const reqBody = {
-          authIndex,
-          method: "GET",
-          url: "https://api.anthropic.com/api/oauth/usage",
-          header: { Authorization: "Bearer $TOKEN$", "Content-Type": "application/json", "anthropic-beta": "oauth-2025-04-20" },
-        };
-        const r = await fetchPostWithTimeout(ctx, `${baseUrl}/v0/management/api-call`, reqBody, { headers }, 4000);
-        if (r && r.status === 200) {
-          const b = await r.json();
-          const body = typeof b.body === "string" ? JSON.parse(b.body) : b.body || {};
-          if (body.five_hour && typeof body.five_hour.utilization === "number") {
-            const rem = Math.max(0, 100 - body.five_hour.utilization);
-            metrics.push({ key: "5h", label: "5 小时", remaining: Math.round(rem), resetAt: body.five_hour.resets_at });
-          }
-        }
-      } catch (e) {}
-    }
-
-    // Codex
-    if (pLower.includes("codex") || pLower.includes("openai")) {
-      try {
-        const reqBody = {
-          authIndex,
-          method: "GET",
-          url: "https://chatgpt.com/backend-api/wham/usage",
-          header: { Authorization: "Bearer $TOKEN$", "Content-Type": "application/json", "User-Agent": "codex_cli_rs/0.76.0" },
-        };
-        const r = await fetchPostWithTimeout(ctx, `${baseUrl}/v0/management/api-call`, reqBody, { headers }, 4000);
-        if (r && r.status === 200) {
-          const b = await r.json();
-          const body = typeof b.body === "string" ? JSON.parse(b.body) : b.body || {};
-          const rl = body.rate_limit || {};
-          if (rl.primary_window) {
-            const u = Number(rl.primary_window.used_percent ?? 0);
-            metrics.push({ key: "5h", label: "5 小时", remaining: Math.max(0, 100 - u), resetAt: rl.primary_window.reset_at });
-          }
-          if (rl.secondary_window) {
-            const u = Number(rl.secondary_window.used_percent ?? 0);
-            metrics.push({ key: "7d", label: "7 天", remaining: Math.max(0, 100 - u), resetAt: rl.secondary_window.reset_at });
-          }
-        }
-      } catch (e) {}
-    }
-
-    accounts.push({
+    return parseAccount({
       id: file.id || idx,
       name,
       email: name,
-      channel: pLower,
-      planType: provider,
+      plan_type: file.provider || file.type || "CLIProxy",
+      channel: (file.provider || file.type || "AI").toLowerCase(),
+      usage_percent_5h: file.usagePercent5h,
+      reset_5h_at: file.reset5hAt,
+      usage_percent_7d: file.usagePercent7d,
+      reset_7d_at: file.reset7dAt,
       status: file.status || "active",
-      healthTier: file.unavailable ? "abnormal" : "healthy",
-      metrics,
+      health_tier: file.unavailable ? "abnormal" : "healthy",
     });
   });
 
-  await Promise.all(quotaTasks);
-  return {
-    ok: true,
-    provider: "cliproxyapi",
-    planLabel: accounts[0]?.planType || "CLIProxy",
-    badgeLogo: accounts[0]?.channel,
-    accounts,
-  };
+  return { accounts, error: null };
 }
 
-// ── 3. DeepSeek 数据抓取 ──
-async function fetchDeepSeekData(ctx, baseUrl, apiKey) {
-  const endpoint = baseUrl || "https://api.deepseek.com";
-  const cleanKey = (apiKey || "").trim().replace(/^Bearer\s+/i, "");
-  const headers = { "Content-Type": "application/json", Authorization: `Bearer ${cleanKey}` };
-
-  const res = await fetchWithTimeout(ctx, `${endpoint}/user/balance`, { headers }, 5000);
-  if (!res || res.status !== 200) return { ok: false, error: res ? `HTTP ${res.status}` : "连接超时" };
-
-  const data = await res.json().catch(() => null);
-  const infos = data?.balance_infos || [];
-  const primary = infos[0] || { currency: "CNY", total_balance: "0", granted_balance: "0", topped_up_balance: "0" };
-
-  return {
-    ok: true,
-    provider: "deepseek",
-    planLabel: primary.currency || "CNY",
-    badgeLogo: "deepseek",
-    balance: {
-      currency: primary.currency || "CNY",
-      total: parseFloat(primary.total_balance) || 0,
-      granted: parseFloat(primary.granted_balance) || 0,
-      toppedUp: parseFloat(primary.topped_up_balance) || 0,
-    },
-    accounts: [],
-  };
-}
-
-// ── 4. New API 数据抓取 ──
-async function fetchNewAPIData(ctx, baseUrl, apiKey) {
-  const cleanKey = (apiKey || "").trim().replace(/^Bearer\s+/i, "");
-  const headers = { "Content-Type": "application/json", Accept: "application/json" };
-  if (cleanKey) headers["Authorization"] = `Bearer ${cleanKey}`;
-
-  const selfRes = await fetchWithTimeout(ctx, `${baseUrl}/api/user/self`, { headers }, 4000);
-  if (!selfRes || selfRes.status !== 200) return { ok: false, error: selfRes ? `HTTP ${selfRes.status}` : "连接超时" };
-
-  const raw = await selfRes.json().catch(() => ({}));
-  const u = raw.data || raw;
-  const quota = u.quota || 0;
-  const used = u.used_quota || 0;
-  const remUSD = quota / 500000;
-  const usedUSD = used / 500000;
-
-  return {
-    ok: true,
-    provider: "newapi",
-    planLabel: "New API",
-    badgeLogo: "openai",
-    summary: {
-      name: u.username || u.display_name || "账户",
-      remainingUSD: remUSD,
-      usedUSD,
-    },
-    accounts: [],
-  };
-}
-
-// ── 5. AxonHub 数据抓取 ──
-async function fetchAxonHubData(ctx, baseUrl, apiKey, email, password) {
-  let token = (apiKey || "").trim().replace(/^Bearer\s+/i, "");
-  const headers = { "Content-Type": "application/json", Accept: "application/json" };
-
-  if (!token && email && password) {
-    try {
-      const signinRes = await fetchPostWithTimeout(ctx, `${baseUrl}/admin/auth/signin`, JSON.stringify({ email, password }), { headers }, 4000);
-      if (signinRes && signinRes.status === 200) {
-        const signinData = await signinRes.json();
-        token = signinData?.token || signinData?.data?.token;
-      }
-    } catch (e) {}
-  }
-  if (token) headers["Authorization"] = `Bearer ${token}`;
-
-  const query = `query GetStats {
-    dashboardOverview {
-      totalRequests
-      requestStats { requestsToday }
-    }
-    tokenStats {
-      totalInputTokensToday totalOutputTokensToday totalCachedTokensToday
-    }
-  }`;
-
-  const gqlRes = await fetchPostWithTimeout(ctx, `${baseUrl}/admin/graphql`, JSON.stringify({ query }), { headers }, 5000);
-  if (!gqlRes || gqlRes.status !== 200) return { ok: false, error: gqlRes ? `HTTP ${gqlRes.status}` : "连接超时" };
-
-  const data = await gqlRes.json().catch(() => null);
-  const overview = data?.data?.dashboardOverview;
-  const tokenStats = data?.data?.tokenStats;
-  const reqToday = overview?.requestStats?.requestsToday || 0;
-  const tokensToday = (tokenStats?.totalInputTokensToday || 0) + (tokenStats?.totalOutputTokensToday || 0) + (tokenStats?.totalCachedTokensToday || 0);
-
-  return {
-    ok: true,
-    provider: "axonhub",
-    planLabel: "Gateway",
-    badgeLogo: "openai",
-    axonStats: {
-      reqToday,
-      tokensToday,
-    },
-    accounts: [],
-  };
-}
-
-// ── 综合数据调度 ──
+// ── 综合数据分发器 ──
 async function syncAIUsage(ctx) {
   const provider = (ctx.env?.PROVIDER || ctx.env?.provider || "codex2api").toLowerCase().trim();
   const meta = PROVIDER_METAS[provider] || PROVIDER_METAS.codex2api;
-  const rawUrl = ctx.env?.SERVER_URL || ctx.env?.server_url || ctx.storage.get(`ai_usage_url_${provider}`) || meta.defaultUrl;
+
+  let rawUrl = ctx.env?.SERVER_URL || ctx.env?.server_url || "";
+  if (!rawUrl.trim()) {
+    rawUrl = meta.defaultPort ? `http://127.0.0.1:${meta.defaultPort}` : (meta.defaultUrl || "");
+  }
   const baseUrl = rawUrl.trim().replace(/\/+$/, "");
   const apiKey = (ctx.env?.API_KEY || ctx.env?.api_key || ctx.env?.MANAGEMENT_KEY || ctx.env?.ADMIN_KEY || "").trim();
-  const email = (ctx.env?.EMAIL || ctx.env?.email || "").trim();
-  const password = (ctx.env?.PASSWORD || ctx.env?.password || "").trim();
 
-  let res = { ok: false, error: "未处理的平台" };
-  if (provider === "codex2api") res = await fetchCodex2APIData(ctx, baseUrl, apiKey);
-  else if (provider === "cliproxyapi") res = await fetchCLIProxyData(ctx, baseUrl, apiKey);
-  else if (provider === "deepseek") res = await fetchDeepSeekData(ctx, baseUrl, apiKey);
-  else if (provider === "newapi") res = await fetchNewAPIData(ctx, baseUrl, apiKey);
-  else if (provider === "axonhub") res = await fetchAxonHubData(ctx, baseUrl, apiKey, email, password);
+  let res = { accounts: [], error: "未识别平台" };
+  if (provider === "codex2api") {
+    res = await fetchCodex2APIData(ctx, baseUrl, apiKey);
+  } else if (provider === "cliproxyapi") {
+    res = await fetchCLIProxyData(ctx, baseUrl, apiKey);
+  }
 
   const snapshot = {
-    ...res,
     provider,
-    fetchedAt: new Date().toISOString(),
+    providerTitle: meta.title,
+    accounts: res.accounts || [],
+    lastUpdated: Date.now(),
+    error: res.error,
   };
 
-  if (res.ok) ctx.storage.setJSON("ai_usage_snapshot", snapshot);
+  if (res.accounts && res.accounts.length > 0) {
+    ctx.storage.setJSON("ai_usage_snapshot", snapshot);
+  }
   return snapshot;
 }
 
-// ══════════════════════════════════════════════════
-// ── UI 渲染层 (1:1 还原 Scripting UsageWidgetView) ──
-// ══════════════════════════════════════════════════
-
-// ── 渲染：Small 尺寸组件 ──
-function renderSmallView(data, maskEmailEnabled) {
-  const meta = PROVIDER_METAS[data.provider] || PROVIDER_METAS.codex2api;
-  const accounts = data.accounts || [];
-  const first = accounts[0];
-
-  // 1. Header (Logo + PlanBadge)
-  const header = {
-    type: "stack",
-    direction: "row",
-    alignItems: "center",
-    children: [
-      { type: "image", src: meta.logo, width: 17, height: 17, borderRadius: 4 },
-      { type: "spacer" },
-      PlanBadge(data.planLabel || meta.title, data.badgeLogo),
-    ],
-  };
-
-  // 2. Body
-  let bodyChildren = [];
-  if (data.provider === "deepseek" && data.balance) {
-    const b = data.balance;
-    bodyChildren = [
-      { type: "text", text: `${b.currency} 账户总额`, font: { size: 11 }, textColor: C.textSecondary },
-      { type: "text", text: formatCurrency(b.total, b.currency), font: { size: 24, weight: "bold" }, textColor: C.textPrimary },
-      {
-        type: "stack",
-        direction: "row",
-        alignItems: "center",
-        children: [
-          { type: "text", text: `充值 ${formatCurrency(b.toppedUp, b.currency)}`, font: { size: 10 }, textColor: C.textSecondary },
-          { type: "spacer" },
-          { type: "text", text: `赠送 ${formatCurrency(b.granted, b.currency)}`, font: { size: 10 }, textColor: "#34C759" },
-        ],
-      },
-    ];
-  } else if (data.provider === "newapi" && data.summary) {
-    const s = data.summary;
-    bodyChildren = [
-      { type: "text", text: "账户可用余额", font: { size: 11 }, textColor: C.textSecondary },
-      { type: "text", text: `$${s.remainingUSD.toFixed(2)}`, font: { size: 24, weight: "bold" }, textColor: C.textPrimary },
-      {
-        type: "stack",
-        direction: "row",
-        alignItems: "center",
-        children: [
-          { type: "text", text: s.name, font: { size: 10 }, textColor: C.textSecondary, maxLines: 1 },
-          { type: "spacer" },
-          { type: "text", text: `已用 $${s.usedUSD.toFixed(2)}`, font: { size: 10 }, textColor: C.textSecondary },
-        ],
-      },
-    ];
-  } else if (first) {
-    const m = first.metrics[0] || { label: "配额", remaining: 100 };
-    const rem = m.remaining;
-    const tint = usageTint(rem);
-    const accName = maskEmail(first.email || first.name, maskEmailEnabled);
-    const stat = statusInfo(first.status, first.healthTier);
-
-    bodyChildren = [
-      { type: "text", text: `${m.label}剩余`, font: { size: 11 }, textColor: C.textSecondary },
-      { type: "text", text: formatPercent(rem), font: { size: 28, weight: "bold" }, textColor: tint },
-      WidgetBar(rem, 10),
-      {
-        type: "stack",
-        direction: "row",
-        alignItems: "center",
-        children: [
-          { type: "text", text: accName, font: { size: 10 }, textColor: C.textSecondary, maxLines: 1 },
-          { type: "spacer" },
-          { type: "text", text: stat.label, font: { size: 10, weight: "semibold" }, textColor: stat.color },
-        ],
-      },
-    ];
-  } else {
-    bodyChildren = [
-      { type: "text", text: "暂无用量数据", font: { size: 12 }, textColor: C.textSecondary },
+function getDisplayAccounts(snapshot) {
+  if (!snapshot || !snapshot.accounts || snapshot.accounts.length === 0) {
+    const now = Date.now();
+    return [
+      parseAccount({
+        id: "demo-1",
+        name: "Pro 账号示例",
+        email: "demo@gmail.com",
+        plan_type: "pro",
+        channel: "codex",
+        usage_percent_7d: 12,
+        reset_7d_at: new Date(now + 86400000 * 5).toISOString(),
+        usage_percent_5h: 30,
+        reset_5h_at: new Date(now + 3600000 * 3).toISOString(),
+      }),
     ];
   }
+  return snapshot.accounts;
+}
 
-  // 3. Footer
-  const footer = {
-    type: "stack",
-    direction: "row",
-    alignItems: "center",
-    children: [
-      { type: "text", text: data.ok ? "已同步" : "连接失败", font: { size: 10 }, textColor: data.ok ? C.textSecondary : "#FF3B30" },
-      { type: "spacer" },
-      { type: "text", text: timeText(data.fetchedAt), font: { size: 10 }, textColor: C.textSecondary },
-    ],
-  };
+// ══════════════════════════════════════════════════
+// ── 原生 HIG 磨砂卡片渲染层 (复刻原版经典呈现) ──
+// ══════════════════════════════════════════════════
+
+// ── Small 尺寸组件 ──
+function renderSmallWidget(account, updateTime, providerMeta) {
+  const accBadge = getBadgeConfig(account.provider, account.planType);
+  const used7d = account.usagePercent7d !== null ? Math.round(account.usagePercent7d) : 0;
+  const remain7d = Math.round(account.remainingFraction7d * 100);
+  const progressSvg = createProgressBarSvg(account.remainingFraction7d, account.statusColor, 6);
 
   return {
     type: "widget",
     backgroundColor: C.widgetBg,
-    padding: 14,
+    padding: 12,
+    gap: 8,
     children: [
-      header,
-      { type: "spacer" },
-      { type: "stack", direction: "column", gap: 6, children: bodyChildren },
-      { type: "spacer" },
-      footer,
+      {
+        type: "stack",
+        direction: "row",
+        alignItems: "center",
+        gap: 5,
+        children: [
+          { type: "image", src: providerMeta.logo, width: 14, height: 14, borderRadius: 3.5 },
+          { type: "text", text: providerMeta.title, font: { size: "caption1", weight: "heavy" }, textColor: C.textPrimary },
+          { type: "spacer" },
+          { type: "text", text: updateTime, font: { size: 10, weight: "medium" }, textColor: C.textTertiary },
+        ],
+      },
+      {
+        type: "stack",
+        direction: "column",
+        gap: 6,
+        padding: 10,
+        backgroundColor: C.cardBg,
+        borderWidth: 0.5,
+        borderColor: C.cardBorder,
+        borderRadius: 13,
+        flex: 1,
+        children: [
+          {
+            type: "stack",
+            direction: "row",
+            alignItems: "center",
+            children: [
+              createMicroBadge(accBadge),
+              { type: "spacer" },
+            ],
+          },
+          {
+            type: "stack",
+            direction: "row",
+            alignItems: "center",
+            children: [
+              {
+                type: "stack",
+                direction: "row",
+                gap: 3,
+                alignItems: "center",
+                children: [
+                  { type: "text", text: "已用", font: { size: 10 }, textColor: C.textSecondary },
+                  { type: "text", text: `${used7d}%`, font: { size: 15, weight: "heavy" }, textColor: C.textPrimary },
+                ],
+              },
+              { type: "spacer" },
+              {
+                type: "stack",
+                direction: "row",
+                gap: 3,
+                alignItems: "center",
+                children: [
+                  { type: "text", text: "7D 余", font: { size: 9.5, weight: "bold" }, textColor: C.textSecondary },
+                  { type: "text", text: `${remain7d}%`, font: { size: 16, weight: "heavy" }, textColor: account.statusColor },
+                ],
+              },
+            ],
+          },
+          { type: "image", src: progressSvg, height: 5.5 },
+          {
+            type: "stack",
+            direction: "row",
+            alignItems: "center",
+            children: [
+              { type: "text", text: `重置 ${account.reset7dTimeStr}`, font: { size: 9 }, textColor: C.textSecondary },
+              { type: "spacer" },
+              { type: "text", text: account.reset7dCountdownStr, font: { size: 9.5, weight: "bold" }, textColor: account.statusColor },
+            ],
+          },
+        ],
+      },
     ],
   };
 }
 
-// ── 渲染：Medium 尺寸组件 (单账号展示双指标，多账号并排) ──
-function renderMediumView(data, maskEmailEnabled) {
-  const meta = PROVIDER_METAS[data.provider] || PROVIDER_METAS.codex2api;
-  const accounts = data.accounts || [];
+// ── Medium 尺寸组件 (双时窗 7D + 5H 拟物母卡片) ──
+function renderMediumWidget(accounts, updateStr, maskEmailEnabled, providerMeta) {
+  const isSingle = accounts.length === 1;
   const first = accounts[0];
 
-  // 1. Header
-  const header = {
-    type: "stack",
-    direction: "row",
-    alignItems: "center",
-    gap: 6,
-    children: [
-      { type: "image", src: meta.logo, width: 17, height: 17, borderRadius: 4 },
-      { type: "text", text: meta.title, font: { size: 13, weight: "semibold" }, textColor: C.textPrimary },
-      { type: "spacer" },
-      PlanBadge(data.planLabel || meta.title, data.badgeLogo),
-    ],
-  };
+  if (isSingle && first) {
+    const accBadge = getBadgeConfig(first.provider, first.planType);
+    const used7d = Math.round((1 - first.remainingFraction7d) * 100);
+    const remain7d = Math.round(first.remainingFraction7d * 100);
+    const used5h = Math.round((1 - first.remainingFraction5h) * 100);
+    const remain5h = Math.round(first.remainingFraction5h * 100);
+    const accountLabel = maskEmail(first.email || first.name, maskEmailEnabled);
 
-  // 2. Body
-  let bodyElement = null;
-  if (data.provider === "deepseek" && data.balance) {
-    const b = data.balance;
-    bodyElement = {
-      type: "stack",
-      direction: "row",
-      alignItems: "center",
-      gap: 12,
+    const progressSvg7d = createProgressBarSvg(first.remainingFraction7d, getQuotaColor(first.remainingFraction7d), 6);
+    const progressSvg5h = createProgressBarSvg(first.remainingFraction5h, getQuotaColor(first.remainingFraction5h), 6);
+
+    return {
+      type: "widget",
+      backgroundColor: C.widgetBg,
+      padding: [12, 14, 12, 14],
+      gap: 8,
       children: [
+        // 顶部 Header
         {
           type: "stack",
-          direction: "column",
-          gap: 2,
-          flex: 1,
-          children: [
-            { type: "text", text: `${b.currency} 账户总额`, font: { size: 11 }, textColor: C.textSecondary },
-            { type: "text", text: formatCurrency(b.total, b.currency), font: { size: 28, weight: "bold" }, textColor: C.textPrimary },
-          ],
-        },
-        {
-          type: "stack",
-          direction: "column",
+          direction: "row",
+          alignItems: "center",
           gap: 6,
-          flex: 1,
           children: [
+            { type: "image", src: providerMeta.logo, width: 15, height: 15, borderRadius: 3.5 },
+            { type: "text", text: `${providerMeta.title} 配额`, font: { size: "footnote", weight: "heavy" }, textColor: C.textPrimary },
             {
               type: "stack",
-              direction: "row",
+              padding: [2, 5],
+              borderRadius: 4,
+              backgroundColor: C.cardBg,
               children: [
-                { type: "text", text: "充值余额", font: { size: 10 }, textColor: C.textSecondary },
-                { type: "spacer" },
-                { type: "text", text: formatCurrency(b.toppedUp, b.currency), font: { size: 12, weight: "semibold" }, textColor: C.textPrimary },
+                { type: "text", text: "1 账号", font: { size: 9.5, weight: "bold" }, textColor: C.textSecondary },
               ],
             },
+            { type: "spacer" },
+            { type: "text", text: `更新 ${updateStr}`, font: { size: 11, weight: "medium" }, textColor: C.textSecondary },
+          ],
+        },
+        // 核心拟物母卡片
+        {
+          type: "stack",
+          direction: "column",
+          gap: 7,
+          padding: [10, 12, 10, 12],
+          backgroundColor: C.cardBg,
+          borderWidth: 0.5,
+          borderColor: C.cardBorder,
+          borderRadius: 13,
+          flex: 1,
+          children: [
+            // 账号标题行
             {
               type: "stack",
               direction: "row",
+              alignItems: "center",
               children: [
-                { type: "text", text: "赠送额度", font: { size: 10 }, textColor: C.textSecondary },
+                {
+                  type: "stack",
+                  direction: "row",
+                  alignItems: "center",
+                  gap: 5,
+                  children: [
+                    createMicroBadge(accBadge),
+                    { type: "text", text: accountLabel, font: { size: 11.5, weight: "bold" }, maxLines: 1 },
+                  ],
+                },
                 { type: "spacer" },
-                { type: "text", text: formatCurrency(b.granted, b.currency), font: { size: 12, weight: "semibold" }, textColor: "#34C759" },
+                { type: "text", text: "正常", font: { size: 10, weight: "semibold" }, textColor: "#34C759" },
+              ],
+            },
+            // 7D 周配额进度条
+            {
+              type: "stack",
+              direction: "column",
+              gap: 3.5,
+              children: [
+                {
+                  type: "stack",
+                  direction: "row",
+                  alignItems: "center",
+                  children: [
+                    { type: "text", text: `已用 ${used7d}%`, font: { size: 10 }, textColor: C.textSecondary },
+                    { type: "spacer" },
+                    { type: "text", text: `7D 余 ${remain7d}%`, font: { size: 11, weight: "bold" }, textColor: getQuotaColor(first.remainingFraction7d) },
+                  ],
+                },
+                { type: "image", src: progressSvg7d, height: 5.5 },
+                {
+                  type: "stack",
+                  direction: "row",
+                  alignItems: "center",
+                  children: [
+                    { type: "text", text: `重置 ${first.reset7dTimeStr}`, font: { size: 9 }, textColor: C.textSecondary },
+                    { type: "spacer" },
+                    { type: "text", text: first.reset7dCountdownStr, font: { size: 9.5, weight: "bold" }, textColor: getQuotaColor(first.remainingFraction7d) },
+                  ],
+                },
+              ],
+            },
+            // 5H 滚动时窗进度条
+            {
+              type: "stack",
+              direction: "column",
+              gap: 3.5,
+              children: [
+                {
+                  type: "stack",
+                  direction: "row",
+                  alignItems: "center",
+                  children: [
+                    { type: "text", text: `已用 ${used5h}%`, font: { size: 10 }, textColor: C.textSecondary },
+                    { type: "spacer" },
+                    { type: "text", text: `5H 余 ${remain5h}%`, font: { size: 11, weight: "bold" }, textColor: getQuotaColor(first.remainingFraction5h) },
+                  ],
+                },
+                { type: "image", src: progressSvg5h, height: 5.5 },
+                {
+                  type: "stack",
+                  direction: "row",
+                  alignItems: "center",
+                  children: [
+                    { type: "text", text: `重置 ${first.reset5hTimeStr}`, font: { size: 9 }, textColor: C.textSecondary },
+                    { type: "spacer" },
+                    { type: "text", text: first.reset5hCountdownStr, font: { size: 9.5, weight: "bold" }, textColor: getQuotaColor(first.remainingFraction5h) },
+                  ],
+                },
               ],
             },
           ],
         },
       ],
     };
-  } else if (accounts.length >= 2) {
-    // 多账号并排展示
-    bodyElement = {
-      type: "stack",
-      direction: "row",
-      gap: 16,
-      children: accounts.slice(0, 2).map((acc) => {
-        const m = acc.metrics[0] || { label: "配额", remaining: 100 };
-        const stat = statusInfo(acc.status, acc.healthTier);
-        const accName = maskEmail(acc.email || acc.name, maskEmailEnabled);
-        return {
-          type: "stack",
-          direction: "column",
-          gap: 5,
-          flex: 1,
-          children: [
-            {
-              type: "stack",
-              direction: "row",
-              alignItems: "center",
-              children: [
-                { type: "text", text: accName, font: { size: 11, weight: "semibold" }, textColor: C.textPrimary, maxLines: 1 },
-                { type: "spacer" },
-                { type: "text", text: stat.label, font: { size: 10, weight: "semibold" }, textColor: stat.color },
-              ],
-            },
-            {
-              type: "stack",
-              direction: "row",
-              alignItems: "center",
-              children: [
-                { type: "text", text: `${m.label}剩余`, font: { size: 11 }, textColor: C.textSecondary },
-                { type: "spacer" },
-                { type: "text", text: formatPercent(m.remaining), font: { size: 16, weight: "semibold" }, textColor: usageTint(m.remaining) },
-              ],
-            },
-            WidgetBar(m.remaining, 8),
-            m.resetAt ? { type: "text", text: `重置 ${formatSmallDate(m.resetAt)}`, font: { size: 9.5 }, textColor: C.textSecondary } : { type: "spacer" },
-          ],
-        };
-      }),
-    };
-  } else if (first) {
-    // 单账号展示 (含 5h 与 7d 两行 MetricRow)
-    const stat = statusInfo(first.status, first.healthTier);
-    const accName = maskEmail(first.email || first.name, maskEmailEnabled);
+  }
 
-    bodyElement = {
-      type: "stack",
-      direction: "column",
-      gap: 6,
-      children: [
-        {
-          type: "stack",
-          direction: "row",
-          alignItems: "center",
-          children: [
-            { type: "text", text: accName, font: { size: 11, weight: "semibold" }, textColor: C.textPrimary },
-            { type: "spacer" },
-            { type: "text", text: stat.label, font: { size: 10, weight: "semibold" }, textColor: stat.color },
-          ],
-        },
-        ...first.metrics.slice(0, 2).map((m) => {
+  // 多账号并排展示
+  const displayPair = accounts.slice(0, 2);
+  return {
+    type: "widget",
+    backgroundColor: C.widgetBg,
+    padding: [12, 14, 12, 14],
+    gap: 8,
+    children: [
+      {
+        type: "stack",
+        direction: "row",
+        alignItems: "center",
+        gap: 6,
+        children: [
+          { type: "image", src: providerMeta.logo, width: 15, height: 15, borderRadius: 3.5 },
+          { type: "text", text: `${providerMeta.title} 配额`, font: { size: "footnote", weight: "heavy" }, textColor: C.textPrimary },
+          {
+            type: "stack",
+            padding: [2, 5],
+            borderRadius: 4,
+            backgroundColor: C.cardBg,
+            children: [
+              { type: "text", text: `${accounts.length} 账号`, font: { size: 9.5, weight: "bold" }, textColor: C.textSecondary },
+            ],
+          },
+          { type: "spacer" },
+          { type: "text", text: `更新 ${updateStr}`, font: { size: 11, weight: "medium" }, textColor: C.textSecondary },
+        ],
+      },
+      {
+        type: "stack",
+        direction: "row",
+        gap: 8,
+        flex: 1,
+        children: displayPair.map((acc) => {
+          const accBadge = getBadgeConfig(acc.provider, acc.planType);
+          const remain7d = Math.round(acc.remainingFraction7d * 100);
+          const progressSvg = createProgressBarSvg(acc.remainingFraction7d, acc.statusColor, 5.5);
+          const label = maskEmail(acc.email || acc.name, maskEmailEnabled);
+
           return {
             type: "stack",
             direction: "column",
-            gap: 4,
+            gap: 5,
+            padding: [8, 10, 8, 10],
+            backgroundColor: C.cardBg,
+            borderWidth: 0.5,
+            borderColor: C.cardBorder,
+            borderRadius: 12,
+            flex: 1,
             children: [
               {
                 type: "stack",
                 direction: "row",
                 alignItems: "center",
                 children: [
-                  { type: "text", text: `${m.label}剩余`, font: { size: 11 }, textColor: C.textSecondary },
+                  createMicroBadge(accBadge),
                   { type: "spacer" },
-                  { type: "text", text: formatPercent(m.remaining), font: { size: 15, weight: "semibold" }, textColor: usageTint(m.remaining) },
+                  { type: "text", text: `${remain7d}%`, font: { size: 14, weight: "heavy" }, textColor: acc.statusColor },
                 ],
               },
-              WidgetBar(m.remaining, 8),
+              { type: "text", text: label, font: { size: 10, weight: "medium" }, textColor: C.textSecondary, maxLines: 1 },
+              { type: "image", src: progressSvg, height: 5 },
+              {
+                type: "stack",
+                direction: "row",
+                alignItems: "center",
+                children: [
+                  { type: "text", text: acc.reset7dTimeStr, font: { size: 9 }, textColor: C.textSecondary },
+                  { type: "spacer" },
+                  { type: "text", text: acc.reset7dCountdownStr, font: { size: 9.5, weight: "bold" }, textColor: acc.statusColor },
+                ],
+              },
             ],
           };
         }),
-      ],
-    };
-  } else {
-    bodyElement = {
-      type: "text",
-      text: data.error || "暂无可用配额数据",
-      font: { size: 12 },
-      textColor: C.textSecondary,
-    };
-  }
-
-  // 3. Footer
-  const footer = {
-    type: "stack",
-    direction: "row",
-    alignItems: "center",
-    children: [
-      { type: "text", text: data.ok ? "已同步" : "连接失败", font: { size: 10 }, textColor: data.ok ? C.textSecondary : "#FF3B30" },
-      { type: "spacer" },
-      { type: "text", text: timeText(data.fetchedAt), font: { size: 10 }, textColor: C.textSecondary },
-    ],
-  };
-
-  return {
-    type: "widget",
-    backgroundColor: C.widgetBg,
-    padding: [12, 16, 12, 16],
-    children: [
-      header,
-      { type: "spacer" },
-      bodyElement,
-      { type: "spacer" },
-      footer,
+      },
     ],
   };
 }
 
-// ── 渲染：Large 尺寸组件 ──
-function renderLargeView(data, maskEmailEnabled) {
-  const meta = PROVIDER_METAS[data.provider] || PROVIDER_METAS.codex2api;
-  const accounts = data.accounts || [];
-
-  const header = {
-    type: "stack",
-    direction: "row",
-    alignItems: "center",
-    gap: 6,
+// ── Large 尺寸组件 ──
+function renderLargeWidget(accounts, updateStr, maskEmailEnabled, providerMeta) {
+  const displayList = accounts.slice(0, 4);
+  return {
+    type: "widget",
+    backgroundColor: C.widgetBg,
+    padding: [14, 16, 14, 16],
+    gap: 10,
     children: [
-      { type: "image", src: meta.logo, width: 17, height: 17, borderRadius: 4 },
-      { type: "text", text: meta.title, font: { size: 13, weight: "semibold" }, textColor: C.textPrimary },
-      { type: "spacer" },
-      PlanBadge(data.planLabel || meta.title, data.badgeLogo),
-    ],
-  };
+      {
+        type: "stack",
+        direction: "row",
+        alignItems: "center",
+        gap: 6,
+        children: [
+          { type: "image", src: providerMeta.logo, width: 16, height: 16, borderRadius: 4 },
+          { type: "text", text: `${providerMeta.title} 监控`, font: { size: "subheadline", weight: "heavy" }, textColor: C.textPrimary },
+          {
+            type: "stack",
+            padding: [2, 5],
+            borderRadius: 4,
+            backgroundColor: C.cardBg,
+            children: [
+              { type: "text", text: `${accounts.length} 账号`, font: { size: 10, weight: "bold" }, textColor: C.textSecondary },
+            ],
+          },
+          { type: "spacer" },
+          { type: "text", text: `更新 ${updateStr}`, font: { size: 12, weight: "medium" }, textColor: C.textSecondary },
+        ],
+      },
+      {
+        type: "stack",
+        direction: "column",
+        gap: 6,
+        children: displayList.map((acc) => {
+          const accBadge = getBadgeConfig(acc.provider, acc.planType);
+          const remain7d = Math.round(acc.remainingFraction7d * 100);
+          const progressSvg = createProgressBarSvg(acc.remainingFraction7d, acc.statusColor, 5.5);
+          const label = maskEmail(acc.email || acc.name, maskEmailEnabled);
 
-  let bodyList = accounts.slice(0, 3).map((acc) => {
-    const stat = statusInfo(acc.status, acc.healthTier);
-    const accName = maskEmail(acc.email || acc.name, maskEmailEnabled);
-    return {
-      type: "stack",
-      direction: "column",
-      gap: 6,
-      children: [
-        {
-          type: "stack",
-          direction: "row",
-          alignItems: "center",
-          children: [
-            { type: "text", text: accName, font: { size: 12, weight: "semibold" }, textColor: C.textPrimary },
-            { type: "spacer" },
-            { type: "text", text: stat.label, font: { size: 10, weight: "semibold" }, textColor: stat.color },
-          ],
-        },
-        ...acc.metrics.slice(0, 2).map((m) => {
           return {
             type: "stack",
             direction: "column",
-            gap: 4,
+            gap: 4.5,
+            padding: [8, 11, 8, 11],
+            backgroundColor: C.cardBg,
+            borderWidth: 0.5,
+            borderColor: C.cardBorder,
+            borderRadius: 12,
             children: [
               {
                 type: "stack",
                 direction: "row",
                 alignItems: "center",
                 children: [
-                  { type: "text", text: `${m.label}剩余`, font: { size: 11 }, textColor: C.textSecondary },
+                  createMicroBadge(accBadge),
                   { type: "spacer" },
-                  { type: "text", text: formatPercent(m.remaining), font: { size: 16, weight: "semibold" }, textColor: usageTint(m.remaining) },
+                  { type: "text", text: label, font: { size: 10.5, weight: "semibold" }, textColor: C.textSecondary },
+                  { type: "spacer" },
+                  { type: "text", text: `余 ${remain7d}%`, font: { size: 11.5, weight: "heavy" }, textColor: acc.statusColor },
                 ],
               },
-              WidgetBar(m.remaining, 10),
-              m.resetAt ? { type: "text", text: `重置 ${formatSmallDate(m.resetAt)}`, font: { size: 10 }, textColor: C.textSecondary } : null,
-            ].filter(Boolean),
+              { type: "image", src: progressSvg, height: 5.5 },
+              {
+                type: "stack",
+                direction: "row",
+                alignItems: "center",
+                children: [
+                  { type: "text", text: `重置 ${acc.reset7dTimeStr}`, font: { size: 9.5 }, textColor: C.textSecondary },
+                  { type: "spacer" },
+                  { type: "text", text: acc.reset7dCountdownStr, font: { size: 9.5, weight: "bold" }, textColor: acc.statusColor },
+                ],
+              },
+            ],
           };
         }),
-      ],
-    };
-  });
-
-  const footer = {
-    type: "stack",
-    direction: "row",
-    alignItems: "center",
-    children: [
-      { type: "text", text: data.ok ? "已同步" : "连接失败", font: { size: 10 }, textColor: data.ok ? C.textSecondary : "#FF3B30" },
-      { type: "spacer" },
-      { type: "text", text: timeText(data.fetchedAt), font: { size: 10 }, textColor: C.textSecondary },
+      },
     ],
   };
+}
 
+// ── 错误卡片渲染 (展示具体错误) ──
+function renderErrorWidget(family, error, updateTime, providerMeta) {
   return {
     type: "widget",
     backgroundColor: C.widgetBg,
-    padding: [16, 18, 16, 18],
+    padding: 12,
+    gap: 6,
     children: [
-      header,
-      { type: "spacer" },
-      { type: "stack", direction: "column", gap: 14, children: bodyList },
-      { type: "spacer" },
-      footer,
+      {
+        type: "stack",
+        direction: "row",
+        alignItems: "center",
+        gap: 5,
+        children: [
+          { type: "image", src: providerMeta.logo, width: 14, height: 14, borderRadius: 3.5 },
+          { type: "text", text: providerMeta.title, font: { size: 11, weight: "bold" }, textColor: C.textPrimary },
+          { type: "spacer" },
+          { type: "text", text: updateTime, font: { size: 10 }, textColor: C.textSecondary },
+        ],
+      },
+      {
+        type: "stack",
+        direction: "column",
+        gap: 4,
+        padding: 8,
+        backgroundColor: C.cardBg,
+        borderRadius: 10,
+        children: [
+          { type: "text", text: "连接异常", font: { size: 12, weight: "bold" }, textColor: "#FF3B30" },
+          { type: "text", text: String(error).slice(0, 80), font: { size: 10 }, textColor: C.textSecondary, maxLines: 2 },
+          { type: "text", text: "请检查模块 Env 中的 SERVER_URL 与 Key", font: { size: 9 }, textColor: C.textSecondary },
+        ],
+      },
     ],
   };
 }
@@ -1001,18 +835,29 @@ function renderLargeView(data, maskEmailEnabled) {
 export default async function(ctx) {
   const family = ctx.widgetFamily || "systemMedium";
   const maskEmailEnabled = (ctx.env?.MASK_ACCOUNT || ctx.env?.MaskAccount || ctx.env?.mask_account || "false").toLowerCase() === "true";
+  const providerKey = (ctx.env?.PROVIDER || ctx.env?.provider || "codex2api").toLowerCase().trim();
+  const providerMeta = PROVIDER_METAS[providerKey] || PROVIDER_METAS.codex2api;
 
-  let data = await syncAIUsage(ctx);
-  if (!data.ok) {
-    const cached = ctx.storage.getJSON("ai_usage_snapshot");
-    if (cached) data = cached;
+  let snapshot = await syncAIUsage(ctx);
+  if (!snapshot || (snapshot.error && (!snapshot.accounts || snapshot.accounts.length === 0))) {
+    snapshot = ctx.storage.getJSON("ai_usage_snapshot") || snapshot;
   }
 
+  const lastUpdated = snapshot?.lastUpdated || Date.now();
+  const updateTimeStr = formatTimeOnly(lastUpdated);
+  const updateDateStr = formatShortDate(lastUpdated);
+
+  if (snapshot?.error && (!snapshot.accounts || snapshot.accounts.length === 0)) {
+    return renderErrorWidget(family, snapshot.error, updateTimeStr, providerMeta);
+  }
+
+  const accounts = getDisplayAccounts(snapshot);
+
   if (family === "systemSmall") {
-    return renderSmallView(data, maskEmailEnabled);
+    return renderSmallWidget(accounts[0], updateTimeStr, providerMeta);
   } else if (family === "systemLarge" || family === "systemExtraLarge") {
-    return renderLargeView(data, maskEmailEnabled);
+    return renderLargeWidget(accounts, updateDateStr, maskEmailEnabled, providerMeta);
   } else {
-    return renderMediumView(data, maskEmailEnabled);
+    return renderMediumWidget(accounts, updateDateStr, maskEmailEnabled, providerMeta);
   }
 }
