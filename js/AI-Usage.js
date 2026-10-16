@@ -1,12 +1,8 @@
-/*
- * AI Usage 聚合监控小组件 — Egern 2.16+ (Widget DSL)
- * 完美融合：
- *   - 原生拟物磨砂玻璃卡片看板系统 (双时窗 7D/5H 进度条、官方矢量徽标、健康状态指示)
- *   - 7 大平台聚合支持 (Codex2API, CLIProxy, AxonHub, Sub2API, New API, DeepSeek, Agy Tools)
- *   - 智能端口回退 (Codex2API 支持 2004 与 8080 自适应探测)
+/* AI Usage 聚合监控 — Egern 原生 Widget DSL
+ * 真实配额 / 余额；未知为 null；无演示数据；仅访问显式配置的服务。
+ * 接口、凭据和验证边界：../markdown/AI-Usage.md
  */
 
-// ── 7 大服务官方高清徽标 ──
 const PROVIDER_LOGOS = {
   "cliproxyapi": "data:image/png;base64,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",
   "codex2api": "data:image/png;base64,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",
@@ -17,847 +13,1122 @@ const PROVIDER_LOGOS = {
   "agy": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAAAwBAMAAAClLOS0AAAAJFBMVEVMaXEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAB/eFplAAAAC3RSTlMAEyq8ntZFgGPr9xkf/HEAAADxSURBVHjapZIxjsIwEEUfwwJazSX2CLkEEhKNG+6TI+xRptpm74BouEeaaAskROHEsceBFeAq8Zv/53s08OxZTJ9q9CH9SX6P2gwwAK2BZrgATcEz0LpUgqu0qvkdhbkQ/yvANRHX+4HiLvgowDQ8Nk9bFUDrvK9aFUczYO9ZZQNYAXDo4BfAwqhYA/QdMLdwAaAvQTtdhTGvjDs1mPTe6q9wHIACVz9GcYXJq37gKcaXqJxi0sYHSyrLvb5AYm+3698g0BZOEEBBoMlHlHLJzHYChrhMyUsU5xTrTKgEEOBz+QN7Dy7H3UJgW/c+88K5AUIKK+4yaBibAAAAAElFTkSuQmCC"
 };
 
-// ── 官方品牌矢量徽标 SVG ──
-const BRAND_ICONS = {
-  cliproxy: "data:image/svg+xml,%3Csvg%20viewBox%3D%220%200%2024%2024%22%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%3E%3Cpath%20d%3D%22M4%205h16a2%202%200%200%201%202%202v2a2%202%200%200%201-2%202H4a2%202%200%200%201-2-2V7a2%202%200%200%201%202-2zm0%208h16a2%202%200%200%201%202%202v2a2%202%200%200%201-2%202H4a2%202%200%200%201-2-2v-2a2%202%200%200%201%202-2zm2-5h2v2H6V8zm0%208h2v2H6v-2zm12-8h-2v2h2V8zm0%208h-2v2h2v-2z%22%20fill%3D%22%23FFFFFF%22/%3E%3C/svg%3E",
-  antigravity: "data:image/svg+xml,%3Csvg%20viewBox%3D%220%200%2024%2024%22%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%3E%3Cpath%20d%3D%22M21.751%2022.607c1.34%201.005%203.35.335%201.508-1.508C17.73%2015.74%2018.904%201%2012.037%201%205.17%201%206.342%2015.74.815%2021.1c-2.01%202.009.167%202.511%201.507%201.506%205.192-3.517%204.857-9.714%209.715-9.714%204.857%200%204.522%206.197%209.714%209.715z%22%20fill%3D%22%23FFFFFF%22/%3E%3C/svg%3E",
-  gemini: "data:image/svg+xml,%3Csvg%20viewBox%3D%220%200%2024%2024%22%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%3E%3Cpath%20d%3D%22M20.616%2010.835a14.147%2014.147%200%2001-4.45-3.001%2014.111%2014.111%200%2001-3.678-6.452.503.503%200%2000-.975%200%2014.134%2014.134%200%2001-3.679%206.452%2014.155%2014.155%200%2001-4.45%203.001c-.65.28-1.318.505-2.002.678a.502.502%200%20000%20.975c.684.172%201.35.397%202.002.677a14.147%2014.147%200%20014.45%203.001%2014.112%2014.112%200%20013.679%206.453.502.502%200%2000.975%200c.172-.685.397-1.351.677-2.003a14.145%2014.145%200%20013.001-4.45%2014.113%2014.113%200%20016.453-3.678.503.503%200%20000-.975%2013.245%2013.245%200%2001-2.003-.678z%22%20fill%3D%22%23FFFFFF%22/%3E%3C/svg%3E",
-  claude: "data:image/svg+xml,%3Csvg%20viewBox%3D%220%200%2024%2024%22%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%3E%3Cpath%20d%3D%22M4.709%2015.955l4.72-2.647.08-.23-.08-.128H9.2l-.79-.048-2.698-.073-2.339-.097-2.266-.122-.571-.121L0%2011.784l.055-.352.48-.321.686.06%201.52.103%202.278.158%201.652.097%202.449.255h.389l.055-.157-.134-.098-.103-.097-2.358-1.596-2.552-1.688-1.336-.972-.724-.491-.364-.462-.158-1.008.656-.722.881.06.225.061.893.686%201.908%201.476%202.491%201.833.365.304.145-.103.019-.073-.164-.274-1.355-2.446-1.446-2.49-.644-1.032-.17-.619a2.97%202.97%200%2001-.104-.729L6.283.134%206.696%200l.996.134.42.364.62%201.414%201.002%202.229%201.555%203.03.456.898.243.832.091.255h.158V9.01l.128-1.706.237-2.095.23-2.695.08-.76.376-.91.747-.492.584.28.48.685-.067.444-.286%201.851-.559%202.903-.364%201.942h.212l.243-.242.985-1.306%201.652-2.064.73-.82.85-.904.547-.431h1.033l.76%201.129-.34%201.166-1.064%201.347-.881%201.142-1.264%201.7-.79%201.36.073.11.188-.02%202.856-.606%201.543-.28%201.841-.315.833.388.091.395-.328.807-1.969.486-2.309.462-3.439.813-.042.03.049.061%201.549.146.662.036h1.622l3.02.225.79.522.474.638-.079.485-1.215.62-1.64-.389-3.829-.91-1.312-.329h-.182v.11l1.093%201.068%202.006%201.81%202.509%202.33.127.578-.322.455-.34-.049-2.205-1.657-.851-.747-1.926-1.62h-.128v.17l.444.649%202.345%203.521.122%201.08-.17.353-.608.213-.668-.122-1.374-1.925-1.415-2.167-1.143-1.943-.14.08-.674%207.254-.316.37-.729.28-.607-.461-.322-.747.322-1.476.389-1.924.315-1.53.286-1.9.17-.632-.012-.042-.14.018-1.434%201.967-2.18%202.945-1.726%201.845-.414.164-.717-.37.067-.662.401-.589%202.388-3.036%201.44-1.882.93-1.086-.006-.158h-.055L4.132%2018.56l-1.13.146-.487-.456.061-.746.231-.243%201.908-1.312-.006.006z%22%20fill%3D%22%23FFFFFF%22/%3E%3C/svg%3E",
-  openai: "data:image/svg+xml,%3Csvg%20viewBox%3D%220%200%2024%2024%22%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%3E%3Cpath%20d%3D%22M9.205%208.658v-2.26c0-.19.072-.333.238-.428l4.543-2.616c.619-.357%201.356-.523%202.117-.523%202.854%200%204.662%202.212%204.662%204.566%200%20.167%200%20.357-.024.547l-4.71-2.759a.797.797%200%2000-.856%200l-5.97%203.473zm10.609%208.8V12.06c0-.333-.143-.57-.429-.737l-5.97-3.473%201.95-1.118a.433.433%200%2001.476%200l4.543%202.617c1.309.76%202.189%202.378%202.189%203.948%200%201.808-1.07%203.473-2.76%204.163zM7.802%2012.703l-1.95-1.142c-.167-.095-.239-.238-.239-.428V5.899c0-2.545%201.95-4.472%204.591-4.472%201%200%201.927.333%202.712.928L8.23%205.067c-.285.166-.428.404-.428.737v6.898zM12%2015.128l-2.795-1.57v-3.33L12%208.658l2.795%201.57v3.33L12%2015.128zm1.796%207.23c-1%200-1.927-.332-2.712-.927l4.686-2.712c.285-.166.428-.404.428-.737v-6.898l1.974%201.142c.167.095.238.238.238.428v5.233c0%202.545-1.974%204.472-4.614%204.472zm-5.637-5.303l-4.544-2.617c-1.308-.761-2.188-2.378-2.188-3.948A4.482%204.482%200%20014.21%206.327v5.423c0%20.333.143.571.428.738l5.947%203.449-1.95%201.118a.432.432%200%2001-.476%200zm-.262%203.9c-2.688%200-4.662-2.021-4.662-4.519%200-.19.024-.38.047-.57l4.686%202.71c.286.167.571.167.856%200l5.97-3.448v2.26c0%20.19-.07.333-.237.428l-4.543%202.616c-.619.357-1.356.523-2.117.523zm5.899%202.83a5.947%205.947%200%20005.827-4.756C22.287%2018.339%2024%2015.84%2024%2013.296c0-1.665-.713-3.282-1.998-4.448.119-.5.19-.999.19-1.498%200-3.401-2.759-5.947-5.946-5.947-.642%200-1.26.095-1.88.31A5.962%205.962%200%200010.205%200a5.947%205.947%200%2000-5.827%204.757C1.713%205.447%200%207.945%200%2010.49c0%201.666.713%203.283%201.998%204.448-.119.5-.19%201-.19%201.499%200%203.401%202.759%205.946%205.946%205.946.642%200%201.26-.095%201.88-.309a5.96%205.96%200%20004.162%201.713z%22%20fill%3D%22%23FFFFFF%22/%3E%3C/svg%3E",
-  deepseek: "data:image/svg+xml,%3Csvg%20viewBox%3D%220%200%2024%2024%22%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%3E%3Cpath%20d%3D%22M23.748%204.482c-.254-.124-.364.113-.512.234-.051.039-.094.09-.137.136-.372.397-.806.657-1.373.626-.829-.046-1.537.214-2.163.848-.133-.782-.575-1.248-1.247-1.548-.352-.156-.708-.311-.955-.65-.172-.241-.219-.51-.305-.774-.055-.16-.11-.323-.293-.35-.2-.031-.278.136-.356.276-.313.572-.434%201.202-.422%201.84.027%201.436.633%202.58%201.838%203.393.137.093.172.187.129.323-.082.28-.18.552-.266.833-.055.179-.137.217-.329.14a5.526%205.526%200%2001-1.736-1.18c-.857-.828-1.631-1.742-2.597-2.458a11.365%2011.365%200%2000-.689-.471c-.985-.957.13-1.743.388-1.836.27-.098.093-.432-.779-.428-.872.004-1.67.295-2.687.684a3.055%203.055%200%2001-.465.137%209.597%209.597%200%2000-2.883-.102c-1.885.21-3.39%201.102-4.497%202.623C.082%208.606-.231%2010.684.152%2012.85c.403%202.284%201.569%204.175%203.36%205.653%201.858%201.533%203.997%202.284%206.438%202.14%201.482-.085%203.133-.284%204.994-1.86.47.234.962.327%201.78.397.63.059%201.236-.03%201.705-.128.735-.156.684-.837.419-.961-2.155-1.004-1.682-.595-2.113-.926%201.096-1.296%202.746-2.642%203.392-7.003.05-.347.007-.565%200-.845-.004-.17.035-.237.23-.256a4.173%204.173%200%20001.545-.475c1.396-.763%201.96-2.015%202.093-3.517.02-.23-.004-.467-.247-.588zM11.581%2018c-2.089-1.642-3.102-2.183-3.52-2.16-.392.024-.321.471-.235.763.09.288.207.486.371.739.114.167.192.416-.113.603-.673.416-1.842-.14-1.897-.167-1.361-.802-2.5-1.86-3.301-3.307-.774-1.393-1.224-2.887-1.298-4.482-.02-.386.093-.522.477-.592a4.696%204.696%200%20011.529-.039c2.132.312%203.946%201.265%205.468%202.774.868.86%201.525%201.887%202.202%202.891.72%201.066%201.494%202.082%202.48%202.914.348.292.625.514.891.677-.802.09-2.14.11-3.054-.614zm1-6.44a.306.306%200%2001.415-.287.302.302%200%2001.2.288.306.306%200%2001-.31.307.303.303%200%2001-.304-.308zm3.11%201.596c-.2.081-.399.151-.59.16a1.245%201.245%200%2001-.798-.254c-.274-.23-.47-.358-.552-.758a1.73%201.73%200%2001.016-.588c.07-.327-.008-.537-.239-.727-.187-.156-.426-.199-.688-.199a.559.559%200%2001-.254-.078c-.11-.054-.2-.19-.114-.358.028-.054.16-.186.192-.21.356-.202.767-.136%201.146.016.352.144.618.408%201.001.782.391.451.462.576.685.914.176.265.336.537.445.848.067.195-.019.354-.25.452z%22%20fill%3D%22%23FFFFFF%22/%3E%3C/svg%3E",
-  grok: "data:image/svg+xml,%3Csvg%20viewBox%3D%220%200%2024%2024%22%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%3E%3Cpath%20d%3D%22M9.27%2015.29l7.978-5.897c.391-.29.95-.177%201.137.272.98%202.369.542%205.215-1.41%207.169-1.951%201.954-4.667%202.382-7.149%201.406l-2.711%201.257c3.889%202.661%208.611%202.003%2011.562-.953%202.341-2.344%203.066-5.539%202.388-8.42l.006.007c-.983-4.232.242-5.924%202.75-9.383.06-.082.12-.164.179-.248l-3.301%203.305v-.01L9.267%2015.292M7.623%2016.723c-2.792-2.67-2.31-6.801.071-9.184%201.761-1.763%204.647-2.483%207.166-1.425l2.705-1.25a7.808%207.808%200%2000-1.829-1A8.975%208.975%200%20005.984%205.83c-2.533%202.536-3.33%206.436-1.962%209.764%201.022%202.487-.653%204.246-2.34%206.022-.599.63-1.199%201.259-1.682%201.925l7.62-6.815%22%20fill%3D%22%23FFFFFF%22/%3E%3C/svg%3E"
-};
-
-// ── 服务平台定义 ──
+// 配置、HTTP 与指标归一化。所有余额/配额只来自上游，不生成演示数据。
 const PROVIDER_METAS = {
-  codex2api:   { title: "Codex2API", logo: PROVIDER_LOGOS.codex2api, defaultPort: 2004 },
-  cliproxyapi: { title: "CLIProxy", logo: PROVIDER_LOGOS.cliproxyapi, defaultPort: 8317 },
-  axonhub:     { title: "AxonHub", logo: PROVIDER_LOGOS.axonhub, defaultPort: 8090 },
-  sub2api:     { title: "Sub2API", logo: PROVIDER_LOGOS.sub2api, defaultUrl: "https://your-sub2api-domain.com" },
-  newapi:      { title: "New API", logo: PROVIDER_LOGOS.newapi, defaultUrl: "https://your-newapi-domain.com" },
-  deepseek:    { title: "DeepSeek", logo: PROVIDER_LOGOS.deepseek, defaultUrl: "https://api.deepseek.com" },
-  agy:         { title: "Agy Tools", logo: PROVIDER_LOGOS.agy, defaultPort: 8088 },
+  cliproxyapi: { title: "CLIProxyAPI", logo: PROVIDER_LOGOS.cliproxyapi },
+  codex2api: { title: "Codex2API", logo: PROVIDER_LOGOS.codex2api },
+  axonhub: { title: "AxonHub", logo: PROVIDER_LOGOS.axonhub },
+  sub2api: { title: "Sub2API", logo: PROVIDER_LOGOS.sub2api },
+  newapi: { title: "New API", logo: PROVIDER_LOGOS.newapi },
+  deepseek: { title: "DeepSeek", logo: PROVIDER_LOGOS.deepseek },
+  agy: { title: "Agy Tools", logo: PROVIDER_LOGOS.agy },
 };
 
-// ── HIG 磨砂玻璃与高对比度色彩 ──
-const C = {
-  textPrimary: { light: "#151515", dark: "#FFFFFF" },
-  textSecondary: { light: "#6E6E73", dark: "#98989D" },
-  textTertiary: { light: "#8E8E93", dark: "#636366" },
+function envText(env, ...keys) {
+  for (const key of keys) {
+    if (env[key] !== undefined && env[key] !== null && String(env[key]).trim()) return String(env[key]).trim();
+  }
+  return "";
+}
 
-  widgetBg: { light: "#FFFFFF", dark: "#151515" },
-  cardBg: { light: "rgba(0, 0, 0, 0.04)", dark: "rgba(255, 255, 255, 0.08)" },
-  cardBorder: { light: "rgba(0, 0, 0, 0.06)", dark: "rgba(255, 255, 255, 0.08)" },
+function normalizeProvider(value) {
+  const key = String(value || "CLIProxyAPI").trim().toLowerCase().replace(/[\s_-]+/g, "");
+  return ({ cliproxy: "cliproxyapi", agytools: "agy" })[key] || key;
+}
+
+function readConfig(ctx) {
+  const env = ctx.env || {};
+  const provider = normalizeProvider(envText(env, "PROVIDER", "provider"));
+  if (!PROVIDER_METAS[provider]) throw new Error("不支持的平台，请在 PROVIDER 中选择服务平台");
+  const rawUrl = envText(env, "SERVER_URL", "server_url") || (provider === "deepseek" ? "https://api.deepseek.com" : "");
+  if (!rawUrl) throw new Error("请填写 SERVER_URL（手机可访问的服务地址，不是服务器自身的 localhost）");
+  // 不自动猜端口，不向另一个 origin 回退，也不接受 URL 内嵌凭据。
+  if (/[\\\u0000-\u0020]/.test(rawUrl)) throw new Error("SERVER_URL 不能包含空白、反斜杠或控制字符");
+  if (!/^https?:\/\/[^\s/?#@]+(?::\d+)?(?:\/[^\s?#]*)?$/i.test(rawUrl)) throw new Error("SERVER_URL 必须是 http(s) 地址，不能包含账号密码、query 或 fragment");
+  let baseUrl = rawUrl.replace(/\/+$/, "");
+  const suffixes = {
+    cliproxyapi: /\/v(?:0|8)\/management$/i,
+    codex2api: /\/api\/admin$/i,
+    axonhub: /\/admin(?:\/graphql)?$/i,
+    sub2api: /\/(?:api\/v1|v1)$/i,
+    newapi: /\/(?:api|v1)$/i,
+    deepseek: /\/v1$/i,
+  };
+  if (suffixes[provider]) baseUrl = baseUrl.replace(suffixes[provider], "");
+  const apiKey = envText(env, "API_KEY", "api_key", "MANAGEMENT_KEY", "ADMIN_KEY").replace(/^Bearer\s+/i, "");
+  const modeValue = envText(env, "AUTH_MODE").toLowerCase();
+  const mode = ({ "api key": "api_key", "api-key": "api_key", "user token": "user", "admin key": "admin" })[modeValue] || modeValue || "auto";
+  if (!["auto", "admin", "api_key", "user"].includes(mode)) throw new Error("AUTH_MODE 只能是 Auto / Admin / API Key / User");
+  const email = envText(env, "EMAIL", "email");
+  const password = String(env.PASSWORD ?? env.password ?? "");
+  const userId = envText(env, "USER_ID");
+  const maskAccount = envText(env, "MASK_ACCOUNT", "MaskAccount", "mask_account").toLowerCase() === "true";
+  return { provider, baseUrl, apiKey, mode, email, password, userId, maskAccount, filter: envText(env, "FILTER") };
+}
+
+function numberOrNull(value) {
+  if (value === null || value === undefined || value === "" || typeof value === "boolean" || (typeof value === "string" && !value.trim())) return null;
+  const n = Number(value);
+  return Number.isFinite(n) ? n : null;
+}
+
+function timestampMs(value) {
+  if (value === null || value === undefined || value === "") return null;
+  const numeric = numberOrNull(value);
+  const ms = numeric !== null ? (numeric < 1e12 ? numeric * 1000 : numeric) : Date.parse(value);
+  return Number.isFinite(ms) && ms > 0 ? ms : null;
+}
+
+function percentMetric(label, used, resetAt) {
+  const n = numberOrNull(used);
+  return { label, kind: "percent", remaining: n === null || n < 0 ? null : Math.max(0, Math.min(1, 1 - n / 100)), used: n, resetAt: timestampMs(resetAt) };
+}
+
+function balanceMetric(label, remaining, currency, total) {
+  return { label, kind: currency ? "balance" : "number", remaining: numberOrNull(remaining), currency: currency || "", total: numberOrNull(total) };
+}
+
+function accountRecord(raw = {}) {
+  return { id: String(raw.id ?? raw.name ?? "account"), name: String(raw.name || raw.email || "账号"), email: String(raw.email || ""), provider: String(raw.provider || ""), plan: String(raw.plan || ""), status: raw.status || "unknown", statusLabel: raw.statusLabel || "", metrics: raw.metrics || [], error: raw.error || null };
+}
+
+function statusFrom(value, disabled, unavailable) {
+  const s = String(value || "").toLowerCase();
+  if (disabled || ["disabled", "inactive", "banned"].includes(s)) return "disabled";
+  if (unavailable || ["error", "abnormal", "expired", "unauthorized", "cooldown", "rate_limited", "quota_exhausted"].includes(s)) return "error";
+  if (["ready", "active", "enabled", "healthy", "ok"].includes(s)) return "ready";
+  return "unknown";
+}
+
+function httpError(status) {
+  const hints = { 400: "请求参数不匹配", 401: "凭据无效或已过期", 403: "权限不足或远程管理未开放", 404: "接口不存在，请核对服务类型和地址", 429: "请求过于频繁，请稍后刷新" };
+  const error = new Error(`HTTP ${status} · ${hints[status] || "服务返回异常"}`);
+  error.status = status;
+  return error;
+}
+
+async function requestJSON(ctx, url, options = {}) {
+  let response;
+  try {
+    const { method = "GET", ...rest } = options;
+    response = await ctx.http[method.toLowerCase()](url, { timeout: 5000, redirect: "error", credentials: "omit", ...rest });
+  } catch (_) {
+    throw new Error("连接失败或超时，请检查地址、网络和 TLS 证书");
+  }
+  if (!response || response.status < 200 || response.status >= 300) throw httpError(response?.status || 0);
+  try { return await response.json(); } catch (_) { throw new Error("接口返回的不是有效 JSON，请检查服务地址"); }
+}
+
+function authHeaders(key, extra = {}) {
+  return { Accept: "application/json", ...(key ? { Authorization: `Bearer ${key}` } : {}), ...extra };
+}
+
+function requireKey(config) {
+  if (!config.apiKey) throw new Error("请填写 API_KEY，凭据类型以当前平台说明为准");
+}
+
+function filterAccounts(accounts, filter) {
+  if (!filter) return accounts;
+  const terms = filter.split(/[,，]/).map(s => s.trim().toLowerCase()).filter(Boolean);
+  return accounts.flatMap((acc, index) => {
+    const identity = [acc.name, acc.email, acc.provider, acc.plan].join(" ").toLowerCase();
+    if (terms.some(term => /^\d+$/.test(term) ? index + 1 === Number(term) : identity.includes(term))) return [acc];
+    const metrics = (acc.metrics || []).filter(metric => terms.some(term => !/^\d+$/.test(term) && String(metric.label || "").toLowerCase().includes(term)));
+    return metrics.length ? [{ ...acc, metrics }] : [];
+  });
+}
+
+// 非加密指纹只用于缓存隔离，不用于鉴权；不持久化密钥、密码、请求头或原始 API 响应。
+function cacheFingerprint(text) {
+  let a = 0x811c9dc5, b = 0x9e3779b9;
+  for (let i = 0; i < text.length; i++) {
+    a = Math.imul(a ^ text.charCodeAt(i), 16777619);
+    b = Math.imul(b ^ text.charCodeAt(i), 2246822519);
+  }
+  return `${(a >>> 0).toString(16)}${(b >>> 0).toString(16)}`;
+}
+
+function redactSnapshot(snapshot, config) {
+  const secrets = [config.apiKey, config.password].filter(Boolean).sort((a, b) => b.length - a.length);
+  return JSON.parse(JSON.stringify(snapshot, (key, value) => {
+    if (typeof value !== "string") return value;
+    let text = value;
+    secrets.forEach(secret => { text = text.split(secret).join("[REDACTED]"); });
+    return text.replace(/Bearer\s+[^\s"<>]+/gi, "Bearer [REDACTED]");
+  }));
+}
+
+function cacheKey(config) {
+  return `ai_usage_v2_${cacheFingerprint(JSON.stringify([config.provider, config.baseUrl, config.mode, config.email, config.userId, config.apiKey, config.password, config.filter]))}`;
+}
+
+
+// CLIProxyAPI official management API adapter.
+// v0 is tried first for existing deployments; v8 is used only after a 404.
+
+const CLIPROXY_CODEX_USAGE_URL = "https://chatgpt.com/backend-api/wham/usage";
+const CLIPROXY_CODEX_HEADERS = {
+  Authorization: "Bearer $TOKEN$",
+  "Content-Type": "application/json",
+  "User-Agent": "codex-tui/0.149.1 (Mac OS 26.5.2; arm64) iTerm.app/3.6.11 (codex-tui; 0.149.1)",
 };
+const CLIPROXY_QUOTA_CONCURRENCY = 6;
+const CLIPROXY_MAX_QUOTA_ACCOUNTS = 6;
+const CLIPROXY_UNKNOWN_METRIC = "配额（未知）";
 
-// ── 格式化工具函数 ──
-function formatTimeOnly(ts) {
-  if (!ts || isNaN(ts)) return "--:--";
-  const d = new Date(ts);
-  const h = d.getHours().toString().padStart(2, "0");
-  const min = d.getMinutes().toString().padStart(2, "0");
-  return `${h}:${min}`;
+function cliproxyManagementHeaders(config) {
+  return authHeaders("", { "X-Management-Key": config.apiKey });
 }
 
-function formatShortDate(ts) {
-  if (!ts || isNaN(ts)) return "--/--";
-  const d = new Date(ts);
-  const m = (d.getMonth() + 1).toString().padStart(2, "0");
-  const day = d.getDate().toString().padStart(2, "0");
-  const h = d.getHours().toString().padStart(2, "0");
-  const min = d.getMinutes().toString().padStart(2, "0");
-  return `${m}-${day} ${h}:${min}`;
+function cliproxyErrorMessage(error) {
+  return String(error?.message || "CLIProxyAPI 请求失败").replace(/Bearer\s+[^\s"<>]+/gi, "Bearer [REDACTED]");
 }
 
-function formatCountdown(resetAtMs, fallback = 1.0) {
-  if (!resetAtMs || isNaN(resetAtMs)) {
-    return fallback >= 0.99 ? "配额充沛" : "恢复中";
-  }
-  const diffMs = resetAtMs - Date.now();
-  if (diffMs <= 0) return "已重置";
-  const mins = Math.floor(diffMs / 60000);
-  const h = Math.floor(mins / 60);
-  const m = mins % 60;
-  if (h > 0) return `${h}h ${m}m`;
-  return `${m}m`;
-}
-
-function getQuotaColor(fraction) {
-  if (fraction >= 0.4) return "#34C759";
-  if (fraction >= 0.15) return "#FF9500";
-  return "#FF3B30";
-}
-
-function maskEmail(str, enabled) {
-  if (!enabled || !str) return str;
-  if (!str.includes("@")) {
-    if (str.length <= 4) return str;
-    return `${str.slice(0, 2)}***${str.slice(-2)}`;
-  }
-  const atIdx = str.indexOf("@");
-  const name = str.slice(0, atIdx);
-  const domain = str.slice(atIdx);
-  if (name.length <= 1) return `${name}***${domain}`;
-  if (name.length <= 3) return `${name[0]}***${domain}`;
-  if (name.length <= 6) return `${name.slice(0, 1)}***${name.slice(-1)}${domain}`;
-  return `${name.slice(0, 2)}***${name.slice(-2)}${domain}`;
-}
-
-function createProgressBarSvg(fraction, color, height = 6) {
-  const percent = Math.max(0, Math.min(100, Math.round(fraction * 100)));
-  const svg = `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 ${height}' preserveAspectRatio='none'>
-    <rect x='0' y='0' width='100' height='${height}' rx='${height / 2}' fill='rgba(120,120,128,0.18)'/>
-    <rect x='0' y='0' width='${percent}' height='${height}' rx='${height / 2}' fill='${color}'/>
-  </svg>`.replace(/\s+/g, " ");
-  return `data:image/svg+xml,${encodeURIComponent(svg)}`;
-}
-
-function getBadgeConfig(provider, name) {
-  const p = (provider || "").toUpperCase();
-  const n = (name || "").toUpperCase();
-
-  if (n.includes("ANTIGRAVITY") || p.includes("ANTIGRAVITY")) {
-    return { text: "ANTIGRAVITY", svg: BRAND_ICONS.antigravity, bg: "#1A73E8" };
-  }
-  if (n.includes("GOOGLE") || p.includes("GEMINI") || n.includes("GEMINI")) {
-    return { text: "GEMINI", svg: BRAND_ICONS.gemini, bg: "#1A73E8" };
-  }
-  if (n.includes("CLAUDE") || p.includes("CLAUDE")) {
-    return { text: "CLAUDE", svg: BRAND_ICONS.claude, bg: "#D97706" };
-  }
-  if (n.includes("DEEPSEEK") || p.includes("DEEPSEEK")) {
-    return { text: "DEEPSEEK", svg: BRAND_ICONS.deepseek, bg: "#4D6BFE" };
-  }
-  if (n.includes("GROK") || p.includes("GROK")) {
-    return { text: "GROK", svg: BRAND_ICONS.grok, bg: "#151515" };
-  }
-  if (n.includes("PLUS") || n.includes("CODEX") || p.includes("OPENAI") || n.includes("GPT") || p.includes("PRO")) {
-    return { text: "OPENAI", svg: BRAND_ICONS.openai, bg: "#10A37F" };
-  }
-  return { text: "AI", svg: BRAND_ICONS.cliproxy, bg: "#007AFF" };
-}
-
-function createMicroBadge(badge) {
-  return {
-    type: "stack",
-    direction: "row",
-    alignItems: "center",
-    gap: 3,
-    padding: [2, 5],
-    backgroundColor: badge.bg,
-    borderRadius: 5,
-    children: [
-      { type: "image", src: badge.svg, width: 9, height: 9 },
-      { type: "text", text: badge.text, font: { size: 8.5, weight: "heavy" }, textColor: "#FFFFFF" },
-    ],
-  };
-}
-
-async function fetchWithTimeout(ctx, url, options = {}, timeoutMs = 5000) {
+async function cliproxyManagementJSON(ctx, config, v0Path, v8Path) {
+  const headers = cliproxyManagementHeaders(config);
   try {
-    return await ctx.http.get(url, { ...options, timeout: timeoutMs });
-  } catch (e) {
-    return null;
+    return await requestJSON(ctx, `${config.baseUrl}/v0/management${v0Path}`, { headers });
+  } catch (error) {
+    // A credential/auth failure is not a version probe. Never retry 401/403.
+    if (error?.status !== 404) throw error;
+    return requestJSON(ctx, `${config.baseUrl}/v8/management${v8Path}`, { headers });
   }
 }
 
-async function fetchPostWithTimeout(ctx, url, body, options = {}, timeoutMs = 5000) {
+async function cliproxyGenericJSON(ctx, config, v0Path, v8Path, body) {
+  const headers = cliproxyManagementHeaders(config);
+  let response;
   try {
-    return await ctx.http.post(url, { ...options, body, timeout: timeoutMs });
-  } catch (e) {
-    return null;
+    response = await ctx.http.post(`${config.baseUrl}/v0/management${v0Path}`, {
+      timeout: 4000, redirect: "error", credentials: "omit", headers, body,
+    });
+  } catch (_) {
+    throw new Error("连接失败或超时，请检查地址、网络和 TLS 证书");
   }
-}
-
-// ── 账号模型归一化解析器 ──
-function parseAccount(acc) {
-  const name = acc.name || `account-${acc.id}`;
-  const email = acc.email || name;
-  const planType = (acc.plan_type || acc.plan || "pro").toLowerCase();
-  const status = acc.status || "ready";
-  const healthTier = acc.health_tier || "healthy";
-
-  // 5H Window
-  const has5h = acc.usage_percent_5h !== undefined && acc.usage_percent_5h !== null && !isNaN(Number(acc.usage_percent_5h));
-  const usage5h = has5h ? Number(acc.usage_percent_5h) : 0;
-  const remainingFraction5h = has5h ? Math.max(0, Math.min(1, (100 - usage5h) / 100)) : 1.0;
-  const reset5hAtMs = acc.reset_5h_at ? new Date(acc.reset_5h_at).getTime() : null;
-  const reset5hTimeStr = reset5hAtMs ? formatTimeOnly(reset5hAtMs) : "--:--";
-  const reset5hCountdownStr = formatCountdown(reset5hAtMs, remainingFraction5h);
-
-  // 7D Window
-  const has7d = acc.usage_percent_7d !== undefined && acc.usage_percent_7d !== null && !isNaN(Number(acc.usage_percent_7d));
-  const usage7d = has7d ? Number(acc.usage_percent_7d) : 0;
-  const remainingFraction7d = has7d ? Math.max(0, Math.min(1, (100 - usage7d) / 100)) : 1.0;
-  const reset7dAtMs = acc.reset_7d_at ? new Date(acc.reset_7d_at).getTime() : null;
-  const reset7dTimeStr = reset7dAtMs ? formatShortDate(reset7dAtMs) : "--/--";
-  const reset7dCountdownStr = formatCountdown(reset7dAtMs, remainingFraction7d);
-
-  // 主窗口：优先周配额 7D
-  const isDual = has7d || has5h;
-  const primaryRemainingFraction = has7d ? remainingFraction7d : remainingFraction5h;
-  const statusColor = getQuotaColor(primaryRemainingFraction);
-
-  return {
-    id: acc.id || name,
-    name,
-    email,
-    planType,
-    status,
-    healthTier,
-    provider: (acc.channel || "codex").toUpperCase(),
-    has5h,
-    usagePercent5h: usage5h,
-    remainingFraction5h,
-    reset5hAtMs,
-    reset5hTimeStr,
-    reset5hCountdownStr,
-    has7d,
-    usagePercent7d: usage7d,
-    remainingFraction7d,
-    reset7dAtMs,
-    reset7dTimeStr,
-    reset7dCountdownStr,
-    primaryRemainingFraction,
-    statusColor,
-  };
-}
-
-// ── 1. Codex2API 数据抓取 (支持 2004 与 8080 自适应探测) ──
-async function fetchCodex2APIData(ctx, baseUrl, apiKey) {
-  const cleanKey = (apiKey || "").trim().replace(/^Bearer\s+/i, "");
-  const headers = { "Content-Type": "application/json", Accept: "application/json" };
-  if (cleanKey) {
-    headers["Authorization"] = `Bearer ${cleanKey}`;
-    headers["X-Admin-Key"] = cleanKey;
-  }
-
-  // 候选 URL 探测列表
-  const candidateUrls = [baseUrl];
-  if (baseUrl.includes("127.0.0.1") || baseUrl.includes("localhost")) {
-    if (!candidateUrls.includes("http://127.0.0.1:2004")) candidateUrls.push("http://127.0.0.1:2004");
-    if (!candidateUrls.includes("http://127.0.0.1:8080")) candidateUrls.push("http://127.0.0.1:8080");
-  }
-
-  let lastError = null;
-
-  for (const bUrl of candidateUrls) {
-    // 1. 尝试 /api/admin/accounts
+  if (response?.status === 404) {
     try {
-      const accFetch = await fetchWithTimeout(ctx, `${bUrl}/api/admin/accounts`, { headers }, 4000);
-      if (accFetch && accFetch.status === 200) {
-        const accRes = await accFetch.json().catch(() => null);
-        let raw = [];
-        if (Array.isArray(accRes)) raw = accRes;
-        else if (accRes && Array.isArray(accRes.accounts)) raw = accRes.accounts;
-        else if (accRes && Array.isArray(accRes.data)) raw = accRes.data;
-
-        if (raw.length > 0) {
-          return { accounts: raw.map(parseAccount), error: null };
-        }
-      } else if (accFetch) {
-        lastError = accFetch.status === 401 ? "401 管理密钥无效或缺失" : `HTTP ${accFetch.status}`;
-      }
-    } catch (e) {
-      lastError = "连接失败";
+      response = await ctx.http.post(`${config.baseUrl}/v8/management${v8Path}`, {
+        timeout: 4000, redirect: "error", credentials: "omit", headers, body,
+      });
+    } catch (_) {
+      throw new Error("连接失败或超时，请检查地址、网络和 TLS 证书");
     }
-
-    // 2. 尝试回退至 /api/key-usage/summary
-    try {
-      const keyFetch = await fetchWithTimeout(ctx, `${bUrl}/api/key-usage/summary`, { headers }, 4000);
-      if (keyFetch && keyFetch.status === 200) {
-        const data = await keyFetch.json().catch(() => null);
-        if (data && (data.key || data.usage)) {
-          const keyRaw = data.key || {};
-          const usageRaw = data.usage || {};
-          const windowsRaw = usageRaw.windows || {};
-          const limit = Number(keyRaw.quota_limit) || 0;
-          const used = Number(keyRaw.quota_used) || 0;
-          const remFrac = limit > 0 ? Math.max(0, (limit - used) / limit) : 1.0;
-
-          return {
-            accounts: [{
-              id: "key-quota",
-              name: String(keyRaw.name || "API Key"),
-              email: String(keyRaw.name || "API Key"),
-              planType: limit > 0 ? `$${limit.toFixed(2)}` : "ACTIVE",
-              status: "ready",
-              healthTier: "healthy",
-              provider: "CODEX",
-              has5h: Boolean(windowsRaw.last_5h),
-              usagePercent5h: 0,
-              remainingFraction5h: 1.0,
-              reset5hTimeStr: "--:--",
-              reset5hCountdownStr: "滚动时窗",
-              has7d: limit > 0,
-              usagePercent7d: Math.round((1 - remFrac) * 100),
-              remainingFraction7d: remFrac,
-              reset7dTimeStr: keyRaw.expires_at ? formatShortDate(new Date(keyRaw.expires_at).getTime()) : "--/--",
-              reset7dCountdownStr: "配额充沛",
-              primaryRemainingFraction: remFrac,
-              statusColor: getQuotaColor(remFrac),
-            }],
-            error: null,
-          };
-        }
-      }
-    } catch (e) {}
   }
-
-  return { accounts: [], error: lastError || "无法连接到 Codex2API (请检查端口与密钥)" };
+  if (!response || response.status < 200 || response.status >= 300) throw httpError(response?.status || 0);
+  try { return await response.json(); } catch (_) { throw new Error("接口返回的不是有效 JSON，请检查服务地址"); }
 }
 
-// ── 2. CLIProxy 数据抓取 ──
-async function fetchCLIProxyData(ctx, baseUrl, apiKey) {
-  const cleanKey = (apiKey || "").trim().replace(/^Bearer\s+/i, "");
-  const headers = { "Content-Type": "application/json", Accept: "application/json" };
-  if (cleanKey) {
-    headers["Authorization"] = `Bearer ${cleanKey}`;
-    headers["X-Management-Key"] = cleanKey;
+function cliproxyJSONBody(value) {
+  if (value && typeof value === "object") return value;
+  if (typeof value === "string") {
+    try {
+      const parsed = JSON.parse(value);
+      return parsed && typeof parsed === "object" ? parsed : null;
+    } catch (_) { return null; }
+  }
+  return null;
+}
+
+function cliproxyUnknownMetric(detail = "该账号类型暂无已适配配额接口") {
+  const metric = percentMetric(CLIPROXY_UNKNOWN_METRIC, null, null);
+  metric.detail = detail;
+  return metric;
+}
+
+function cliproxyAuthRecord(raw) {
+  const type = String(raw?.type || raw?.provider || "").trim();
+  const email = String(raw?.email || "").trim();
+  const claims = raw?.id_token && typeof raw.id_token === "object" ? raw.id_token : {};
+  const plan = String(raw?.plan || raw?.plan_type || claims.plan_type || "").trim();
+  const statusValue = raw?.status || (raw?.disabled ? "disabled" : raw?.unavailable ? "error" : "unknown");
+  const unavailable = raw?.unavailable === true || ["error", "abnormal", "expired", "unauthorized", "cooldown", "rate_limited"].includes(String(statusValue).toLowerCase());
+  const id = raw?.auth_index ?? raw?.id ?? raw?.name ?? "account";
+  return {
+    raw,
+    record: accountRecord({
+      id,
+      name: raw?.name || email || raw?.label || raw?.account || "账号",
+      email,
+      provider: type,
+      plan,
+      status: statusFrom(statusValue, raw?.disabled === true, unavailable),
+      statusLabel: String(raw?.status_message || raw?.status || ""),
+      metrics: [],
+    }),
+  };
+}
+
+function cliproxyCodexWindowMetrics(payload) {
+  if (!payload || typeof payload !== "object") return [];
+  const windows = [];
+  const add = (label, window) => {
+    if (!window || typeof window !== "object") return;
+    const rawUsed = window.used_percent ?? window.usedPercent;
+    const used = numberOrNull(rawUsed);
+    const seconds = numberOrNull(window.limit_window_seconds ?? window.limitWindowSeconds);
+    let windowLabel = label;
+    if (seconds !== null && seconds >= 28 * 86400 && seconds <= 31 * 86400) windowLabel = "月窗配额";
+    else if (seconds !== null && seconds >= 6 * 86400 && seconds <= 8 * 86400) windowLabel = "7D 配额";
+    else if (seconds !== null && seconds >= 4 * 3600 && seconds <= 6 * 3600) windowLabel = "5H 配额";
+    const explicitReset = timestampMs(window.reset_at ?? window.resetAt);
+    const afterSeconds = numberOrNull(window.reset_after_seconds ?? window.resetAfterSeconds);
+    const resetAt = explicitReset ?? (afterSeconds !== null && afterSeconds >= 0 ? Date.now() + afterSeconds * 1000 : null);
+    windows.push(percentMetric(label === "Codex 配额" ? windowLabel : `${label} · ${windowLabel}`, used, resetAt));
+  };
+  const addRateLimit = (label, rate) => {
+    if (!rate || typeof rate !== "object") return;
+    const primary = rate.primary_window ?? rate.primaryWindow;
+    const secondary = rate.secondary_window ?? rate.secondaryWindow;
+    add(label, primary);
+    add(label, secondary);
+  };
+  addRateLimit("Codex 配额", payload.rate_limit ?? payload.rateLimit);
+  addRateLimit("Codex Code Review 配额", payload.code_review_rate_limit ?? payload.codeReviewRateLimit);
+  const additional = payload.additional_rate_limits ?? payload.additionalRateLimits;
+  if (Array.isArray(additional)) {
+    for (const item of additional) {
+      const name = String(item?.limit_name ?? item?.limitName ?? item?.metered_feature ?? item?.meteredFeature ?? "附加配额");
+      addRateLimit(name, item?.rate_limit ?? item?.rateLimit);
+    }
+  }
+  return windows;
+}
+
+function cliproxyHasCodex(raw) {
+  return String(raw?.type || raw?.provider || "").trim().toLowerCase() === "codex" && Boolean(raw?.auth_index);
+}
+
+async function cliproxyFetchCodexQuota(ctx, config, raw) {
+  const authIndex = String(raw.auth_index);
+  const result = await cliproxyGenericJSON(ctx, config, "/api-call", "/requests/api-call", {
+    auth_index: authIndex,
+    method: "GET",
+    url: CLIPROXY_CODEX_USAGE_URL,
+    header: {
+      ...CLIPROXY_CODEX_HEADERS,
+      ...((raw.chatgpt_account_id || raw.metadata?.chatgpt_account_id || raw.attributes?.chatgpt_account_id || raw.id_token?.chatgpt_account_id) ? { "Chatgpt-Account-Id": String(raw.chatgpt_account_id || raw.metadata?.chatgpt_account_id || raw.attributes?.chatgpt_account_id || raw.id_token?.chatgpt_account_id) } : {}),
+    },
+  });
+  const statusCode = numberOrNull(result?.status_code);
+  if (statusCode === null || statusCode < 200 || statusCode >= 300) {
+    const error = new Error(`Codex 配额请求失败（上游 HTTP ${statusCode ?? "unknown"}）`);
+    error.status = statusCode;
+    throw error;
+  }
+  const payload = cliproxyJSONBody(result.body);
+  if (!payload) throw new Error("Codex 配额响应不是有效 JSON");
+  const metrics = cliproxyCodexWindowMetrics(payload);
+  return metrics.length ? metrics : [cliproxyUnknownMetric("Codex 配额响应未包含可识别的 usage window")];
+}
+
+function cliproxySupportsQuota(raw) {
+  return ["codex", "claude"].includes(String(raw?.type || raw?.provider || "").toLowerCase()) && Boolean(raw?.auth_index);
+}
+
+async function cliproxyFetchQuota(ctx, config, raw) {
+  if (cliproxyHasCodex(raw)) return cliproxyFetchCodexQuota(ctx, config, raw);
+  const result = await cliproxyGenericJSON(ctx, config, "/api-call", "/requests/api-call", {
+    auth_index: String(raw.auth_index), method: "GET", url: "https://api.anthropic.com/api/oauth/usage",
+    header: { Authorization: "Bearer $TOKEN$", "Content-Type": "application/json", Accept: "application/json", "anthropic-beta": "oauth-2025-04-20", "User-Agent": "claude-cli/2.1.280 (external, cli)" },
+  });
+  const status = numberOrNull(result?.status_code);
+  if (status === null || status < 200 || status >= 300) throw new Error(`Claude 配额请求失败（上游 HTTP ${status ?? "unknown"}）`);
+  const data = cliproxyJSONBody(result.body);
+  if (!data) throw new Error("Claude 配额响应不是有效 JSON");
+  const metrics = [];
+  for (const [key,label] of [["five_hour","5H 配额"],["seven_day","7D 配额"],["seven_day_opus","Opus 7D"],["seven_day_sonnet","Sonnet 7D"]]) {
+    if (data[key] && typeof data[key] === "object") metrics.push(percentMetric(label, data[key].utilization, data[key].resets_at));
+  }
+  return metrics.length ? metrics : [cliproxyUnknownMetric("Claude 未返回可识别窗口")];
+}
+
+async function cliproxyMapWithLimit(items, limit, worker) {
+  const results = new Array(items.length);
+  let cursor = 0;
+  const runners = Array.from({ length: Math.min(limit, items.length) }, async () => {
+    while (true) {
+      const index = cursor++;
+      if (index >= items.length) return;
+      try { results[index] = await worker(items[index], index); }
+      catch (error) { results[index] = { error }; }
+    }
+  });
+  await Promise.all(runners);
+  return results;
+}
+
+async function fetchCLIProxyData(ctx, config) {
+  requireKey(config);
+  if (!["auto", "admin"].includes(config.mode)) throw new Error("CLIProxyAPI 请使用 Auto 或 Admin 模式的管理密钥");
+
+  const response = await cliproxyManagementJSON(ctx, config, "/auth-files", "/credentials");
+  if (!Array.isArray(response?.files)) throw new Error("CLIProxyAPI 账号结构不匹配（缺少 files）");
+
+  const mapped = response.files.map(cliproxyAuthRecord);
+  const selected = new Set(filterAccounts(mapped.map(item => ({ ...item.record, metrics: cliproxyHasCodex(item.raw) ? [{label: "Codex 配额 5H 7D 月窗 Code Review"}] : String(item.raw?.type || item.raw?.provider || "").trim().toLowerCase() === "claude" ? [{label: "Claude 配额 5H 7D Opus Sonnet"}] : [] })), config.filter).map(item => item.id));
+  const quotaTargets = mapped.filter(item => (!config.filter || selected.has(item.record.id)) && cliproxySupportsQuota(item.raw) && item.record.status !== "disabled").slice(0, CLIPROXY_MAX_QUOTA_ACCOUNTS);
+  const quotaResults = await cliproxyMapWithLimit(quotaTargets, CLIPROXY_QUOTA_CONCURRENCY, item => cliproxyFetchQuota(ctx, config, item.raw));
+  const quotaById = new Map(quotaTargets.map((item, index) => [String(item.raw.auth_index), quotaResults[index]]));
+
+  return mapped.map(item => {
+    const key = String(item.raw?.auth_index ?? "");
+    if (cliproxySupportsQuota(item.raw) && quotaById.has(key)) {
+      const result = quotaById.get(key);
+      if (result?.error) {
+        item.record.error = cliproxyErrorMessage(result.error);
+        item.record.metrics = [cliproxyUnknownMetric("配额读取失败；未猜测额度")];
+      } else {
+        item.record.metrics = result;
+      }
+    } else {
+      item.record.metrics = [cliproxyUnknownMetric(cliproxySupportsQuota(item.raw) ? (item.record.status === "disabled" ? "已禁用，未请求配额" : "本次最多读取 6 个账号配额；请用 FILTER 选择关注账号") : "该账号类型暂无已适配配额接口")];
+    }
+    delete item.raw;
+    return accountRecord(item.record);
+  });
+}
+
+
+// Codex2API: james-6-23/codex2api docs/API.md, admin/key_usage_public.go.
+async function fetchCodex2APIData(ctx, config) {
+  requireKey(config);
+  const mode = config.mode === "auto" ? "admin" : config.mode;
+  if (!["admin", "api_key"].includes(mode)) throw new Error("Codex2API 请选 Admin（管理密钥）或 API Key（公开自助用量）");
+  if (mode === "admin") {
+    const response = await requestJSON(ctx, `${config.baseUrl}/api/admin/accounts`, { headers: authHeaders("", { "X-Admin-Key": config.apiKey }) });
+    if (!Array.isArray(response?.accounts)) throw new Error("Codex2API 账号结构不匹配（缺少 accounts）");
+    return response.accounts.map(raw => accountRecord({
+      id: raw.id, name: raw.name, email: raw.email, provider: raw.channel || "Codex", plan: raw.plan_type,
+      status: statusFrom(raw.status, raw.enabled === false, ["banned", "risky"].includes(raw.health_tier)),
+      statusLabel: raw.health_tier ? String(raw.health_tier) : "",
+      metrics: [percentMetric("5H 配额", raw.usage_percent_5h, raw.reset_5h_at), percentMetric(raw.usage_window_7d_kind === "monthly" ? "月窗配额" : "7D 配额", raw.usage_percent_7d, raw.reset_7d_at)],
+    }));
+  }
+  const response = await requestJSON(ctx, `${config.baseUrl}/api/key-usage/summary`, { headers: authHeaders(config.apiKey) });
+  if (!response?.key || typeof response.key !== "object") throw new Error("Codex2API 公开用量结构不匹配；需在后台启用 API Key 自助用量页");
+  const key = response.key;
+  const limit = numberOrNull(key.quota_limit), used = numberOrNull(key.quota_used);
+  const metrics = [{ ...balanceMetric("Key 累计余额", limit !== null && limit > 0 && used !== null ? Math.max(0, limit - used) : null, "USD", limit > 0 ? limit : null), used, detail: limit === 0 ? "Key 未设累计额度上限" : "累计美元额度 · 非周配额" }];
+  if (Array.isArray(response.model_request_usage)) {
+    for (const rule of response.model_request_usage) {
+      const metric = balanceMetric(`${rule.model || "模型"} ${rule.window || "窗口"} 剩余次数`, rule.remaining, "", rule.limit);
+      metric.used = numberOrNull(rule.used);
+      metric.resetAt = timestampMs(rule.reset_at);
+      metric.detail = `请求次数${rule.timezone ? " · " + rule.timezone : ""}`;
+      metrics.push(metric);
+    }
+  }
+  return [accountRecord({ id: "codex2api-key", name: key.name || "API Key", provider: "Codex2API", status: statusFrom(key.status), statusLabel: key.status === "active" ? "已读取" : String(key.status || ""), metrics })];
+}
+
+
+// AxonHub official unstable GraphQL adapter.
+// Sources (looplj/axonhub, unstable):
+// - frontend/src/lib/api-client.ts (/admin/auth/signin)
+// - frontend/src/lib/auth-session.ts + frontend/src/gql/graphql.ts (/admin/graphql, Bearer JWT)
+// - internal/server/gql/axonhub.graphql (queryChannels, providerQuotaStatus, APIKeyQuota schema)
+// - internal/server/gql/ent.graphql (ProviderQuotaStatus fields)
+// Provider quota is read from providerQuotaStatus.quotaData._limits[].usageRatio.
+// periodQuota is deliberately ignored: the upstream code documents it as an estimate, not balance.
+
+const AXONHUB_GRAPHQL_QUERY = `
+  query WidgetProviderQuotas($input: QueryChannelInput!) {
+    queryChannels(input: $input) {
+      edges {
+        node {
+          id
+          name
+          type
+          providerQuotaStatus {
+            providerType
+            status
+            ready
+            nextResetAt
+            nextCheckAt
+            updatedAt
+            accountKey
+            quotaData
+          }
+        }
+        cursor
+      }
+      pageInfo {
+        hasNextPage
+        endCursor
+      }
+    }
+  }
+`;
+
+function axonhubGraphQLError(data) {
+  if (!data || !Array.isArray(data.errors) || !data.errors.length) return "";
+  return data.errors.map(error => String(error?.message || "GraphQL 请求失败")).join("；");
+}
+
+function axonhubObject(value) {
+  if (value && typeof value === "object") return value;
+  if (typeof value === "string") {
+    try {
+      const parsed = JSON.parse(value);
+      return parsed && typeof parsed === "object" ? parsed : null;
+    } catch (_) {
+      return null;
+    }
+  }
+  return null;
+}
+
+function axonhubLoginRequired(config) {
+  if (!config.email || !config.password) throw new Error("AxonHub User/Admin 模式需 EMAIL 与 PASSWORD，或填写已有 API_KEY / JWT");
+}
+
+async function axonhubGetToken(ctx, config, mode) {
+  if (config.apiKey) return config.apiKey;
+  if (mode === "api_key") requireKey(config);
+  axonhubLoginRequired(config);
+  const response = await requestJSON(ctx, `${config.baseUrl}/admin/auth/signin`, {
+    method: "POST",
+    headers: authHeaders("", { "Content-Type": "application/json" }),
+    body: { email: config.email, password: config.password },
+  });
+  if (!response || typeof response.token !== "string" || !response.token.trim()) {
+    throw new Error("AxonHub 登录失败：响应缺少顶层 token");
+  }
+  // Deliberately scoped to this invocation; never written to storage or returned.
+  return response.token.trim();
+}
+
+function axonhubStatus(value, ready) {
+  const status = String(value || "").toLowerCase();
+  if (["disabled", "inactive", "banned"].includes(status)) return "disabled";
+  if (["exhausted", "error", "failed"].includes(status)) return "error";
+  if (ready === true || ["available", "warning", "ready", "active", "ok"].includes(status)) return "ready";
+  return "unknown";
+}
+
+function axonhubStatusLabel(value, ready) {
+  const status = String(value || "").trim();
+  if (status) return status;
+  if (ready === true) return "ready";
+  return "unknown";
+}
+
+function axonhubLimitMetrics(quotaStatus, channelName) {
+  const quotaData = axonhubObject(quotaStatus?.quotaData);
+  // _limits and usageRatio are the official normalized quota fields. Do not
+  // interpret requestCount, totalTokens, cost, or periodQuota as a balance.
+  const limits = Array.isArray(quotaData?._limits) ? quotaData._limits : [];
+  return limits.map((limit, index) => {
+    const ratio = numberOrNull(limit?.usageRatio);
+    const validRatio = ratio !== null && ratio >= 0 && ratio <= 1 ? ratio : null;
+    const window = String(limit?.window || limit?.type || `窗口 ${index + 1}`);
+    const type = String(limit?.type || "");
+    const label = channelName ? `${channelName} · ${window} 配额` : `${window} 配额`;
+    const detailParts = [type, limit?.status, "AxonHub usageRatio"].filter(Boolean).map(String);
+    return {
+      label,
+      kind: "percent",
+      remaining: validRatio === null ? null : 1 - validRatio,
+      used: validRatio === null ? null : validRatio * 100,
+      resetAt: timestampMs(limit?.nextResetAt ?? quotaStatus?.nextResetAt),
+      detail: detailParts.join(" · "),
+    };
+  });
+}
+
+function axonhubAccountKey(channel, quotaStatus) {
+  const accountKey = String(quotaStatus?.accountKey || "").trim();
+  return accountKey || `channel:${String(channel?.id || channel?.name || "unknown")}`;
+}
+
+function axonhubAddChannel(accounts, channel) {
+  const quotaStatus = channel?.providerQuotaStatus;
+  const key = axonhubAccountKey(channel, quotaStatus);
+  let account = accounts.get(key);
+  const channelName = String(channel?.name || channel?.id || "AxonHub channel");
+  if (!account) {
+    const statusValue = quotaStatus?.status;
+    const status = axonhubStatus(statusValue, quotaStatus?.ready);
+    account = {
+      id: key,
+      name: String(quotaStatus?.accountKey || channelName),
+      email: "",
+      provider: "AxonHub",
+      plan: String(quotaStatus?.providerType || channel?.type || ""),
+      status,
+      statusLabel: axonhubStatusLabel(statusValue, quotaStatus?.ready),
+      metrics: [],
+      error: null,
+    };
+    accounts.set(key, account);
+  }
+  const metrics = axonhubLimitMetrics(quotaStatus, channelName);
+  const seen = new Set(account.metrics.map(metric => `${metric.label}|${metric.resetAt || ""}`));
+  for (const metric of metrics) {
+    const metricKey = `${metric.label}|${metric.resetAt || ""}`;
+    if (!seen.has(metricKey)) {
+      account.metrics.push(metric);
+      seen.add(metricKey);
+    }
+  }
+  return account;
+}
+
+async function axonhubQueryChannels(ctx, config, token) {
+  const headers = authHeaders(token, { "Content-Type": "application/json" });
+  const channels = [];
+  let after = null;
+  let page = 0;
+  while (page++ < 1000) {
+    const input = { first: 100 };
+    if (after) input.after = after;
+    const response = await requestJSON(ctx, `${config.baseUrl}/admin/graphql`, {
+      method: "POST",
+      headers,
+      body: { query: AXONHUB_GRAPHQL_QUERY, variables: { input }, operationName: "WidgetProviderQuotas" },
+    });
+    const graphqlError = axonhubGraphQLError(response);
+    if (graphqlError) throw new Error(`AxonHub GraphQL 查询失败：${graphqlError}`);
+    const connection = response?.data?.queryChannels;
+    if (!connection || !Array.isArray(connection.edges) || !connection.pageInfo) {
+      throw new Error("AxonHub GraphQL 响应结构不匹配：缺少 queryChannels");
+    }
+    for (const edge of connection.edges) if (edge?.node) channels.push(edge.node);
+    if (connection.pageInfo.hasNextPage !== true) break;
+    const next = connection.pageInfo.endCursor;
+    if (!next || next === after) throw new Error("AxonHub 分页游标无效");
+    after = next;
+  }
+  if (page > 1000) throw new Error("AxonHub 分页超过安全上限");
+  return channels;
+}
+
+async function fetchAxonHubData(ctx, config) {
+  const requestedMode = config.mode || "auto";
+  if (!["auto", "admin", "api_key", "user"].includes(requestedMode)) throw new Error("AxonHub mode 只能是 auto / admin / api_key / user");
+  const mode = requestedMode === "auto"
+    ? (config.email && config.password && !config.apiKey ? "user" : config.apiKey ? "admin" : "user")
+    : requestedMode;
+  if (mode === "api_key" && !config.apiKey) requireKey(config);
+  const token = await axonhubGetToken(ctx, config, mode);
+  const channels = await axonhubQueryChannels(ctx, config, token);
+  const accounts = new Map();
+  for (const channel of channels) axonhubAddChannel(accounts, channel);
+  return Array.from(accounts.values()).map(accountRecord);
+}
+
+
+// Sub2API: Wei-Shaw/sub2api backend/internal/server/routes/{gateway,auth}.go
+// gateway_handler.go 的 /v1/usage 返回原始对象；面板接口使用 {code:0,data}。
+async function fetchSub2APIData(ctx, config) {
+  const mode = config.mode === "auto" ? (config.email && config.password && !config.apiKey ? "user" : "api_key") : config.mode;
+  if (!["api_key", "user"].includes(mode)) throw new Error("Sub2API 请选择 API Key（调用密钥）或 User（用户 JWT / 邮箱登录）");
+  if (mode === "user") {
+    let token = config.apiKey;
+    if (!token) {
+      if (!config.email || !config.password) throw new Error("Sub2API User 模式需用户访问令牌，或 EMAIL 与 PASSWORD");
+      const login = await requestJSON(ctx, `${config.baseUrl}/api/v1/auth/login`, { method: "POST", headers: authHeaders("", { "Content-Type": "application/json" }), body: { email: config.email, password: config.password } });
+      if (login?.data?.requires_2fa) throw new Error("Sub2API 需要 2FA，请先在网页登录，再填写用户访问令牌");
+      if (login?.code !== 0 || !login.data?.access_token) throw new Error("Sub2API 登录失败；启用验证码 / MFA 时请使用用户访问令牌");
+      token = login.data.access_token;
+    }
+    const response = await requestJSON(ctx, `${config.baseUrl}/api/v1/auth/me`, { headers: authHeaders(token) });
+    if (response?.code !== 0 || !response?.data || typeof response.data !== "object") throw new Error("Sub2API 用户资料结构不匹配");
+    const user = response.data;
+    return [accountRecord({ id: user.id, name: user.username || user.email, email: user.email, provider: "Sub2API", status: statusFrom(user.status), metrics: [balanceMetric("钱包余额", user.balance, "USD")] })];
+  }
+  requireKey(config);
+  const data = await requestJSON(ctx, `${config.baseUrl}/v1/usage`, { headers: authHeaders(config.apiKey) });
+  if (!data || !["quota_limited", "unrestricted"].includes(data.mode)) throw new Error("Sub2API 用量结构不匹配（缺少 mode）");
+  const metrics = [];
+  if (data.quota && typeof data.quota === "object") metrics.push({ ...balanceMetric("Key 累计余额", data.quota.remaining, data.quota.unit || "USD", data.quota.limit), used: numberOrNull(data.quota.used) });
+  if (Array.isArray(data.rate_limits)) {
+    for (const window of data.rate_limits) {
+      metrics.push({ ...balanceMetric(`${String(window.window || "窗口").toUpperCase()} 余额`, window.remaining, "USD", window.limit), used: numberOrNull(window.used), resetAt: timestampMs(window.reset_at) });
+    }
+  }
+  if (data.subscription && typeof data.subscription === "object") {
+    const sub = data.subscription;
+    for (const [key, label] of [["daily", "日"], ["weekly", "周"], ["monthly", "月"]]) {
+      const limit = numberOrNull(sub[`${key}_limit_usd`]), used = numberOrNull(sub[`${key}_usage_usd`]);
+      if (limit !== null && limit > 0) metrics.push({ ...balanceMetric(`${label}订阅余额`, used !== null ? Math.max(0, limit - used) : null, "USD", limit), used });
+    }
+  }
+  if (!metrics.length) {
+    const remaining = numberOrNull(data.balance ?? data.remaining);
+    metrics.push({ ...balanceMetric("钱包 / 订阅余额", remaining !== null && remaining >= 0 ? remaining : null, data.unit || "USD"), detail: remaining === -1 ? "订阅未设额度上限" : "" });
+  }
+  const expiry = timestampMs(data.expires_at || data.subscription?.expires_at);
+  const expired = expiry !== null && expiry <= Date.now();
+  return [accountRecord({ id: "sub2api-key", name: data.planName || "API Key", provider: "Sub2API", status: expired || data.isValid === false ? "error" : statusFrom(data.status || (data.isValid === true ? "active" : "unknown")), error: expired ? "API Key / 订阅已过期" : null, metrics })];
+}
+
+
+// New API: router/api-router.go + controller/token.go, controller/user.go.
+// quota 是站点内部额度单位；不假设 QuotaPerUnit，也不伪装美元/周配额。
+async function fetchNewAPIData(ctx, config) {
+  requireKey(config);
+  const mode = config.mode === "auto" ? "api_key" : config.mode;
+  if (!["api_key", "user"].includes(mode)) throw new Error("New API 请选 API Key（模型调用密钥）或 User（后台访问令牌）");
+  if (mode === "user") {
+    if (config.userId && !/^[1-9]\d*$/.test(config.userId)) throw new Error("USER_ID 如需填写，必须为正整数");
+    const response = await requestJSON(ctx, `${config.baseUrl}/api/user/self`, { headers: authHeaders(config.apiKey, config.userId ? { "New-Api-User": config.userId } : {}) });
+    if (response?.success !== true || !response.data || typeof response.data !== "object") throw new Error("New API 用户信息读取失败，请检查后台访问令牌和权限");
+    const data = response.data;
+    return [accountRecord({ id: data.id, name: data.display_name || data.username, email: data.email, provider: "New API", status: data.status === 1 ? "ready" : data.status === undefined ? "unknown" : "disabled", metrics: [{ ...balanceMetric("账户剩余额度", data.quota, ""), used: numberOrNull(data.used_quota), detail: "站点额度单位 · 非美元" }] })];
+  }
+  const response = await requestJSON(ctx, `${config.baseUrl}/api/usage/token/`, { headers: authHeaders(config.apiKey) });
+  if (response?.success === false || response?.code === false || !response?.data || response.data.object !== "token_usage") throw new Error("New API 令牌额度结构不匹配，请确认使用模型调用 API Key");
+  const data = response.data;
+  const expiredAt = timestampMs(data.expires_at);
+  const expired = expiredAt !== null && expiredAt <= Date.now();
+  const metric = { ...balanceMetric("令牌剩余额度", data.unlimited_quota ? null : data.total_available, "", data.unlimited_quota ? null : data.total_granted), used: numberOrNull(data.total_used), detail: data.unlimited_quota ? "令牌未设上限 · 仍受账户余额约束" : "站点额度单位 · 非美元" };
+  const metrics = [metric];
+  if (data.user_quota && typeof data.user_quota === "object") metrics.push({ ...balanceMetric("账户剩余额度", data.user_quota.total_available, ""), used: numberOrNull(data.user_quota.total_used), detail: "站点额度单位 · 非美元" });
+  return [accountRecord({ id: "newapi-key", name: data.name || "API Key", provider: "New API", status: expired ? "error" : "ready", statusLabel: expired ? "已过期" : data.unlimited_quota ? "未设上限" : "已读取", error: expired ? "API Key 已过期" : null, metrics })];
+}
+
+
+// DeepSeek: https://api-docs.deepseek.com/api/get-user-balance
+async function fetchDeepSeekData(ctx, config) {
+  requireKey(config);
+  if (!["auto", "api_key"].includes(config.mode)) throw new Error("DeepSeek 请使用 API Key 模式与官方模型调用密钥");
+  const data = await requestJSON(ctx, `${config.baseUrl}/user/balance`, { headers: authHeaders(config.apiKey) });
+  if (!Array.isArray(data?.balance_infos)) throw new Error("DeepSeek 余额结构不匹配（缺少 balance_infos）");
+  if (typeof data.is_available !== "boolean") throw new Error("DeepSeek 余额结构不匹配（缺少 is_available）");
+  return [accountRecord({
+    id: "deepseek-balance", name: "DeepSeek", provider: "DeepSeek", status: data.is_available ? "ready" : "error",
+    statusLabel: data.is_available ? "可调用" : "余额不足",
+    metrics: data.balance_infos.map(info => balanceMetric("账户余额", info.total_balance, info.currency)),
+  })];
+}
+
+
+// Antigravity-Manager (lbjlaq/Antigravity-Manager) adapter.
+// Sources checked with gh api (main):
+// - https://github.com/lbjlaq/Antigravity-Manager/blob/main/src-tauri/src/proxy/server.rs
+//   GET /api/accounts -> { accounts: AccountResponse[], current_account_id }
+//   The response includes the persisted quota snapshot on each account.
+// - https://github.com/lbjlaq/Antigravity-Manager/blob/main/src-tauri/src/proxy/middleware/auth.rs
+//   Management routes require Authorization: Bearer <admin_password>; when
+//   admin_password is unset, the server falls back to api_key. A user token is
+//   not an admin credential for this route.
+// - https://github.com/lbjlaq/Antigravity-Manager/blob/main/src-tauri/src/models/quota.rs
+//   quota_groups[].buckets[].remaining_fraction is already a 0..1 remainder;
+//   legacy quota.models[].percentage is a 0..100 remainder.
+//
+// This deliberately performs only GET /api/accounts. Do not call
+// /api/accounts/refresh or /api/accounts/:accountId/quota: those handlers fetch
+// upstream quota and persist it, so they are not read-only.
+
+function agyMetricDetail(quota, observedAt) {
+  const lastUpdated = timestampMs(quota?.last_updated);
+  const observed = timestampMs(observedAt) || lastUpdated;
+  if (observed !== null && observed < Date.now() - 5 * 60 * 1000) {
+    return `服务缓存 · ${new Date(observed).toISOString()}`;
+  }
+  return undefined;
+}
+
+function agyRemainingFraction(value) {
+  const n = numberOrNull(value);
+  return n !== null && n >= 0 && n <= 1 ? n : null;
+}
+
+function agyQuotaMetrics(quota) {
+  if (!quota || typeof quota !== "object") return [];
+  const metrics = [];
+
+  if (Array.isArray(quota.quota_groups)) {
+    for (const group of quota.quota_groups) {
+      if (!group || typeof group !== "object" || !Array.isArray(group.buckets)) continue;
+      for (const bucket of group.buckets) {
+        if (!bucket || typeof bucket !== "object") continue;
+        const bucketName = bucket.display_name || bucket.bucket_id || bucket.window || "配额";
+        const groupName = group.display_name || "配额";
+        metrics.push({
+          label: `${groupName} · ${bucketName}`,
+          kind: "percent",
+          remaining: agyRemainingFraction(bucket.remaining_fraction),
+          resetAt: timestampMs(bucket.reset_time),
+          detail: agyMetricDetail(quota, bucket.observed_at),
+        });
+      }
+    }
   }
 
-  const authFetch = await fetchWithTimeout(ctx, `${baseUrl}/v0/management/auth-files`, { headers }, 5000);
-  if (!authFetch || authFetch.status !== 200) {
-    return { accounts: [], error: authFetch ? (authFetch.status === 401 ? "401 管理密钥错误" : `HTTP ${authFetch.status}`) : "连接失败" };
+  // Older servers expose only models[].percentage. Prefer quota_groups when it
+  // yielded buckets, otherwise retain every legacy model supplied by upstream.
+  if (!metrics.length && Array.isArray(quota.models)) {
+    for (const model of quota.models) {
+      if (!model || typeof model !== "object") continue;
+      const percentage = numberOrNull(model.percentage);
+      metrics.push({
+        label: model.display_name || model.name || "模型配额",
+        kind: "percent",
+        remaining: percentage !== null && percentage >= 0 && percentage <= 100 ? percentage / 100 : null,
+        resetAt: timestampMs(model.reset_time),
+        detail: agyMetricDetail(quota),
+      });
+    }
   }
 
-  const data = await authFetch.json().catch(() => null);
-  const files = Array.isArray(data?.files) ? data.files : [];
-  const validFiles = files.filter(f => !f.disabled && !f.unavailable && f.status !== "disabled");
+  return metrics;
+}
 
-  const accounts = validFiles.map((file, idx) => {
-    const name = file.email || (file.name || "").replace(/\.json$/, "");
-    return parseAccount({
-      id: file.id || idx,
-      name,
-      email: name,
-      plan_type: file.provider || file.type || "CLIProxy",
-      channel: (file.provider || file.type || "AI").toLowerCase(),
-      usage_percent_5h: file.usagePercent5h,
-      reset_5h_at: file.reset5hAt,
-      usage_percent_7d: file.usagePercent7d,
-      reset_7d_at: file.reset7dAt,
-      status: file.status || "active",
-      health_tier: file.unavailable ? "abnormal" : "healthy",
+function agyAccountStatus(account, quota) {
+  if (account?.disabled || account?.proxy_disabled) return "disabled";
+  if (account?.validation_blocked || quota?.is_forbidden) return "error";
+  if (quota && typeof quota === "object") return "ready";
+  return "unknown";
+}
+
+function agyAccountStatusLabel(account, quota, status) {
+  if (status === "disabled") {
+    return account.disabled_reason || account.proxy_disabled_reason || "已禁用";
+  }
+  if (status === "error") {
+    return quota?.forbidden_reason || account.validation_blocked_reason || "配额不可用";
+  }
+  if (status === "ready") return agyMetricDetail(quota) ? "服务缓存" : "可用";
+  return "暂无配额快照";
+}
+
+async function fetchAgyData(ctx, config) {
+  if (config.mode === "user") {
+    throw new Error("Agy Tools 管理接口不接受普通用户 token，请使用 Admin 密码或 API Key");
+  }
+
+  // auth.rs gives admin_password precedence over api_key for strict management
+  // routes. This also mirrors its api_key fallback when no admin password is set.
+  const credential = config.mode === "api_key"
+    ? config.apiKey
+    : (config.password || config.apiKey);
+  if (!credential) throw new Error("Agy Tools 请填写 PASSWORD（admin_password）或 API_KEY");
+
+  const baseUrl = config.baseUrl.replace(/\/+$/, "");
+  const data = await requestJSON(ctx, `${baseUrl}/api/accounts`, {
+    method: "GET",
+    headers: authHeaders(credential),
+  });
+  if (!data || !Array.isArray(data.accounts)) {
+    throw new Error("Agy Tools 账号结构不匹配（GET /api/accounts 缺少 accounts）");
+  }
+
+  return data.accounts.map((account, index) => {
+    const quota = account && typeof account.quota === "object" ? account.quota : null;
+    const status = agyAccountStatus(account, quota);
+    const error = status === "error"
+      ? (quota?.forbidden_reason || account.validation_blocked_reason || "账号配额不可用")
+      : null;
+    return accountRecord({
+      id: account?.id || account?.email || `agy-account-${index + 1}`,
+      name: account?.name || account?.email || `账号 ${index + 1}`,
+      email: account?.email || "",
+      provider: "Agy Tools",
+      plan: quota?.subscription_tier || "",
+      status,
+      statusLabel: agyAccountStatusLabel(account, quota, status),
+      metrics: agyQuotaMetrics(quota),
+      error,
     });
   });
-
-  return { accounts, error: null };
 }
 
-// ── 综合数据分发器 ──
-async function syncAIUsage(ctx) {
-  const provider = (ctx.env?.PROVIDER || ctx.env?.provider || "codex2api").toLowerCase().trim();
-  const meta = PROVIDER_METAS[provider] || PROVIDER_METAS.codex2api;
 
-  let rawUrl = ctx.env?.SERVER_URL || ctx.env?.server_url || "";
-  if (!rawUrl.trim()) {
-    rawUrl = meta.defaultPort ? `http://127.0.0.1:${meta.defaultPort}` : (meta.defaultUrl || "");
-  }
-  const baseUrl = rawUrl.trim().replace(/\/+$/, "");
-  const apiKey = (ctx.env?.API_KEY || ctx.env?.api_key || ctx.env?.MANAGEMENT_KEY || ctx.env?.ADMIN_KEY || "").trim();
+/* Egern native Widget DSL. Concatenation-safe: UI constants/functions only, no exports,
+ * I/O, third-party dependencies, runtime fixtures, HTML, or animation. Entry point:
+ * renderUsageWidget(ctx, snapshot, meta, options). See official widgets DSL documentation.
+ */
+const UI_USAGE_COLORS = {
+  background: { light: '#FFFFFF', dark: '#151515' },
+  card: { light: '#F3F3F5', dark: '#252527' },
+  primary: { light: '#171717', dark: '#FFFFFF' },
+  secondary: { light: '#616167', dark: '#ACACB3' },
+  neutral: { light: '#616167', dark: '#ACACB3' },
+  good: { light: '#16713D', dark: '#54D38A' },
+  warning: { light: '#925000', dark: '#FFBC56' },
+  danger: { light: '#AF201A', dark: '#FF7D75' },
+};
+const UI_USAGE_FAMILIES = ['systemSmall', 'systemMedium', 'systemLarge', 'systemExtraLarge', 'accessoryCircular', 'accessoryRectangular', 'accessoryInline'];
 
-  let res = { accounts: [], error: "未识别平台" };
-  if (provider === "codex2api") {
-    res = await fetchCodex2APIData(ctx, baseUrl, apiKey);
-  } else if (provider === "cliproxyapi") {
-    res = await fetchCLIProxyData(ctx, baseUrl, apiKey);
-  }
-
-  const snapshot = {
-    provider,
-    providerTitle: meta.title,
-    accounts: res.accounts || [],
-    lastUpdated: Date.now(),
-    error: res.error,
-  };
-
-  if (res.accounts && res.accounts.length > 0) {
-    ctx.storage.setJSON("ai_usage_snapshot", snapshot);
-  }
-  return snapshot;
+function uiUsageText(value, fallback) {
+  return value === null || value === undefined || value === '' ? (fallback || '') : String(value);
 }
-
-function getDisplayAccounts(snapshot) {
-  if (!snapshot || !snapshot.accounts || snapshot.accounts.length === 0) {
-    const now = Date.now();
-    return [
-      parseAccount({
-        id: "demo-1",
-        name: "Pro 账号示例",
-        email: "demo@gmail.com",
-        plan_type: "pro",
-        channel: "codex",
-        usage_percent_7d: 12,
-        reset_7d_at: new Date(now + 86400000 * 5).toISOString(),
-        usage_percent_5h: 30,
-        reset_5h_at: new Date(now + 3600000 * 3).toISOString(),
-      }),
-    ];
+function uiUsageNumber(value) {
+  return typeof value === 'number' && Number.isFinite(value) ? value : null;
+}
+function uiUsageISO(value) {
+  const number = uiUsageNumber(value);
+  if (number === null) return null;
+  const date = new Date(number);
+  return Number.isFinite(date.getTime()) ? date.toISOString() : null;
+}
+function uiUsageTextNode(text, size, color, weight, mono, lines) {
+  const font = { size: size || 12, weight: weight || 'regular' };
+  if (mono) font.family = 'Menlo';
+  return { type: 'text', text: uiUsageText(text), font, textColor: color || UI_USAGE_COLORS.primary,
+    maxLines: lines || 1, minScale: 0.8 };
+}
+function uiUsageStack(children, direction, gap, extra) {
+  return Object.assign({ type: 'stack', direction: direction || 'column', alignItems: 'start', gap: gap === undefined ? 4 : gap, children: children.filter(Boolean) }, extra || {});
+}
+function uiUsageDate(timestamp, format, size) {
+  const date = uiUsageISO(timestamp);
+  return date ? { type: 'date', date, format: format || 'relative', font: { size: size || 11, family: 'Menlo' },
+    textColor: UI_USAGE_COLORS.secondary, maxLines: 1, minScale: 0.8 } : null;
+}
+function uiUsageNormalize(snapshot) {
+  const source = snapshot || {};
+  const accounts = (Array.isArray(source.accounts) ? source.accounts : []).map((item, index) => {
+    const account = item || {};
+    const status = ['ready', 'disabled', 'error', 'unknown'].includes(account.status) ? account.status : 'unknown';
+    const metrics = (Array.isArray(account.metrics) ? account.metrics : []).filter(item => item && ['percent', 'balance', 'number'].includes(item.kind)).map(item => {
+      let remaining = uiUsageNumber(item.remaining);
+      // Invalid percentages are unknown, not silently clamped into an apparently valid quota.
+      if (item.kind === 'percent' && remaining !== null && (remaining < 0 || remaining > 1)) remaining = null;
+      return { label: uiUsageText(item.label, '指标'), kind: item.kind, remaining,
+        used: uiUsageNumber(item.used), total: uiUsageNumber(item.total), currency: uiUsageText(item.currency),
+        resetAt: uiUsageISO(item.resetAt) ? item.resetAt : null, detail: uiUsageText(item.detail) };
+    });
+    // Preserve source order among known values, then unknown values: no invented primary metric.
+    const ordered = metrics.filter(item => item.remaining !== null).concat(metrics.filter(item => item.remaining === null));
+    return { id: uiUsageText(account.id), name: uiUsageText(account.name, `账号 ${index + 1}`),
+      email: uiUsageText(account.email), provider: uiUsageText(account.provider), plan: uiUsageText(account.plan), status,
+      statusLabel: uiUsageText(account.statusLabel), metrics: ordered, error: uiUsageText(account.error) };
+  });
+  return { provider: uiUsageText(source.provider), providerTitle: uiUsageText(source.providerTitle), accounts,
+    lastUpdated: uiUsageISO(source.lastUpdated) ? source.lastUpdated : null, stale: source.stale === true,
+    error: uiUsageText(source.error) };
+}
+function uiUsagePrivacy(snapshot) {
+  // Mask all identities, including short names and identities embedded in API error/detail strings.
+  const tokens = [];
+  snapshot.accounts.forEach(account => {
+    [account.email, account.name, account.id].forEach(value => { if (value && value.length >= 3) tokens.push(value); });
+  });
+  tokens.sort((a, b) => b.length - a.length);
+  function scrub(value) {
+    let text = value;
+    tokens.forEach(token => { text = text.split(token).join('•••'); });
+    return text.replace(/[^\s<>@]+@[^\s<>@]+\.[^\s<>@]+/g, '•••');
   }
-  return snapshot.accounts;
+  const result = Object.assign({}, snapshot, { error: scrub(snapshot.error), providerTitle: scrub(snapshot.providerTitle) });
+  result.accounts = snapshot.accounts.map((account, index) => Object.assign({}, account, {
+    id: '', name: `账号 •••${index + 1}`, email: '', plan: scrub(account.plan), provider: scrub(account.provider),
+    error: scrub(account.error), statusLabel: scrub(account.statusLabel),
+    metrics: account.metrics.map(metric => Object.assign({}, metric, { label: scrub(metric.label), detail: scrub(metric.detail), currency: scrub(metric.currency) })),
+  }));
+  return result;
 }
-
-// ══════════════════════════════════════════════════
-// ── 原生 HIG 磨砂卡片渲染层 (复刻原版经典呈现) ──
-// ══════════════════════════════════════════════════
-
-// ── Small 尺寸组件 ──
-function renderSmallWidget(account, updateTime, providerMeta) {
-  const accBadge = getBadgeConfig(account.provider, account.planType);
-  const used7d = account.usagePercent7d !== null ? Math.round(account.usagePercent7d) : 0;
-  const remain7d = Math.round(account.remainingFraction7d * 100);
-  const progressSvg = createProgressBarSvg(account.remainingFraction7d, account.statusColor, 6);
-
-  return {
-    type: "widget",
-    backgroundColor: C.widgetBg,
-    padding: 12,
-    gap: 8,
-    children: [
-      {
-        type: "stack",
-        direction: "row",
-        alignItems: "center",
-        gap: 5,
-        children: [
-          { type: "image", src: providerMeta.logo, width: 14, height: 14, borderRadius: 3.5 },
-          { type: "text", text: providerMeta.title, font: { size: "caption1", weight: "heavy" }, textColor: C.textPrimary },
-          { type: "spacer" },
-          { type: "text", text: updateTime, font: { size: 10, weight: "medium" }, textColor: C.textTertiary },
-        ],
-      },
-      {
-        type: "stack",
-        direction: "column",
-        gap: 6,
-        padding: 10,
-        backgroundColor: C.cardBg,
-        borderWidth: 0.5,
-        borderColor: C.cardBorder,
-        borderRadius: 13,
-        flex: 1,
-        children: [
-          {
-            type: "stack",
-            direction: "row",
-            alignItems: "center",
-            children: [
-              createMicroBadge(accBadge),
-              { type: "spacer" },
-            ],
-          },
-          {
-            type: "stack",
-            direction: "row",
-            alignItems: "center",
-            children: [
-              {
-                type: "stack",
-                direction: "row",
-                gap: 3,
-                alignItems: "center",
-                children: [
-                  { type: "text", text: "已用", font: { size: 10 }, textColor: C.textSecondary },
-                  { type: "text", text: `${used7d}%`, font: { size: 15, weight: "heavy" }, textColor: C.textPrimary },
-                ],
-              },
-              { type: "spacer" },
-              {
-                type: "stack",
-                direction: "row",
-                gap: 3,
-                alignItems: "center",
-                children: [
-                  { type: "text", text: "7D 余", font: { size: 9.5, weight: "bold" }, textColor: C.textSecondary },
-                  { type: "text", text: `${remain7d}%`, font: { size: 16, weight: "heavy" }, textColor: account.statusColor },
-                ],
-              },
-            ],
-          },
-          { type: "image", src: progressSvg, height: 5.5 },
-          {
-            type: "stack",
-            direction: "row",
-            alignItems: "center",
-            children: [
-              { type: "text", text: `重置 ${account.reset7dTimeStr}`, font: { size: 9 }, textColor: C.textSecondary },
-              { type: "spacer" },
-              { type: "text", text: account.reset7dCountdownStr, font: { size: 9.5, weight: "bold" }, textColor: account.statusColor },
-            ],
-          },
-        ],
-      },
-    ],
-  };
+function uiUsageFormatNumber(number) {
+  if (number === null) return '—';
+  // Keep raw balance/count semantics. No pseudo percentages or assumed currency conversion.
+  const absolute = Math.abs(number);
+  if (absolute !== 0 && absolute < 0.001) return number.toExponential(2);
+  const places = absolute < 1 ? 4 : 2;
+  return String(Number(number.toFixed(places)));
 }
-
-// ── Medium 尺寸组件 (双时窗 7D + 5H 拟物母卡片) ──
-function renderMediumWidget(accounts, updateStr, maskEmailEnabled, providerMeta) {
-  const isSingle = accounts.length === 1;
-  const first = accounts[0];
-
-  if (isSingle && first) {
-    const accBadge = getBadgeConfig(first.provider, first.planType);
-    const used7d = Math.round((1 - first.remainingFraction7d) * 100);
-    const remain7d = Math.round(first.remainingFraction7d * 100);
-    const used5h = Math.round((1 - first.remainingFraction5h) * 100);
-    const remain5h = Math.round(first.remainingFraction5h * 100);
-    const accountLabel = maskEmail(first.email || first.name, maskEmailEnabled);
-
-    const progressSvg7d = createProgressBarSvg(first.remainingFraction7d, getQuotaColor(first.remainingFraction7d), 6);
-    const progressSvg5h = createProgressBarSvg(first.remainingFraction5h, getQuotaColor(first.remainingFraction5h), 6);
-
-    return {
-      type: "widget",
-      backgroundColor: C.widgetBg,
-      padding: [12, 14, 12, 14],
-      gap: 8,
-      children: [
-        // 顶部 Header
-        {
-          type: "stack",
-          direction: "row",
-          alignItems: "center",
-          gap: 6,
-          children: [
-            { type: "image", src: providerMeta.logo, width: 15, height: 15, borderRadius: 3.5 },
-            { type: "text", text: `${providerMeta.title} 配额`, font: { size: "footnote", weight: "heavy" }, textColor: C.textPrimary },
-            {
-              type: "stack",
-              padding: [2, 5],
-              borderRadius: 4,
-              backgroundColor: C.cardBg,
-              children: [
-                { type: "text", text: "1 账号", font: { size: 9.5, weight: "bold" }, textColor: C.textSecondary },
-              ],
-            },
-            { type: "spacer" },
-            { type: "text", text: `更新 ${updateStr}`, font: { size: 11, weight: "medium" }, textColor: C.textSecondary },
-          ],
-        },
-        // 核心拟物母卡片
-        {
-          type: "stack",
-          direction: "column",
-          gap: 7,
-          padding: [10, 12, 10, 12],
-          backgroundColor: C.cardBg,
-          borderWidth: 0.5,
-          borderColor: C.cardBorder,
-          borderRadius: 13,
-          flex: 1,
-          children: [
-            // 账号标题行
-            {
-              type: "stack",
-              direction: "row",
-              alignItems: "center",
-              children: [
-                {
-                  type: "stack",
-                  direction: "row",
-                  alignItems: "center",
-                  gap: 5,
-                  children: [
-                    createMicroBadge(accBadge),
-                    { type: "text", text: accountLabel, font: { size: 11.5, weight: "bold" }, maxLines: 1 },
-                  ],
-                },
-                { type: "spacer" },
-                { type: "text", text: "正常", font: { size: 10, weight: "semibold" }, textColor: "#34C759" },
-              ],
-            },
-            // 7D 周配额进度条
-            {
-              type: "stack",
-              direction: "column",
-              gap: 3.5,
-              children: [
-                {
-                  type: "stack",
-                  direction: "row",
-                  alignItems: "center",
-                  children: [
-                    { type: "text", text: `已用 ${used7d}%`, font: { size: 10 }, textColor: C.textSecondary },
-                    { type: "spacer" },
-                    { type: "text", text: `7D 余 ${remain7d}%`, font: { size: 11, weight: "bold" }, textColor: getQuotaColor(first.remainingFraction7d) },
-                  ],
-                },
-                { type: "image", src: progressSvg7d, height: 5.5 },
-                {
-                  type: "stack",
-                  direction: "row",
-                  alignItems: "center",
-                  children: [
-                    { type: "text", text: `重置 ${first.reset7dTimeStr}`, font: { size: 9 }, textColor: C.textSecondary },
-                    { type: "spacer" },
-                    { type: "text", text: first.reset7dCountdownStr, font: { size: 9.5, weight: "bold" }, textColor: getQuotaColor(first.remainingFraction7d) },
-                  ],
-                },
-              ],
-            },
-            // 5H 滚动时窗进度条
-            {
-              type: "stack",
-              direction: "column",
-              gap: 3.5,
-              children: [
-                {
-                  type: "stack",
-                  direction: "row",
-                  alignItems: "center",
-                  children: [
-                    { type: "text", text: `已用 ${used5h}%`, font: { size: 10 }, textColor: C.textSecondary },
-                    { type: "spacer" },
-                    { type: "text", text: `5H 余 ${remain5h}%`, font: { size: 11, weight: "bold" }, textColor: getQuotaColor(first.remainingFraction5h) },
-                  ],
-                },
-                { type: "image", src: progressSvg5h, height: 5.5 },
-                {
-                  type: "stack",
-                  direction: "row",
-                  alignItems: "center",
-                  children: [
-                    { type: "text", text: `重置 ${first.reset5hTimeStr}`, font: { size: 9 }, textColor: C.textSecondary },
-                    { type: "spacer" },
-                    { type: "text", text: first.reset5hCountdownStr, font: { size: 9.5, weight: "bold" }, textColor: getQuotaColor(first.remainingFraction5h) },
-                  ],
-                },
-              ],
-            },
-          ],
-        },
-      ],
-    };
+function uiUsageValue(metric) {
+  if (!metric || metric.remaining === null) return '—';
+  if (metric.kind === 'percent') {
+    if (metric.remaining > 0 && metric.remaining < 0.001) return '<0.1%';
+    if (metric.remaining < 1 && metric.remaining > 0.999) return '>99.9%';
+    return `${Number((metric.remaining * 100).toFixed(1))}%`;
   }
-
-  // 多账号并排展示
-  const displayPair = accounts.slice(0, 2);
-  return {
-    type: "widget",
-    backgroundColor: C.widgetBg,
-    padding: [12, 14, 12, 14],
-    gap: 8,
-    children: [
-      {
-        type: "stack",
-        direction: "row",
-        alignItems: "center",
-        gap: 6,
-        children: [
-          { type: "image", src: providerMeta.logo, width: 15, height: 15, borderRadius: 3.5 },
-          { type: "text", text: `${providerMeta.title} 配额`, font: { size: "footnote", weight: "heavy" }, textColor: C.textPrimary },
-          {
-            type: "stack",
-            padding: [2, 5],
-            borderRadius: 4,
-            backgroundColor: C.cardBg,
-            children: [
-              { type: "text", text: `${accounts.length} 账号`, font: { size: 9.5, weight: "bold" }, textColor: C.textSecondary },
-            ],
-          },
-          { type: "spacer" },
-          { type: "text", text: `更新 ${updateStr}`, font: { size: 11, weight: "medium" }, textColor: C.textSecondary },
-        ],
-      },
-      {
-        type: "stack",
-        direction: "row",
-        gap: 8,
-        flex: 1,
-        children: displayPair.map((acc) => {
-          const accBadge = getBadgeConfig(acc.provider, acc.planType);
-          const remain7d = Math.round(acc.remainingFraction7d * 100);
-          const progressSvg = createProgressBarSvg(acc.remainingFraction7d, acc.statusColor, 5.5);
-          const label = maskEmail(acc.email || acc.name, maskEmailEnabled);
-
-          return {
-            type: "stack",
-            direction: "column",
-            gap: 5,
-            padding: [8, 10, 8, 10],
-            backgroundColor: C.cardBg,
-            borderWidth: 0.5,
-            borderColor: C.cardBorder,
-            borderRadius: 12,
-            flex: 1,
-            children: [
-              {
-                type: "stack",
-                direction: "row",
-                alignItems: "center",
-                children: [
-                  createMicroBadge(accBadge),
-                  { type: "spacer" },
-                  { type: "text", text: `${remain7d}%`, font: { size: 14, weight: "heavy" }, textColor: acc.statusColor },
-                ],
-              },
-              { type: "text", text: label, font: { size: 10, weight: "medium" }, textColor: C.textSecondary, maxLines: 1 },
-              { type: "image", src: progressSvg, height: 5 },
-              {
-                type: "stack",
-                direction: "row",
-                alignItems: "center",
-                children: [
-                  { type: "text", text: acc.reset7dTimeStr, font: { size: 9 }, textColor: C.textSecondary },
-                  { type: "spacer" },
-                  { type: "text", text: acc.reset7dCountdownStr, font: { size: 9.5, weight: "bold" }, textColor: acc.statusColor },
-                ],
-              },
-            ],
-          };
-        }),
-      },
-    ],
-  };
+  const value = uiUsageFormatNumber(metric.remaining);
+  return metric.kind === 'balance' && metric.currency ? `${metric.currency} ${value}` : value;
 }
-
-// ── Large 尺寸组件 ──
-function renderLargeWidget(accounts, updateStr, maskEmailEnabled, providerMeta) {
-  const displayList = accounts.slice(0, 4);
-  return {
-    type: "widget",
-    backgroundColor: C.widgetBg,
-    padding: [14, 16, 14, 16],
-    gap: 10,
-    children: [
-      {
-        type: "stack",
-        direction: "row",
-        alignItems: "center",
-        gap: 6,
-        children: [
-          { type: "image", src: providerMeta.logo, width: 16, height: 16, borderRadius: 4 },
-          { type: "text", text: `${providerMeta.title} 监控`, font: { size: "subheadline", weight: "heavy" }, textColor: C.textPrimary },
-          {
-            type: "stack",
-            padding: [2, 5],
-            borderRadius: 4,
-            backgroundColor: C.cardBg,
-            children: [
-              { type: "text", text: `${accounts.length} 账号`, font: { size: 10, weight: "bold" }, textColor: C.textSecondary },
-            ],
-          },
-          { type: "spacer" },
-          { type: "text", text: `更新 ${updateStr}`, font: { size: 12, weight: "medium" }, textColor: C.textSecondary },
-        ],
-      },
-      {
-        type: "stack",
-        direction: "column",
-        gap: 6,
-        children: displayList.map((acc) => {
-          const accBadge = getBadgeConfig(acc.provider, acc.planType);
-          const remain7d = Math.round(acc.remainingFraction7d * 100);
-          const progressSvg = createProgressBarSvg(acc.remainingFraction7d, acc.statusColor, 5.5);
-          const label = maskEmail(acc.email || acc.name, maskEmailEnabled);
-
-          return {
-            type: "stack",
-            direction: "column",
-            gap: 4.5,
-            padding: [8, 11, 8, 11],
-            backgroundColor: C.cardBg,
-            borderWidth: 0.5,
-            borderColor: C.cardBorder,
-            borderRadius: 12,
-            children: [
-              {
-                type: "stack",
-                direction: "row",
-                alignItems: "center",
-                children: [
-                  createMicroBadge(accBadge),
-                  { type: "spacer" },
-                  { type: "text", text: label, font: { size: 10.5, weight: "semibold" }, textColor: C.textSecondary },
-                  { type: "spacer" },
-                  { type: "text", text: `余 ${remain7d}%`, font: { size: 11.5, weight: "heavy" }, textColor: acc.statusColor },
-                ],
-              },
-              { type: "image", src: progressSvg, height: 5.5 },
-              {
-                type: "stack",
-                direction: "row",
-                alignItems: "center",
-                children: [
-                  { type: "text", text: `重置 ${acc.reset7dTimeStr}`, font: { size: 9.5 }, textColor: C.textSecondary },
-                  { type: "spacer" },
-                  { type: "text", text: acc.reset7dCountdownStr, font: { size: 9.5, weight: "bold" }, textColor: acc.statusColor },
-                ],
-              },
-            ],
-          };
-        }),
-      },
-    ],
-  };
+function uiUsageRisk(metric, account) {
+  if (account && (account.error || account.status === 'error')) return { text: '账号异常', color: UI_USAGE_COLORS.danger };
+  if (!metric || metric.remaining === null) return { text: '未知', color: UI_USAGE_COLORS.neutral };
+  if (account && (account.status === 'unknown' || account.status === 'disabled')) return { text: account.status === 'disabled' ? '已禁用' : '状态未知', color: UI_USAGE_COLORS.neutral };
+  if (metric.remaining <= 0) return { text: metric.kind === 'balance' && metric.remaining < 0 ? '余额不足' : '已耗尽', color: UI_USAGE_COLORS.danger };
+  if (metric.kind === 'percent' && metric.remaining < 0.15) return { text: '即将耗尽', color: UI_USAGE_COLORS.danger };
+  if (metric.kind === 'percent' && metric.remaining < 0.4) return { text: '剩余偏低', color: UI_USAGE_COLORS.warning };
+  return { text: '剩余', color: metric.kind === 'percent' ? UI_USAGE_COLORS.good : UI_USAGE_COLORS.primary };
 }
-
-// ── 错误卡片渲染 (展示具体错误) ──
-function renderErrorWidget(family, error, updateTime, providerMeta) {
-  return {
-    type: "widget",
-    backgroundColor: C.widgetBg,
-    padding: 12,
-    gap: 6,
-    children: [
-      {
-        type: "stack",
-        direction: "row",
-        alignItems: "center",
-        gap: 5,
-        children: [
-          { type: "image", src: providerMeta.logo, width: 14, height: 14, borderRadius: 3.5 },
-          { type: "text", text: providerMeta.title, font: { size: 11, weight: "bold" }, textColor: C.textPrimary },
-          { type: "spacer" },
-          { type: "text", text: updateTime, font: { size: 10 }, textColor: C.textSecondary },
-        ],
-      },
-      {
-        type: "stack",
-        direction: "column",
-        gap: 4,
-        padding: 8,
-        backgroundColor: C.cardBg,
-        borderRadius: 10,
-        children: [
-          { type: "text", text: "连接异常", font: { size: 12, weight: "bold" }, textColor: "#FF3B30" },
-          { type: "text", text: String(error).slice(0, 80), font: { size: 10 }, textColor: C.textSecondary, maxLines: 2 },
-          { type: "text", text: "请检查模块 Env 中的 SERVER_URL 与 Key", font: { size: 9 }, textColor: C.textSecondary },
-        ],
-      },
-    ],
-  };
+function uiUsageStatus(account, stale) {
+  if (account.status === 'disabled') return { text: '已禁用', color: UI_USAGE_COLORS.neutral };
+  if (account.error || account.status === 'error') return { text: account.statusLabel || '账号异常', color: UI_USAGE_COLORS.danger };
+  if (account.status === 'unknown') return { text: '状态未知', color: UI_USAGE_COLORS.neutral };
+  if (stale) return { text: '缓存', color: UI_USAGE_COLORS.warning };
+  return { text: account.statusLabel || '就绪', color: UI_USAGE_COLORS.secondary };
 }
-
-// ── 入口主函数 ──
-export default async function(ctx) {
-  const family = ctx.widgetFamily || "systemMedium";
-  const maskEmailEnabled = (ctx.env?.MASK_ACCOUNT || ctx.env?.MaskAccount || ctx.env?.mask_account || "false").toLowerCase() === "true";
-  const providerKey = (ctx.env?.PROVIDER || ctx.env?.provider || "codex2api").toLowerCase().trim();
-  const providerMeta = PROVIDER_METAS[providerKey] || PROVIDER_METAS.codex2api;
-
-  let snapshot = await syncAIUsage(ctx);
-  if (!snapshot || (snapshot.error && (!snapshot.accounts || snapshot.accounts.length === 0))) {
-    snapshot = ctx.storage.getJSON("ai_usage_snapshot") || snapshot;
+function uiUsageIssue(snapshot) {
+  const failed = snapshot.accounts.filter(account => account.error || account.status === 'error').length;
+  return snapshot.error || failed ? `部分失败${failed ? ` · ${failed} 个账号` : ''}` : '';
+}
+function uiUsageState(snapshot, options) {
+  if (snapshot.accounts.length) return null;
+  if (snapshot.error) return { title: options.baseUrl ? '加载失败' : '配置有误', detail: snapshot.error, color: UI_USAGE_COLORS.danger };
+  if (!options.baseUrl) return { title: '未配置', detail: '请在模块 Env 填写服务地址与密钥', color: UI_USAGE_COLORS.warning };
+  return { title: '暂无账号', detail: '未返回账号，请检查服务账号与权限', color: UI_USAGE_COLORS.neutral };
+}
+function uiUsageHeader(snapshot, meta, small) {
+  const children = [{ type: 'image', src: meta.logo || 'sf-symbol:chart.bar.xaxis', width: small ? 14 : 17, height: small ? 14 : 17, borderRadius: 4 },
+    Object.assign(uiUsageTextNode(meta.title, small ? 13 : 15, UI_USAGE_COLORS.primary, 'bold'), { flex: 1 })];
+  if (!small) children.push(uiUsageTextNode(`${snapshot.accounts.length} 个账号`, 12, UI_USAGE_COLORS.secondary));
+  return uiUsageStack(children, 'row', 5, { alignItems: 'center' });
+}
+function uiUsageFreshness(snapshot, small) {
+  const date = uiUsageDate(snapshot.lastUpdated, 'relative', 11);
+  const label = snapshot.stale ? '缓存 · 上次更新' : '更新';
+  return uiUsageStack([uiUsageTextNode(date ? label : (snapshot.stale ? '缓存 · 更新时间未知' : '尚未更新'), 11,
+    snapshot.stale ? UI_USAGE_COLORS.warning : UI_USAGE_COLORS.secondary), date], 'row', small ? 3 : 5);
+}
+function uiUsageMetric(metric, account, size, showExtra) {
+  const risk = uiUsageRisk(metric, account);
+  const children = [uiUsageStack([Object.assign(uiUsageTextNode(metric.label, 12, UI_USAGE_COLORS.secondary, 'medium'), { flex: 1 }),
+    uiUsageTextNode(risk.text, 11, risk.color, 'medium')], 'row', 4),
+    Object.assign(uiUsageTextNode(uiUsageValue(metric), size, risk.color, 'bold', true), { minScale: 0.55 })];
+  if (metric.kind === 'percent' && metric.remaining !== null) {
+    const segments = [];
+    if (metric.remaining > 0) segments.push(uiUsageStack([], 'row', 0, { flex: metric.remaining, height: 4, backgroundColor: risk.color, borderRadius: 2 }));
+    if (metric.remaining < 1) segments.push(uiUsageStack([], 'row', 0, { flex: 1 - metric.remaining, height: 4 }));
+    children.push(uiUsageStack(segments, 'row', 0, { height: 4, backgroundColor: { light: '#DDDEE3', dark: '#444449' }, borderRadius: 2 }));
   }
-
-  const lastUpdated = snapshot?.lastUpdated || Date.now();
-  const updateTimeStr = formatTimeOnly(lastUpdated);
-  const updateDateStr = formatShortDate(lastUpdated);
-
-  if (snapshot?.error && (!snapshot.accounts || snapshot.accounts.length === 0)) {
-    return renderErrorWidget(family, snapshot.error, updateTimeStr, providerMeta);
+  if (showExtra) {
+    if (metric.resetAt !== null) children.push(uiUsageStack([uiUsageTextNode('重置', 11, UI_USAGE_COLORS.secondary), uiUsageDate(metric.resetAt, 'relative', 11)], 'row', 3));
+    else if (metric.detail) children.push(uiUsageTextNode(metric.detail, 11, UI_USAGE_COLORS.secondary));
+    else if (metric.used !== null || metric.total !== null) {
+      const used = metric.used !== null ? `已用 ${uiUsageFormatNumber(metric.used)}` : '';
+      const total = metric.total !== null ? `总量 ${uiUsageFormatNumber(metric.total)}` : '';
+      children.push(uiUsageTextNode([used, total].filter(Boolean).join(' · '), 11, UI_USAGE_COLORS.secondary, 'regular', true));
+    }
   }
-
-  const accounts = getDisplayAccounts(snapshot);
-
-  if (family === "systemSmall") {
-    return renderSmallWidget(accounts[0], updateTimeStr, providerMeta);
-  } else if (family === "systemLarge" || family === "systemExtraLarge") {
-    return renderLargeWidget(accounts, updateDateStr, maskEmailEnabled, providerMeta);
+  return uiUsageStack(children, 'column', 3, { flex: 1 });
+}
+function uiUsageCard(account, snapshot, count, small) {
+  const status = uiUsageStatus(account, snapshot.stale);
+  const metrics = account.metrics.slice(0, count);
+  const title = uiUsageTextNode(account.email || account.name, 12, UI_USAGE_COLORS.primary, 'semibold');
+  const children = [uiUsageStack([Object.assign(title, { flex: 1 }), uiUsageTextNode(status.text, 11, status.color, 'medium')], 'row', 3)];
+  if (metrics.length) children.push(uiUsageStack(metrics.map(metric => uiUsageMetric(metric, account, small ? 25 : count > 1 ? 18 : 23, true)), 'row', 10));
+  else children.push(uiUsageTextNode(account.status === 'disabled' ? '已禁用 · 无指标' : '暂无指标 · 未知', 14, UI_USAGE_COLORS.neutral, 'medium'));
+  if (account.error && !small) children.push(uiUsageTextNode(account.error, 11, UI_USAGE_COLORS.danger));
+  const hidden = account.metrics.length - metrics.length;
+  if (hidden > 0) children.push(uiUsageTextNode(`另有 ${hidden} 项指标`, 11, UI_USAGE_COLORS.secondary));
+  return uiUsageStack(children, 'column', small ? 4 : 6,
+    { padding: small ? 0 : 10, backgroundColor: small ? UI_USAGE_COLORS.background : UI_USAGE_COLORS.card, borderRadius: small ? 0 : 12, borderWidth: small ? 0 : 0.5, borderColor: { light: '#00000012', dark: '#FFFFFF18' }, flex: 1 });
+}
+function uiUsageLock(snapshot, meta, family, options) {
+  const state = uiUsageState(snapshot, options);
+  const account = snapshot.accounts[0];
+  const metric = account && account.metrics[0];
+  const status = account ? uiUsageStatus(account, snapshot.stale) : null;
+  const issue = uiUsageIssue(snapshot);
+  const risk = metric ? uiUsageRisk(metric, account) : { color: UI_USAGE_COLORS.neutral, text: '未知' };
+  const hidden = snapshot.accounts.length > 1 ? ` +${snapshot.accounts.length - 1}账号` : '';
+  const hiddenMetrics = account && account.metrics.length > 1 ? ` +${account.metrics.length - 1}项` : '';
+  const flags = [snapshot.stale ? '缓存' : '', issue ? '部分失败' : '', status && status.text !== '就绪' && status.text !== '缓存' ? status.text : ''].filter(Boolean).join(' · ');
+  const value = metric ? uiUsageValue(metric) : '—';
+  if (family === 'accessoryInline') {
+    const label = state ? `${meta.title} · ${state.title}` : `${meta.title} ${metric ? metric.label : '无指标'} ${value} ${risk.text}${hidden}${hiddenMetrics}${flags ? ` · ${flags}` : ''}`;
+    const children = [uiUsageTextNode(label, 12, state ? state.color : risk.color, 'medium', false)];
+    if (snapshot.stale) children.push(uiUsageDate(snapshot.lastUpdated, 'relative', 11) || uiUsageTextNode('更新时间未知', 11, UI_USAGE_COLORS.neutral));
+    return uiUsageStack(children, 'row', 3);
+  }
+  if (family === 'accessoryCircular') {
+    const children = [uiUsageTextNode(state ? state.title : (flags || metric && metric.label || meta.title), 10, state ? state.color : UI_USAGE_COLORS.secondary, 'medium'),
+      uiUsageTextNode(state ? '—' : value, 18, state ? state.color : risk.color, 'bold', true),
+      uiUsageTextNode(state ? '查看配置' : `${risk.text}${hidden}${hiddenMetrics}`, 10, risk.color, 'medium')];
+    if (snapshot.stale) children.push(uiUsageDate(snapshot.lastUpdated, 'relative', 10) || uiUsageTextNode('更新时间未知', 10, UI_USAGE_COLORS.neutral));
+    return uiUsageStack(children, 'column', 1, { alignItems: 'center' });
+  }
+  const children = [uiUsageTextNode(state ? `${meta.title} · ${state.title}` : `${account.email || account.name}${hidden} · ${flags || status.text}`, 12, state ? state.color : UI_USAGE_COLORS.primary, 'semibold')];
+  if (state) children.push(uiUsageTextNode(state.detail, 11, UI_USAGE_COLORS.secondary, 'regular', false, 2));
+  else children.push(uiUsageTextNode(metric ? `${metric.label} ${value} · ${risk.text}${hiddenMetrics}` : '暂无指标 · 未知', 14, risk.color, 'bold', true));
+  if (snapshot.stale) children.push(uiUsageFreshness(snapshot, true));
+  else if (metric && metric.resetAt !== null) children.push(uiUsageStack([uiUsageTextNode('重置', 11, UI_USAGE_COLORS.secondary), uiUsageDate(metric.resetAt, 'relative', 11)], 'row', 3));
+  return uiUsageStack(children, 'column', 2);
+}
+function renderUsageWidget(ctx, snapshot, meta, options) {
+  const family = ctx && UI_USAGE_FAMILIES.includes(ctx.widgetFamily) ? ctx.widgetFamily : 'systemMedium';
+  const opts = { maskAccount: !!(options && options.maskAccount === true), baseUrl: uiUsageText(options && options.baseUrl).trim() };
+  let data = uiUsageNormalize(snapshot);
+  if (opts.maskAccount) data = uiUsagePrivacy(data);
+  const provider = { title: uiUsageText(meta && meta.title, data.providerTitle || data.provider || 'AI 用量'),
+    logo: meta && typeof meta.logo === 'string' && meta.logo.startsWith('data:') ? meta.logo : null };
+  const root = { type: 'widget', children: [], gap: 6, refreshAfter: new Date(Date.now() + 5 * 60000).toISOString() };
+  // No credentials in widget URLs; leave configuration/navigation untouched outside the UI.
+  if (/^https?:\/\//i.test(opts.baseUrl) && !/^https?:\/\/[^/]*@/i.test(opts.baseUrl)) root.url = opts.baseUrl;
+  if (family.startsWith('accessory')) {
+    root.padding = family === 'accessoryCircular' ? 2 : 0;
+    root.children.push(uiUsageLock(data, provider, family, opts));
+    return root;
+  }
+  const small = family === 'systemSmall';
+  const state = uiUsageState(data, opts);
+  root.backgroundColor = UI_USAGE_COLORS.background;
+  root.padding = small ? 11 : 13;
+  root.children.push(uiUsageHeader(data, provider, small));
+  if (state) {
+    root.children.push(uiUsageTextNode(state.title, small ? 19 : 23, state.color, 'bold'));
+    root.children.push(uiUsageTextNode(state.detail, 12, UI_USAGE_COLORS.secondary, 'regular', false, small ? 2 : 3));
   } else {
-    return renderMediumWidget(accounts, updateDateStr, maskEmailEnabled, providerMeta);
+    const limit = small ? 1 : family === 'systemMedium' ? 2 : family === 'systemLarge' ? 4 : 8;
+    const visible = data.accounts.slice(0, limit);
+    const cards = visible.map(account => uiUsageCard(account, data, small ? 1 : 2, small));
+    if (small) root.children.push(cards[0]);
+    else if (family === 'systemMedium') root.children.push(uiUsageStack(cards, 'row', 8, { flex: 1 }));
+    else {
+      const columns = family === 'systemExtraLarge' ? 4 : 2;
+      const rows = [];
+      for (let index = 0; index < cards.length; index += columns) rows.push(uiUsageStack(cards.slice(index, index + columns), 'row', 8, { flex: 1 }));
+      root.children.push(uiUsageStack(rows, 'column', 8, { flex: 1 }));
+    }
+    const hiddenAccounts = data.accounts.length - visible.length;
+    const issue = uiUsageIssue(data);
+    if (hiddenAccounts || issue) root.children.push(uiUsageTextNode([hiddenAccounts ? `另有 ${hiddenAccounts} 个账号` : '', issue].filter(Boolean).join(' · '), 11,
+      issue ? UI_USAGE_COLORS.warning : UI_USAGE_COLORS.secondary, 'medium'));
   }
+  root.children.push(uiUsageFreshness(data, small));
+  return root;
+}
+
+
+const ADAPTERS = {
+  cliproxyapi: fetchCLIProxyData,
+  codex2api: fetchCodex2APIData,
+  axonhub: fetchAxonHubData,
+  sub2api: fetchSub2APIData,
+  newapi: fetchNewAPIData,
+  deepseek: fetchDeepSeekData,
+  agy: fetchAgyData,
+};
+
+async function syncAIUsage(ctx, config) {
+  const key = cacheKey(config);
+  try {
+    const accounts = await ADAPTERS[config.provider](ctx, config);
+    if (!Array.isArray(accounts)) throw new Error("服务返回的账号结构不匹配");
+    const snapshot = redactSnapshot({ provider: config.provider, providerTitle: PROVIDER_METAS[config.provider].title, accounts, lastUpdated: Date.now(), error: null, stale: false }, config);
+    try { ctx.storage?.setJSON(key, snapshot); } catch (_) { /* 缓存不可用不影响本次真实结果。 */ }
+    return snapshot;
+  } catch (error) {
+    const failure = redactSnapshot({ error: String(error?.message || "读取失败") }, config).error;
+    let cached;
+    try { cached = ctx.storage?.getJSON(key); } catch (_) { cached = null; }
+    // 只使用同配置、六小时内的归一化快照；失败时间不能覆盖最后成功时间。
+    const age = Date.now() - (cached?.lastUpdated || 0);
+    if (cached?.provider === config.provider && Array.isArray(cached.accounts) && cached.accounts.length && age >= 0 && age <= 6 * 3600000) {
+      return { ...cached, stale: true, error: failure };
+    }
+    return { provider: config.provider, providerTitle: PROVIDER_METAS[config.provider].title, accounts: [], lastUpdated: null, error: failure, stale: false };
+  }
+}
+
+export default async function(ctx) {
+  let config;
+  try {
+    config = readConfig(ctx);
+  } catch (error) {
+    const provider = normalizeProvider(envText(ctx.env || {}, "PROVIDER", "provider"));
+    return renderUsageWidget(ctx, { accounts: [], lastUpdated: null, error: error.message, stale: false }, PROVIDER_METAS[provider] || { title: "AI Usage" }, { maskAccount: true, baseUrl: "" });
+  }
+  const snapshot = await syncAIUsage(ctx, config);
+  const filtered = { ...snapshot, accounts: filterAccounts(snapshot.accounts, config.filter) };
+  if (config.filter && snapshot.accounts.length && !filtered.accounts.length) filtered.error = "没有匹配 FILTER 的账号或模型";
+  return renderUsageWidget(ctx, filtered, PROVIDER_METAS[config.provider], { maskAccount: config.maskAccount, baseUrl: config.baseUrl });
 }

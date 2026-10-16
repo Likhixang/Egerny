@@ -1,46 +1,61 @@
 name: "AI Usage 聚合监控"
-description: "AI 配额与用量多服务万能聚合监控（CLIProxy, Codex2API, AxonHub, Sub2API, New API, DeepSeek, Agy Tools），Apple HIG 现代拟物看板，支持主屏全部尺寸"
+manual: https://raw.githubusercontent.com/Likhixang/Egerny/main/markdown/AI-Usage.md
+description: "按平台展示真实配额、余额和账号状态：CLIProxyAPI、Codex2API、AxonHub、Sub2API、New API、DeepSeek、Agy Tools（lbjlaq/Antigravity-Manager）。缺失数据不补成 100%，支持深浅色和主屏/锁屏尺寸。"
 
-# 模块可视化配置控件 (Egern 2.16+)
+# Egern env_schema 的 options 为字符串数组，显示值即传入脚本的值。
+# 脚本同时兼容旧的小写平台标识；未设置 env 时由脚本默认值兜底。
 env_schema:
   PROVIDER:
     name: 服务平台
-    description: "选择监控的服务平台类型"
+    description: "选择平台；旧配置中的 cliproxyapi / codex2api / axonhub 等仍兼容。"
     options:
-      - "cliproxyapi"
-      - "codex2api"
-      - "axonhub"
-      - "sub2api"
-      - "newapi"
-      - "deepseek"
-      - "agy"
-    default_value: "cliproxyapi"
+      - "CLIProxyAPI"
+      - "Codex2API"
+      - "AxonHub"
+      - "Sub2API"
+      - "New API"
+      - "DeepSeek"
+      - "Agy Tools"
+    default_value: "CLIProxyAPI"
   SERVER_URL:
     name: 服务地址
-    description: "服务端点 URL（留空将自动根据平台匹配：Codex2API 默认 2004/8080，CLIProxy 8317，AxonHub 8090，DeepSeek 官方 API）"
+    description: "填写手机可访问的完整 http(s) 地址，可含反代路径前缀；不自动猜端口或连接其他主机。仅 DeepSeek 留空默认官方 API。"
     default_value: ""
+  AUTH_MODE:
+    name: 凭据类型
+    description: "Auto 使用各平台默认模式；管理密钥、模型调用 API Key 和用户登录令牌不能混用。各平台用法见使用说明。"
+    options:
+      - "Auto"
+      - "Admin"
+      - "API Key"
+      - "User"
+    default_value: "Auto"
   API_KEY:
-    name: 密钥 / 令牌
-    description: "Management Key / Admin Key / API Key / Token（根据平台填写）"
+    name: 密钥 / 访问令牌
+    description: "CLIProxyAPI 用 Management Key；Codex2API 用 Admin Key 或 API Key；其余平台按凭据类型填写。不要填写上游 OAuth refresh token。"
     default_value: ""
   EMAIL:
-    name: 账号 / 邮箱
-    description: "登录邮箱或用户名（AxonHub/Sub2API/NewAPI 自动登录时使用，选填）"
+    name: 登录邮箱
+    description: "AxonHub / Sub2API 用户登录时填写；已有访问令牌可留空。"
     default_value: ""
   PASSWORD:
-    name: 密码
-    description: "登录密码（AxonHub/Sub2API/NewAPI 自动登录时使用，选填）"
+    name: 登录密码
+    description: "AxonHub / Sub2API 登录密码；Agy Tools 填独立 admin_password（有设置时优先于 API Key）。启用 MFA / 验证码时改用访问令牌。密码不缓存。"
+    default_value: ""
+  USER_ID:
+    name: New API 用户 ID
+    description: "旧版 New API 的 User 模式可能需要，传入 New-Api-User；新版 PAT / JWT 可留空。填写正整数用户 ID，不是用户名。"
     default_value: ""
   MASK_ACCOUNT:
     name: 账号邮箱打码
-    description: "是否对账号和邮箱进行脱敏隐藏"
+    description: "对所有尺寸的小组件账号名称和邮箱统一打码。"
     options:
       - "true"
       - "false"
     default_value: "false"
   FILTER:
     name: 过滤筛选
-    description: "筛选指定模型、账号关键字或序号（选填）"
+    description: "按账号、邮箱、平台、模型关键字或从 1 开始的账号序号筛选；多个条件以逗号分隔。留空显示全部。"
     default_value: ""
 
 scriptings:
@@ -49,11 +64,13 @@ scriptings:
       script_url: https://raw.githubusercontent.com/Likhixang/Egerny/main/js/AI-Usage.js
       timeout: 20
       env:
-        PROVIDER: "cliproxyapi"
+        PROVIDER: "CLIProxyAPI"
         SERVER_URL: ""
+        AUTH_MODE: "Auto"
         API_KEY: ""
         EMAIL: ""
         PASSWORD: ""
+        USER_ID: ""
         MASK_ACCOUNT: "false"
         FILTER: ""
 
