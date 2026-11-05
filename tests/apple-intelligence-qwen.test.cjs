@@ -8,7 +8,7 @@ const source = fs.readFileSync(path.join(__dirname, '../js/AppleIntelligence-Qwe
 const context = vm.createContext({ console, Date, URL, JSON, Math });
 vm.runInContext(
   source.replace('export default async function (ctx)', 'async function main(ctx)') +
-    `\nglobalThis.api = { main, readConfig, buildEndpoint, parseRequestPath, extractInput, extractUserText, buildUserContent, pickAnnotations, buildTextSSE, makeSummary, pickAnswer, unwrapAnswer, chunkString, looksLikeImageRequest, isComposeRequest, parseComposeInput, composeUserMessage, parseComposeResult, buildComposeValue, isBaiduImageRequest, extractImageBase64, base64ToBytes, detectImage, toBaidu, pickGuessword, multipartImage, readLensConfig, buildReasoningParams, parseExtraBody, readSearchMode, parseQwenStream, sourcesFromText, dedupeSources, buildSearchContext, dedupeAnnotations };`,
+    `\nglobalThis.api = { main, readConfig, buildEndpoint, parseRequestPath, extractInput, extractUserText, buildUserContent, pickAnnotations, buildTextSSE, makeSummary, pickAnswer, unwrapAnswer, chunkString, looksLikeImageRequest, isComposeRequest, parseComposeInput, composeUserMessage, parseComposeResult, buildComposeValue, isBaiduImageRequest, extractImageBase64, base64ToBytes, detectImage, toBaidu, pickGuessword, multipartImage, readLensConfig, buildReasoningParams, parseExtraBody, readSearchMode, parseQwenStream, sourcesFromText, dedupeSources, buildSearchContext, dedupeAnnotations, stripTrigger };`,
   context,
 );
 const api = context.api;
@@ -184,7 +184,7 @@ test('多轮对话把历史带上，并写入存储', async () => {
 
   const sent = second.calls[0].options.body.messages;
   assert.equal(sent[0].role, 'system');
-  assert.equal(sent[1].content, '问千问，你是什么模型');
+  assert.equal(sent[1].content, '你是什么模型');
   assert.equal(sent[2].content, '第一轮回答');
   assert.equal(sent[3].content, '再说一句');
   assert.equal(second.calls[0].options.headers.Authorization, 'Bearer sk-test');
@@ -213,8 +213,8 @@ test('上游失败也返回合法 SSE，而不是挂起', async () => {
   assert.match(JSON.parse(done.value).content, /boom/);
 });
 
-test('未配置时给出可读错误，不抛异常', async () => {
-  const ctx = makeCtx({ url: NEW_URL, body: BODY, env: {} });
+test('填了模型但缺接口地址时给出可读错误', async () => {
+  const ctx = makeCtx({ url: NEW_URL, body: BODY, env: { MODEL: 'test-model' } });
   const out = await api.main(ctx);
   const events = parseSSE(out.__responded.body);
   const done = events.find(e => e.name.endsWith('text.value.done')).payload;
@@ -523,7 +523,7 @@ test('搜索走 Tavily：取结果并注入来源', async () => {
   const out = await api.main(ctx);
   assert.equal(ctx.calls[0].target, 'https://api.tavily.com/search');
   assert.equal(ctx.calls[0].options.headers.Authorization, 'Bearer tvly-test');
-  assert.equal(ctx.calls[0].options.body.query, '问千问，你是什么模型');
+  assert.equal(ctx.calls[0].options.body.query, '你是什么模型');
 
   const system = ctx.calls[1].options.body.messages[0].content;
   assert.match(system, /https:\/\/t\.example\/1/);
@@ -669,6 +669,55 @@ test('检索密钥缺失时通知并降级', async () => {
   assert.equal(notes[0].title, 'Tavily搜索不可用');
   assert.match(notes[0].body, /SEARCH_KEY/);
   assert.equal(events.some(e => e.name.endsWith('annotations[].added')), false);
+});
+
+test('唤醒词剥离：大小写、空格、标点都不影响', () => {
+  const cases = [
+    ['问千问，今天天气', '今天天气'],
+    ['千问 今天天气', '今天天气'],
+    ['问千问:你好', '你好'],
+    ['ask qwen what is up', 'what is up'],
+    ['AskQwen what is up', 'what is up'],
+    ['ASK   QWEN：你好', '你好'],
+    ['qwen hello', 'hello'],
+    ['QWEN Hello', 'Hello'],
+    ['ask ChatGPT hello', 'hello'],
+    ['askChatGPT hello', 'hello'],
+    ['ChatGPT, hello', 'hello'],
+    ['ask GPT hello', 'hello'],
+    ['askGPT hello', 'hello'],
+    ['GPT：你好', '你好'],
+  ];
+  for (const [input, expected] of cases) {
+    assert.equal(api.stripTrigger(input), expected, input);
+  }
+});
+
+test('唤醒词剥离：模型名和普通句子不受影响', () => {
+  assert.equal(api.stripTrigger('GPT-4 是什么'), 'GPT-4 是什么');
+  assert.equal(api.stripTrigger('qwen3 是什么'), 'qwen3 是什么');
+  assert.equal(api.stripTrigger('今天天气怎么样'), '今天天气怎么样');
+  // 只有唤醒词没有正文时保留原文，避免把问题剥空
+  assert.equal(api.stripTrigger('问千问'), '问千问');
+  assert.equal(api.stripTrigger('ask qwen'), 'ask qwen');
+});
+
+test('发给 provider 的是剥离唤醒词后的句子', async () => {
+  const body = {
+    input: [{ message: { role: 'user', content: [{ type: 'text', text: 'AskQwen 今天有什么 AI 新闻' }] }, type: 'message' }],
+  };
+  const ctx = makeCtx({ url: NEW_URL, body, env: ENV, route: () => chatText('回答') });
+  await api.main(ctx);
+  const messages = ctx.calls[0].options.body.messages;
+  assert.equal(messages[messages.length - 1].content, '今天有什么 AI 新闻');
+});
+
+test('MODEL 留空时原样放行给千问', async () => {
+  const body = { input: [{ message: { role: 'user', content: [{ type: 'text', text: '问千问，你好' }] }, type: 'message' }], stream: true };
+  const ctx = makeCtx({ url: NEW_URL, body, env: { PROVIDER_URL: '', API_KEY: '', MODEL: '' }, route: () => chatText('不该调用') });
+  const out = await api.main(ctx);
+  assert.deepEqual(plain(out), { body: JSON.stringify(body) });
+  assert.equal(ctx.calls.length, 0);
 });
 
 test('EXTRA_BODY 并入请求体但不能覆盖核心字段', async () => {

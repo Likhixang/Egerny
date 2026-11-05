@@ -30,6 +30,21 @@ const DEFAULT_WRITING_PROMPT =
   "body 要包含完整文本，未改动的部分也照抄，不要省略；" +
   "refinements 是 3 条中文短语，从结构、语气、意象、节奏等角度给出，供用户下一步选择。";
 
+/**
+ * Siri 只有听到唤醒词才会把请求发给千问。唤醒词本身不该进 provider，
+ * 否则模型会把它当成问题的一部分。
+ */
+const TRIGGER_RE =
+  /^\s*(?:(?:ask\s*)?(?:qwen|chat\s*gpt|chatgpt|gpt)(?![a-z0-9-])|问千问|千问)\s*[,，、:：!！.。]?\s*/i;
+
+function stripTrigger(text) {
+  const raw = str(text);
+  const m = TRIGGER_RE.exec(raw);
+  if (!m) return raw;
+  const rest = raw.slice(m[0].length).trim();
+  return rest || raw;
+}
+
 const COMPOSE_GROUP_PREFIX = "compose_";
 
 /* 画图不接管：命中这些句式就放行给千问，别用自己的模型回答 */
@@ -104,12 +119,14 @@ function parseExtraBody(raw) {
 
 function readConfig(env) {
   const e = env || {};
-  const rawProvider = str(e.PROVIDER_URL);
-  if (!rawProvider) throw new Error("未填写 PROVIDER_URL（填到 /v1 即可，会自动补 /chat/completions）");
-  if (!/^https?:\/\/[^\s]+$/i.test(rawProvider)) throw new Error("PROVIDER_URL 必须是 http(s) 地址");
-  const providerUrl = buildEndpoint(rawProvider, "chat/completions");
   const model = str(e.MODEL);
-  if (!model) throw new Error("未填写 MODEL");
+  const rawProvider = str(e.PROVIDER_URL);
+  // MODEL 留空 = 不接管，整条请求原样回到千问
+  if (model) {
+    if (!rawProvider) throw new Error("未填写 PROVIDER_URL（填到 /v1 即可，会自动补 /chat/completions）");
+    if (!/^https?:\/\/[^\s]+$/i.test(rawProvider)) throw new Error("PROVIDER_URL 必须是 http(s) 地址");
+  }
+  const providerUrl = model ? buildEndpoint(rawProvider, "chat/completions") : "";
 
   const timeout = Number(str(e.TIMEOUT) || "120");
   const searchMode = readSearchMode(e.WEB_SEARCH || "provider");
@@ -1359,6 +1376,7 @@ export default async function (ctx) {
   }
 
   const input = extractInput(body);
+  input.text = stripTrigger(input.text);
   const userText = input.text;
   const hasImage = input.images.length > 0;
 
@@ -1369,6 +1387,9 @@ export default async function (ctx) {
     return ctx.respond(sseResponse(sessionId,
       buildTextSSE(sessionId, "配置错误：" + error.message, { isNew: parsed.isNew })));
   }
+
+  // MODEL 留空表示不接管：把读过的 body 原样带回，整条请求继续走千问
+  if (!cfg.model) return raw ? { body: raw } : undefined;
 
   // 写作工具（compose）与 Siri 对话共用端点，但报文结构完全不同，先分流
   if (isComposeRequest(body)) {

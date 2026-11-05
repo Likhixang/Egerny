@@ -8,6 +8,10 @@ icon: "sparkles"
 # 两项能力各自独立：Siri 那套需要 PROVIDER_URL/MODEL，识图那套需要 SERPAPI_KEY。
 # 没填的部分不会接管，原样走苹果/百度。
 env_schema:
+  MODEL:
+    name: 模型
+    description: "填模型名；留空则不接管，继续走千问。"
+    default_value: ""
   PROVIDER_URL:
     name: 接口地址
     description: "OpenAI 兼容接口，填到 /v1 即可。"
@@ -15,10 +19,6 @@ env_schema:
   API_KEY:
     name: 密钥
     description: "Bearer 密钥；本地网关留空。"
-    default_value: ""
-  MODEL:
-    name: 模型
-    description: "模型名，手填。"
     default_value: ""
   EFFORT:
     name: 思考强度

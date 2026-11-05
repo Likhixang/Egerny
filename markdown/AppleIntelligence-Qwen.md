@@ -241,7 +241,7 @@ SerpAPI 把这一层包掉了：给它图，它返回结构化 JSON。
 | --- | --- | --- |
 | `PROVIDER_URL` | 是 | Siri / 写作工具的接口，填到 `/v1` 即可 |
 | `API_KEY` | 否 | Bearer 密钥；本地网关无鉴权可留空 |
-| `MODEL` | 是 | 传给 provider 的 `model` 字段 |
+| `MODEL` | 否 | 传给 provider 的 `model` 字段；**留空则不接管，整条请求继续走千问** |
 | `EFFORT` | 否 | 思考强度，按 OpenAI 兼容的 `reasoning_effort` 发送：`default` 不发送 / `off` 发 `none` / `low` `medium` `high` `xhigh` `max` |
 | `EXTRA_BODY` | 否 | JSON 对象，原样并入请求体，用于 provider 私有参数 |
 | `WEB_SEARCH` | 否 | 搜索来源：`provider`（默认）/ `qwen` / `tavily` / `serpapi` / `off` |
@@ -285,6 +285,22 @@ provider 用非标准字段时（百炼 `enable_thinking`/`thinking_budget`、Op
 ```
 
 `EXTRA_BODY` 会原样并入请求体，但不会覆盖 `model` / `messages` / `stream`。
+
+### 唤醒词
+
+Siri 只有听到唤醒词才会把请求发给千问，这些词本身不该出现在 provider 的输入里：
+
+```
+问千问  千问  qwen  ask qwen  gpt  chatgpt  ask gpt  ask chatgpt
+```
+
+- 大小写不敏感：`Qwen` / `QWEN` / `AskQwen` 都算
+- 空格可有可无：`askqwen` / `ask qwen` / `ask  gpt` 都算
+- 紧跟的逗号、冒号、感叹号等标点一并去掉
+- 剥离后为空则保留原文（避免把「问千问」三个字本身吃光）
+- `GPT-4 是什么`、`qwen3 是什么` 这类模型名不误伤
+
+剥离发生在解析出用户文本之后、写历史之前，所以历史、搜索 query、provider 输入都是干净的问题。
 
 ### 联网搜索与来源卡片
 
