@@ -1051,6 +1051,20 @@ test('判断调用给推理模型留够 token', async () => {
   assert.equal(judge.options.body.max_tokens, 64);
 });
 
+test('deepseek 型号直接映射到它支持的档位，不发注定 400 的值', async () => {
+  for (const [wanted, expected] of [['xhigh', 'max'], ['medium', 'low'], ['high', 'high'], ['max', 'max'], ['off', undefined]]) {
+    const ctx = makeCtx({
+      url: NEW_URL,
+      body: BODY,
+      env: { ...ENV, MODEL: 'deepseek-flash', EFFORT: wanted },
+      route: () => chatText('ok'),
+    });
+    await api.main(ctx);
+    assert.equal(ctx.calls[0].options.body.reasoning_effort, expected, wanted);
+    assert.equal(ctx.calls.length, 1, wanted);
+  }
+});
+
 test('EXTRA_BODY 并入请求体但不能覆盖核心字段', async () => {
   const ctx = makeCtx({
     url: NEW_URL,
