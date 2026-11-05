@@ -982,6 +982,15 @@ test('中英文搜索词都能命中，research 不误伤', () => {
   }
 });
 
+test('只说一个「搜」也命中，搜集/搜狗不误伤', () => {
+  for (const q of ['搜 这是什么', '搜这是什么', '搜，帮我看看']) {
+    assert.equal(api.looksTimeSensitive(q), true, q);
+  }
+  for (const q of ['搜集资料', '搜狗输入法', '你是什么模型']) {
+    assert.equal(api.looksTimeSensitive(q), false, q);
+  }
+});
+
 test('EXTRA_BODY 并入请求体但不能覆盖核心字段', async () => {
   const ctx = makeCtx({
     url: NEW_URL,
