@@ -1,6 +1,6 @@
 # Apple 智能换模型（问千问）
 
-把国行 Apple 智能里「问千问」那条链路，改接到你自己的 OpenAI 兼容 provider。Siri 界面照常显示，模型换成你的。
+把国行 Apple 智能里「问千问」那条链路，改接到你自己的 OpenAI 兼容 provider。文本和出图都支持。
 
 模块地址：
 
@@ -21,6 +21,7 @@ https://raw.githubusercontent.com/Likhixang/Egerny/main/sgmodule/AppleIntelligen
 | UA | `Siri (iPhone - Version 27.3.0)` |
 | 模型 | `qwenapp-apple-tqa` |
 | 响应 | `text/event-stream` + brotli，事件名 `session.response.*` |
+| 服务端工具 | `image_generator` / `file_generator` / `browser` |
 
 所以可以在 Egern 的 `http_request` 脚本里直接吞掉请求，按原样 SSE 事件壳回包。
 
@@ -35,13 +36,87 @@ https://raw.githubusercontent.com/Likhixang/Egerny/main/sgmodule/AppleIntelligen
 
 ---
 
+## 两条链路
+
+### 纯文本：14 个事件
+
+```
+session.created                                        ← 仅新会话
+session.response.created
+session.response.choices[].added
+session.response.choices[].items[].added
+session.response.choices[].items[].message.content[].added
+session.response.choices[].items[].message.content[].text.value.delta   ×N
+session.response.choices[].items[].message.content[].text.value.done
+session.response.choices[].items[].message.content[].done
+session.response.choices[].items[].done
+session.response.choices[].completed
+session.response.choices[].done
+session.response.done
+```
+
+### 出图：20 个事件，两个 item
+
+```
+session.response.choices[].items[].added                                   ← item 0: image_generator_call
+session.response.choices[].items[].image_generator_call.in_progress
+session.response.choices[].items[].image_generator_call.prompt.done
+session.response.choices[].items[].image_generator_call.generating
+session.response.choices[].items[].image_generator_call.images[].added
+session.response.choices[].items[].image_generator_call.completed
+session.response.choices[].items[].done
+session.response.choices[].items[].added                                   ← item 1: message
+session.response.choices[].items[].message.content[].added                 ← content 0: image_generator_image
+session.response.choices[].items[].message.content[].done
+session.response.choices[].items[].message.content[].added                 ← content 1: text
+session.response.choices[].items[].message.content[].text.value.delta      ×N
+session.response.choices[].items[].message.content[].text.value.done
+session.response.choices[].items[].message.content[].done
+session.response.choices[].items[].done
+session.response.choices[].completed
+session.response.choices[].done
+session.response.done
+```
+
+关键结构：
+
+- `items[0]` 是 `image_generator_call`，`completed` 事件里带 `tool_name`、`images[].url`、`prompt`、`status`。
+- `items[1]` 是 `message`，`content[0]` 是 `image_generator_image`（`{width, height, url, prompt}`，这才是真正显示的图），`content[1]` 才是那段双重编码的文本。
+- `choices[].completed` 的 `output` 里两个 item 都要在。
+- 真实后端在 `items[].added` 里就给了 `status: "completed"` 和空 `prompt`，这不是笔误，照抄才能对齐。
+
+---
+
+## 出图是怎么触发的
+
+1. 请求上游时带上 `image_generator` 的 function 定义，`tool_choice: "auto"`。
+2. 上游返回 `tool_calls` → 取出 `arguments.prompt` → 调 `IMAGE_URL` 生成图片。
+3. 拿到 URL 后按上面 20 个事件回包。
+
+上游 400 且报错里带 `tool` 字样时，自动去掉 `tools` 重发一次，然后用句式兜底（`画只猫`、`生成图片：海边日落`、`draw me a cat image` 之类）。普通提问不会误触。
+
+**图片 URL 必须设备能直接抓取。** `dall-e-3` 这类默认回 `url`，直接可用；`gpt-image-1` 只回 `b64_json`，需要配 `IMAGE_UPLOAD_URL`，否则降级成纯文本并提示。
+
+转存接口约定：
+
+```
+POST <IMAGE_UPLOAD_URL>
+Content-Type: application/json
+{"image": "<base64>", "mimeType": "image/png"}
+
+→ 200 {"url": "https://..."}   或   纯文本 URL
+```
+
+---
+
 ## 安装
 
 1. Egern → 配置 → 模块 → 添加模块，填上面的地址。
-2. 进入模块设置，填 **接口地址**、**密钥**、**模型** 三项，其余保持默认即可。
-3. 确认模块已启用，且 MITM 里包含 `prod-yabuli.qianwen.com`（模块会自动合并，不用手动加）。
-4. 手机上装好 Egern 的 CA 证书，并在「设置 → 通用 → 关于本机 → 证书信任设置」打开完全信任。
-5. 重新打开 Siri，选择用千问回答，问一句试试。
+2. 进入模块设置，至少填 **接口地址**、**密钥**、**模型**。
+3. 需要出图就再填 **图像接口地址** 和 **图像模型**。
+4. 确认模块已启用，MITM 里包含 `prod-yabuli.qianwen.com`（模块会自动合并）。
+5. 手机上装好 Egern 的 CA 证书，并在「设置 → 通用 → 关于本机 → 证书信任设置」打开完全信任。
+6. 重开 Siri，选千问问一句。
 
 ---
 
@@ -58,16 +133,23 @@ https://raw.githubusercontent.com/Likhixang/Egerny/main/sgmodule/AppleIntelligen
 | `REPORT_MODEL` | 否 | 回给 Siri 的 `model` 字段，默认 `qwenapp-apple-tqa` |
 | `CONTINUE_URL` | 否 | 回答下方的跳转链接，留空不显示 |
 | `NOTIFY_ON_ERROR` | 否 | 上游失败时发系统通知 |
+| `IMAGE_ENABLE` | 否 | 出图总开关，默认 `true` |
+| `IMAGE_URL` | 出图必填 | `/images/generations` 地址 |
+| `IMAGE_MODEL` | 出图必填 | 例如 `dall-e-3`、`gpt-image-1`、`flux-schnell` |
+| `IMAGE_SIZE` | 否 | `宽x高`，默认 `1024x1024`，同时决定回包的 `width`/`height` |
+| `IMAGE_KEY` | 否 | 留空复用 `API_KEY` |
+| `IMAGE_TIMEOUT` | 否 | 默认 180 秒 |
+| `IMAGE_UPLOAD_URL` | 否 | base64 转存地址 |
+| `IMAGE_DESCRIBE` | 否 | 额外一次模型调用写图片描述，默认关闭 |
 
-上游同时兼容两种返回格式：Chat Completions 的 `choices[0].message.content`，以及 Responses 的 `output_text` / `output[].content[].text`。
+上游对话接口同时兼容 `choices[0].message.content` 和 Responses 的 `output_text` / `output[].content[].text`。
 
 ---
 
 ## 已知限制
 
 - **只覆盖「问千问」**。端侧模型和苹果自研云端模型不经过这个接口，拦截不到。
-- **不支持工具调用**。抓包里的 `client_tools` 只有一个 `call_emergency_services`，本模块不会把它转发给上游，所以「让 Siri 报警」这类动作不会触发。
-- **不支持服务端工具**。`image_generator` / `file_generator` / `browser` 不会工作，画图请求会退化成纯文本回答。
+- **只实现了 `image_generator` 一个工具**。抓包里的 `call_emergency_services` 不会转发给上游，所以「让 Siri 报警」不会触发；`file_generator` / `browser` 同样不支持。
 - **整段返回，不是逐字流式**。Egern 脚本返回的是完整 body，第一个字的延迟等于整段生成时间。
 - 需要 iOS 27.3 及以上、国行设备，且已开通 Apple 智能测试资格。
 
@@ -79,7 +161,9 @@ https://raw.githubusercontent.com/Likhixang/Egerny/main/sgmodule/AppleIntelligen
 | --- | --- |
 | Siri 回「配置错误」 | 接口地址或模型没填 |
 | Siri 回「后端不可用」 | 上游地址写错、密钥失效，或网关不通 |
-| 完全没有变化 | 模块没启用；MITM 没开；CA 证书没信任 |
+| 该出图却回了文字 | 上游不支持 tool calling，或提示词没被识别；看 `IMAGE_URL` / `IMAGE_MODEL` 是否填了 |
+| 「图片生成失败：… IMAGE_UPLOAD_URL」 | 图像模型只回 base64，配转存地址或换回 url 型的模型 |
+| 完全没变化 | 模块没启用；MITM 没开；CA 证书没信任 |
 | 连接直接失败 | 不要把 `*.apple.com` / `gateway.icloud.com.cn` 加进 MITM，那些有 pinning |
 
 在 Egern 的请求记录里筛 `prod-yabuli.qianwen.com`，能看到脚本是否命中。
@@ -92,6 +176,6 @@ https://raw.githubusercontent.com/Likhixang/Egerny/main/sgmodule/AppleIntelligen
 node --test tests/apple-intelligence-qwen.test.cjs
 ```
 
-覆盖：事件序列与抓包一致、deltas 拼接还原、多轮历史、上游失败兜底、非目标 URL 透传。
+21 条，覆盖：两条链路的事件序列与抓包逐项一致、deltas 还原、多轮历史、工具调用解析、tools 被拒后的降级、base64 转存、图片失败降级、非目标 URL 透传。
 
 协议依据来自 2026-11-05 的一次真实抓包（iOS 27.3 开发者测试版，中国大陆）。
