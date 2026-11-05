@@ -1,8 +1,11 @@
-# Apple 智能换模型（问千问）
+# Apple 智能换模型（问千问 / 识图）
 
-把国行 Apple 智能里「问千问」那条链路，改接到你自己的 OpenAI 兼容 provider。
+一个模块，把国行 Apple 智能里能碰到的两条链路都接管了：
 
-覆盖 **纯文本回答、视觉智能识别、写作工具** 三条链路。**画图不接管**：识别到画图意图时原样放行，仍由千问出图。
+- **Siri / 写作工具 / 视觉智能** → 你自己的 OpenAI 兼容 provider（文本、图片识别、选中文本改写）
+- **视觉搜索（以图搜图）** → 百度识图换成 Google Lens（经 SerpAPI）
+
+**画图不接管**：命中画图句式就原样放行，仍由千问出图。
 
 模块地址：
 
@@ -27,8 +30,9 @@ https://raw.githubusercontent.com/Likhixang/Egerny/main/sgmodule/AppleIntelligen
 | 响应 | `text/event-stream` + brotli，事件名 `session.response.*` |
 | 分流字段 | `configuration.response_configuration_group_id`：`siri.visualIntelligenceCamera` / `compose_*` |
 | 服务端工具 | `image_generator` / `file_generator` / `browser` |
+| 识图 | `POST https://qianfan.baidubce.com/v1/images/search`，`image=<urlencoded base64>` |
 
-所以可以在 Egern 的 `http_request` 脚本里直接吞掉请求，按原样 SSE 事件壳回包。
+所以可以在 Egern 的 `http_request` 脚本里直接吞掉请求，按原协议回包。
 
 两个容易踩的点：
 
@@ -41,7 +45,7 @@ https://raw.githubusercontent.com/Likhixang/Egerny/main/sgmodule/AppleIntelligen
 
 ---
 
-## 三条链路
+## Siri 三条链路
 
 ### 纯文本：14 个事件
 
@@ -119,11 +123,80 @@ message.content[].done          ← annotations 会写进这里
 
 ---
 
+## 视觉搜索：百度识图 → Google Lens
+
+手机端请求（2026-11-05 真机抓包）：
+
+| 项 | 值 |
+| --- | --- |
+| 端点 | `POST https://qianfan.baidubce.com/v1/images/search` |
+| UA | `SearchPartnerInferenceProvider/297.15.7 Network/6681.60.32 iOS/27.3` |
+| 鉴权 | 没有，只靠 UA |
+| 请求体 | `application/x-www-form-urlencoded`，单个字段 `image=<urlencoded base64>` |
+| 图片 | 249×539 JPEG，约 19 KB（手机端已压缩） |
+| 响应 | `Content-Type: text/plain`，内容是 JSON，约 168 KB |
+
+响应结构（只列用到的部分）：
+
+```json
+{
+  "result": {
+    "logid": 3619529311,
+    "err_code": 0,
+    "guessword_res": [{ "word": "心相印抽纸", "type": "TYPE_MLLM_GUESSWORD", "confidence": 1 }],
+    "res_data": {
+      "res_items": [{
+        "item_cate": "CATE_SIMI", "title": "...", "thumburl": "https://mms2.baidu.com/...",
+        "fromurl": "https://...", "objurl": "https://...", "width": 160, "height": 213,
+        "site_name": ""
+      }],
+      "sim_items": [{ "title": "...", "thumburl": "...", "fromurl": "...", "score": 0.79 }],
+      "simi_result_page": "https://graph.baidu.com/s?sign=...",
+      "result_page": "https://graph.baidu.com/s?sign=..."
+    }
+  },
+  "error_code": 0,
+  "error_msg": "succ",
+  "support": "百度识图提供技术支持",
+  "logid": 3619529311
+}
+```
+
+脚本做的事：
+
+1. 读出 `image` 字段，base64 解码成字节
+2. `POST https://serpapi.com/image` 上传，拿 `image_id`
+3. `GET https://serpapi.com/search.json?engine=google_lens&image_id=...`
+4. 把 `visual_matches` / `exact_matches` / `organic_results` 映射成 `res_items` / `sim_items`，用 `related_content[0].query` 当 `guessword_res[0].word`
+5. 按 `text/plain` 回包
+
+**任何一步失败都会原样放行给百度识图**（可选发一条系统通知），所以视觉搜索不会因为 SerpAPI 挂了而不可用。
+
+### 为什么不能纯插件直连 Google
+
+试过了，走不通：
+
+| 验证 | 结果 |
+| --- | --- |
+| `POST lens.google.com/v3/upload` | 200，拿到 `vsrid` 结果 URL |
+| 直接抓那个结果 URL | 94 KB HTML，0 个结果节点、0 个 `AF_initDataCallback` |
+| PicImageSearch 的 `GoogleLens` 引擎 | `raw items: 0`（它只是 HTML 解析，页面里本来就没数据） |
+| 换 iPhone / Android UA、加 `gbv=1` | 还是空壳 |
+| Playwright 渲染 | 机房 IP 直接吃 `sorry/index` 验证码 |
+
+Lens 的结果是**纯客户端渲染**，还要 `bgasy` 下发的脚本在 DOM 里算出 `mlro`/`mrc`/`mgtyp` 等反爬令牌。Egern 的 `ctx.http` 没有 JS 引擎，这条路在插件里不可能完成。
+
+SerpAPI 把这一层包掉了：给它图，它返回结构化 JSON。
+
+---
+
 ## 画图为什么放行
 
 画图请求从形态上和普通提问完全一样（`input` 只有一句话，`server_tools` 里带 `image_generator`），**没法在请求发出前判断这次会不会出图**。
 
-所以脚本只做一件事：命中明确的画图句式就**返回 `undefined` 原样放行**，整条请求回到千问，出图、图片 URL、`image_generator_call` 事件全部由千问原生处理，本模块不参与。
+所以脚本只做一件事：命中明确的画图句式就**原样放行**，整条请求回到千问，出图、图片 URL、`image_generator_call` 事件全部由千问原生处理，本模块不参与。
+
+放行时会把原始 body 显式带回去——脚本已经读过请求体流，不带回去上游会收到空 body。
 
 命中规则（`IMAGE_INTENT`）：
 
@@ -138,12 +211,13 @@ message.content[].done          ← annotations 会写进这里
 ## 安装
 
 1. Egern → 配置 → 模块 → 添加模块，填上面的地址。
-2. 进入模块设置，至少填 **接口地址**、**密钥**、**模型**。接口地址写到 `/v1` 就行，例如 `https://api.openai.com/v1`。
-3. 确认模块已启用，MITM 里包含 `prod-yabuli.qianwen.com`（模块会自动合并）。
-4. 手机上装好 Egern 的 CA 证书，并在「设置 → 通用 → 关于本机 → 证书信任设置」打开完全信任。
-5. 重开 Siri，选千问问一句。
+2. 填 **接口地址**、**密钥**、**模型**（Siri / 写作工具用）。接口地址写到 `/v1` 就行。
+3. 到 [serpapi.com](https://serpapi.com) 注册，把 key 填进 **SerpAPI 密钥**（识图用，免费 250 次/月）。
+4. 确认模块已启用，MITM 里包含 `prod-yabuli.qianwen.com` 和 `qianfan.baidubce.com`（模块会自动合并）。
+5. 手机上装好 Egern 的 CA 证书，并在「设置 → 通用 → 关于本机 → 证书信任设置」打开完全信任。
+6. 重开 Siri，选千问问一句；再打开视觉搜索试一张图。
 
-不需要再配任何图片相关参数。
+两项能力互相独立：不填 SerpAPI key，识图继续走百度；不填 provider，Siri 继续走千问。
 
 ---
 
@@ -165,30 +239,40 @@ message.content[].done          ← annotations 会写进这里
 
 | 参数 | 必填 | 说明 |
 | --- | --- | --- |
-| `PROVIDER_URL` | 是 | 填到 `/v1` 即可，会自动补 `/chat/completions`；只写域名也行，会自动补 `/v1` |
+| `PROVIDER_URL` | 是 | Siri / 写作工具的接口，填到 `/v1` 即可 |
 | `API_KEY` | 否 | Bearer 密钥；本地网关无鉴权可留空 |
 | `MODEL` | 是 | 传给 provider 的 `model` 字段 |
 | `SYSTEM_PROMPT` | 否 | 留空用内置默认：简洁、准确、口语化 |
-| `VISION_MODEL` | 否 | 处理视觉智能图片的模型；留空复用 `MODEL`，主模型不支持图片时填多模态模型 |
+| `VISION_MODEL` | 否 | 处理视觉智能图片的模型；留空复用 `MODEL` |
 | `VISION_PROMPT` | 否 | 视觉智能只发图片不发文字，用这句引导模型作答 |
-| `WRITING_MODEL` | 否 | 写作工具用的模型，留空复用 `MODEL`；想要更好的改写效果可以单独指一个 |
-| `WRITING_PROMPT` | 否 | 写作工具的系统提示词，留空用内置默认（输出 `{body, refinements}`） |
-| `TIMEOUT` | 否 | 等待上游的秒数，默认 120，最大 300 |
+| `WRITING_MODEL` | 否 | 写作工具用的模型，留空复用 `MODEL` |
+| `WRITING_PROMPT` | 否 | 写作工具的系统提示词，留空用内置默认 |
+| `SERPAPI_KEY` | 识图必填 | 留空则识图继续走百度 |
+| `HL` | 否 | 识图语言，默认 `zh-cn` |
+| `COUNTRY` | 否 | 识图国家，默认 `cn` |
+| `LENS_TYPE` | 否 | `all` / `visual_matches` / `exact_matches`，默认 `all` |
+| `THUMB_PROXY` | 否 | 缩略图代理前缀，例如 `https://wsrv.nl/?url=`；留空用 Google 原地址 |
+| `TIMEOUT` | 否 | 等待上游或 SerpAPI 的秒数，默认 120，最大 300 |
 | `REPORT_MODEL` | 否 | 回给 Siri 的 `model` 字段，默认 `qwenapp-apple-tqa` |
 | `CONTINUE_URL` | 否 | 回答下方的跳转链接，留空不显示 |
-| `NOTIFY_ON_ERROR` | 否 | 上游失败时发系统通知 |
+| `NOTIFY_ON_ERROR` | 否 | 上游 / 识图失败时发系统通知 |
 
 上游对话接口同时兼容 `choices[0].message.content` 和 Responses 的 `output_text` / `output[].content[].text`。
+
+**关于缩略图**：Google 的缩略图在 `encrypted-tbn*.gstatic.com`，墙内直连打不开。如果代理规则已覆盖 Google 域名可以留空；否则填一个图片代理前缀。
 
 ---
 
 ## 已知限制
 
-- **只覆盖「问千问」、视觉智能的识别/询问和写作工具**。端侧模型和苹果自研云端模型不经过这个接口，拦截不到。
+- **Siri 只覆盖「问千问」、视觉智能的识别/询问和写作工具**。端侧模型和苹果自研云端模型不经过这个接口，拦截不到。
 - **画图只能靠句式判断**：命中画图句式才放行，说法太绕会被当成普通提问。
-- **写作工具只认 `compose_` 前缀的配置组**。抓到的是 `compose_selectedAndAllText`；如果后续系统换了 group id 或不带这个字段，请求会掉回 Siri 对话逻辑。
-- **写作工具是单轮的**。不读会话历史，每次只按客户端带上来的原文和改写要求处理；App 里连续点建议时若只发增量、不带原文，效果会退化。
+- **写作工具只认 `compose_` 前缀的配置组**。抓到的是 `compose_selectedAndAllText`；如果后续系统换了 group id，请求会掉回 Siri 对话逻辑。
+- **写作工具是单轮的**。不读会话历史，连续点建议时若只发增量、不带原文，效果会退化。
 - **视觉图片只用于当轮**。会话历史里只存 `[图片]` 占位，后续追问看不到那张图。
+- **识图没有 AI 摘要**。百度原包里的 `mllm_abstract` 是一段商品总结，Google 不给等价物，脚本只填识别词，摘要留空。
+- **识图结果质量取决于 Google**。中文商品图的匹配度通常不如百度，尤其是国内电商和小众商品。
+- **识图没有缓存**：同一张图搜两次会计两次 SerpAPI 额度。
 - **整段返回，不是逐字流式**。Egern 脚本返回的是完整 body，第一个字的延迟等于整段生成时间。
 - 需要 iOS 27.3 及以上、国行设备，且已开通 Apple 智能测试资格。
 
@@ -203,10 +287,13 @@ message.content[].done          ← annotations 会写进这里
 | 视觉智能回「图片识别失败」 | `VISION_MODEL`（或 `MODEL`）不是多模态模型，换一个支持图片输入的 |
 | 写作工具没变化，或回的是原文 | 看 Egern 请求记录里 `compose_` 请求是否命中脚本；`WRITING_MODEL` 是否只会长篇解释、不按 JSON 输出 |
 | 说「画只猫」却回了文字 | 放行判定没命中，换个更直接的说法；在 Egern 请求记录里确认这次请求是否被脚本接管 |
+| 识图还是百度的结果 | 没填 `SERPAPI_KEY`，或 MITM 名单里没有 `qianfan.baidubce.com` |
+| 弹「Google 识图不可用」通知 | 通知里带具体原因：key 无效、额度用完、网络不通；此时已自动回退百度 |
+| 识图有结果但缩略图空白 | 配 `THUMB_PROXY`，或确认代理规则覆盖 `gstatic.com` |
 | 完全没变化 | 模块没启用；MITM 没开；CA 证书没信任 |
 | 连接直接失败 | 不要把 `*.apple.com` / `gateway.icloud.com.cn` 加进 MITM，那些有 pinning |
 
-在 Egern 的请求记录里筛 `prod-yabuli.qianwen.com`，能看到脚本是否命中。
+在 Egern 的请求记录里筛 `prod-yabuli.qianwen.com` 或 `qianfan.baidubce.com`，能看到脚本是否命中。
 
 ---
 
@@ -216,6 +303,6 @@ message.content[].done          ← annotations 会写进这里
 node --test tests/apple-intelligence-qwen.test.cjs
 ```
 
-28 条，覆盖：三条链路的事件序列与抓包逐项一致、deltas 还原、多轮历史、图片输入解析、引用卡片、写作工具入参/出参解析与降级、画图意图放行、非目标 URL 透传。
+41 条，覆盖：Siri 三条链路的事件序列与抓包逐项一致、deltas 还原、多轮历史、图片输入解析、引用卡片、写作工具入参/出参解析与降级、画图意图放行（含带回原 body）、识图的 form/base64 解析、multipart、上传+搜索+映射、失败回退、500KB 上限、空结果 schema、非目标 URL 透传。
 
-协议依据来自 2026-11-05 的三次真实抓包（iOS 27.3 开发者测试版，中国大陆）：文本、视觉智能、写作工具。
+协议依据来自 2026-11-05 的真机抓包（iOS 27.3 开发者测试版，中国大陆）：Siri 文本、视觉智能、写作工具、百度识图。

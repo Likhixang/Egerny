@@ -8,7 +8,7 @@ const source = fs.readFileSync(path.join(__dirname, '../js/AppleIntelligence-Qwe
 const context = vm.createContext({ console, Date, URL, JSON, Math });
 vm.runInContext(
   source.replace('export default async function (ctx)', 'async function main(ctx)') +
-    `\nglobalThis.api = { main, readConfig, buildEndpoint, parseRequestPath, extractInput, extractUserText, buildUserContent, pickAnnotations, buildTextSSE, makeSummary, pickAnswer, unwrapAnswer, chunkString, looksLikeImageRequest, isComposeRequest, parseComposeInput, composeUserMessage, parseComposeResult, buildComposeValue };`,
+    `\nglobalThis.api = { main, readConfig, buildEndpoint, parseRequestPath, extractInput, extractUserText, buildUserContent, pickAnnotations, buildTextSSE, makeSummary, pickAnswer, unwrapAnswer, chunkString, looksLikeImageRequest, isComposeRequest, parseComposeInput, composeUserMessage, parseComposeResult, buildComposeValue, isBaiduImageRequest, extractImageBase64, base64ToBytes, detectImage, toBaidu, pickGuessword, multipartImage, readLensConfig };`,
   context,
 );
 const api = context.api;
@@ -502,10 +502,25 @@ test('写作工具：上游失败也回合法 JSON，且不写 Siri 会话历史
 });
 
 
-test('画图意图原样放行，不调用上游', async () => {
+test('画图意图原样放行，带回原始 body（脚本已读过流）', async () => {
   const ctx = makeCtx({ url: NEW_URL, body: DRAW_BODY, env: ENV, route: () => chatText('不该被调用') });
-  assert.equal(await api.main(ctx), undefined);
+  const out = await api.main(ctx);
+  assert.deepEqual(plain(out), { body: JSON.stringify(DRAW_BODY) });
   assert.equal(ctx.calls.length, 0);
+});
+
+test('写作工具里出现「生成图片」也不会被画图放行误伤', async () => {
+  const body = {
+    configuration: { response_configuration_group_id: 'compose_selectedAndAllText' },
+    input: [{
+      type: 'message',
+      message: { role: 'user', content: [{ type: 'text', text: JSON.stringify({ originalText: '帮我生成图片宣传文案', prompt: '更优雅' }) }] },
+    }],
+  };
+  const ctx = makeCtx({ url: NEW_URL, body, env: ENV, route: () => chatText(JSON.stringify({ body: '改写后', refinements: [] })) });
+  const out = await api.main(ctx);
+  assert.ok(out && out.__responded, '应走写作链路而不是放行');
+  assert.equal(ctx.calls.length, 1);
 });
 
 test('普通提问不受放行逻辑影响', async () => {
@@ -513,4 +528,171 @@ test('普通提问不受放行逻辑影响', async () => {
   const out = await api.main(ctx);
   assert.ok(out && out.__responded);
   assert.equal(ctx.calls.length, 1);
+});
+
+/* ------------------------------------------- 视觉搜索：百度识图 → Google Lens */
+
+const BAIDU_URL = 'https://qianfan.baidubce.com/v1/images/search';
+const PNG_B64 = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==';
+const FORM = 'image=' + encodeURIComponent(PNG_B64);
+const LENS_RESPONSE = {
+  search_metadata: { id: 'abc123', status: 'Success' },
+  related_content: [{ query: '心相印抽纸' }],
+  visual_matches: [
+    {
+      title: '心相印抽纸 3层100抽', link: 'https://item.example.com/1', source: '得物',
+      thumbnail: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:AAA',
+      image: 'https://img.example.com/1.jpg', image_width: 800, image_height: 600,
+    },
+    {
+      title: '抽纸对比测评', link: 'https://post.example.com/2', source: '什么值得买',
+      thumbnail: 'https://encrypted-tbn2.gstatic.com/images?q=tbn:BBB',
+      thumbnail_width: 200, thumbnail_height: 150,
+    },
+  ],
+  exact_matches: [{ title: '同款商品页', link: 'https://shop.example.com/3', thumbnail: 'https://encrypted-tbn1.gstatic.com/x' }],
+  organic_results: [{ title: '心相印官网', link: 'https://www.example-brand.com', thumbnail: 'https://encrypted-tbn3.gstatic.com/y' }],
+};
+
+function makeImgCtx({ url = BAIDU_URL, body = FORM, env = { SERPAPI_KEY: 'sk-test' }, route }) {
+  const calls = [];
+  const notices = [];
+  return {
+    env, calls, notices,
+    request: { url, method: 'POST', headers: {}, text: async () => body },
+    http: {
+      post: async (target, options) => { calls.push({ method: 'POST', target, options }); return route({ method: 'POST', target, options }); },
+      get: async (target, options) => { calls.push({ method: 'GET', target, options }); return route({ method: 'GET', target, options }); },
+    },
+    notify: (payload) => notices.push(payload),
+    respond: (payload) => ({ __responded: payload }),
+  };
+}
+
+function okJson(json) {
+  return { status: 200, text: async () => JSON.stringify(json) };
+}
+
+test('识图：非目标请求透传', async () => {
+  const ctx = makeImgCtx({ url: 'https://qianfan.baidubce.com/v1/other' });
+  assert.equal(await api.main(ctx), undefined);
+  assert.equal(ctx.calls.length, 0);
+});
+
+test('识图：没填 SERPAPI_KEY 时继续走百度', async () => {
+  const ctx = makeImgCtx({ env: {} });
+  assert.equal(await api.main(ctx), undefined);
+  assert.equal(ctx.calls.length, 0);
+});
+
+test('识图：解析 form body，百分号编码与加号都正确', () => {
+  assert.equal(api.extractImageBase64(FORM), PNG_B64);
+  assert.equal(api.extractImageBase64('image=abc%2Bdef%2F'), 'abc+def/');
+  assert.equal(api.extractImageBase64('image=abc+def'), 'abc+def');
+  assert.equal(api.extractImageBase64(''), '');
+  assert.equal(api.extractImageBase64('other=1'), '');
+});
+
+test('识图：base64 解码与 PNG 魔数', () => {
+  const bytes = api.base64ToBytes(PNG_B64);
+  assert.equal(bytes.length, 70);
+  assert.deepEqual(Array.from(bytes.slice(0, 8)), [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
+  assert.deepEqual(plain(api.detectImage(bytes)), { ext: 'png', mime: 'image/png' });
+  assert.equal(api.base64ToBytes(PNG_B64.replace(/=+$/, '')).length, 70);
+});
+
+test('识图：multipart 结构正确', () => {
+  const bytes = api.base64ToBytes(PNG_B64);
+  const { boundary, body } = api.multipartImage(bytes, api.detectImage(bytes));
+  const text = Buffer.from(body).toString('latin1');
+  assert.ok(text.includes('name="image"; filename="image.png"'));
+  assert.ok(text.includes('Content-Type: image/png'));
+  assert.ok(text.includes('--' + boundary + '--\r\n'));
+});
+
+test('识图：上传 → 搜索 → 映射成百度 schema', async () => {
+  const ctx = makeImgCtx({
+    route: ({ method, target }) => {
+      if (method === 'POST') return okJson({ image_id: 'img_123' });
+      assert.match(target, /engine=google_lens/);
+      assert.match(target, /image_id=img_123/);
+      return okJson(LENS_RESPONSE);
+    },
+  });
+  const out = await api.main(ctx);
+  assert.ok(out && out.__responded);
+  assert.equal(out.__responded.headers['Content-Type'], 'text/plain; charset=utf-8');
+
+  const json = JSON.parse(out.__responded.body);
+  assert.equal(json.error_code, 0);
+  assert.equal(json.result.guessword_res[0].word, '心相印抽纸');
+
+  const { res_items: res, sim_items: sim } = json.result.res_data;
+  assert.equal(res.length, 2);
+  assert.equal(res[0].title, '心相印抽纸 3层100抽');
+  assert.equal(res[0].fromurl, 'https://item.example.com/1');
+  assert.equal(res[0].site_name, '得物');
+  assert.equal(res[0].width, 800);
+  assert.equal(res[1].width, 200);
+  assert.equal(sim.length, 2);
+});
+
+test('识图：hl / country / type 传给 SerpAPI', async () => {
+  let target = '';
+  const ctx = makeImgCtx({
+    env: { SERPAPI_KEY: 'k', HL: 'zh-tw', COUNTRY: 'us', LENS_TYPE: 'visual_matches' },
+    route: ({ method, target: t }) => {
+      if (method === 'POST') return okJson({ image_id: 'i1' });
+      target = t;
+      return okJson({ visual_matches: [] });
+    },
+  });
+  await api.main(ctx);
+  assert.match(target, /hl=zh-tw/);
+  assert.match(target, /country=us/);
+  assert.match(target, /type=visual_matches/);
+});
+
+test('识图：THUMB_PROXY 生效', async () => {
+  const ctx = makeImgCtx({
+    env: { SERPAPI_KEY: 'k', THUMB_PROXY: 'https://wsrv.nl/?url=' },
+    route: ({ method }) => (method === 'POST' ? okJson({ image_id: 'i1' }) : okJson(LENS_RESPONSE)),
+  });
+  const json = JSON.parse((await api.main(ctx)).__responded.body);
+  assert.equal(
+    json.result.res_data.res_items[0].thumburl,
+    'https://wsrv.nl/?url=' + encodeURIComponent(LENS_RESPONSE.visual_matches[0].thumbnail),
+  );
+});
+
+test('识图：上传失败回退百度并通知', async () => {
+  const ctx = makeImgCtx({ route: () => ({ status: 401, text: async () => JSON.stringify({ error: 'Invalid API key' }) }) });
+  assert.deepEqual(plain(await api.main(ctx)), { body: FORM });
+  assert.equal(ctx.notices.length, 1);
+  assert.match(ctx.notices[0].body, /Invalid API key/);
+});
+
+test('识图：搜索失败也回退百度', async () => {
+  const ctx = makeImgCtx({
+    route: ({ method }) => (method === 'POST' ? okJson({ image_id: 'i1' }) : { status: 500, text: async () => '{"error":"boom"}' }),
+  });
+  assert.deepEqual(plain(await api.main(ctx)), { body: FORM });
+  assert.equal(ctx.notices.length, 1);
+});
+
+test('识图：超过 500KB 直接放行', async () => {
+  const big = 'A'.repeat(Math.ceil((800 * 1024 * 4) / 3));
+  const ctx = makeImgCtx({ body: 'image=' + big });
+  assert.deepEqual(plain(await api.main(ctx)), { body: 'image=' + big });
+  assert.equal(ctx.calls.length, 0);
+});
+
+test('识图：空结果也返回合法 schema', async () => {
+  const ctx = makeImgCtx({
+    route: ({ method }) => (method === 'POST' ? okJson({ image_id: 'i1' }) : okJson({ visual_matches: [] })),
+  });
+  const json = JSON.parse((await api.main(ctx)).__responded.body);
+  assert.equal(json.error_code, 0);
+  assert.equal(json.result.guessword_res[0].word, '图片搜索');
+  assert.deepEqual(json.result.res_data.res_items, []);
 });
