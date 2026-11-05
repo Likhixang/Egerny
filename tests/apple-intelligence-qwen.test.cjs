@@ -8,7 +8,7 @@ const source = fs.readFileSync(path.join(__dirname, '../js/AppleIntelligence-Qwe
 const context = vm.createContext({ console, Date, URL, JSON, Math });
 vm.runInContext(
   source.replace('export default async function (ctx)', 'async function main(ctx)') +
-    `\nglobalThis.api = { main, readConfig, buildEndpoint, parseRequestPath, extractInput, extractUserText, buildUserContent, pickAnnotations, buildTextSSE, makeSummary, pickAnswer, unwrapAnswer, chunkString, looksLikeImageRequest, isComposeRequest, parseComposeInput, composeUserMessage, parseComposeResult, buildComposeValue, isBaiduImageRequest, extractImageBase64, base64ToBytes, detectImage, toBaidu, pickGuessword, multipartImage, readLensConfig, buildReasoningParams, parseExtraBody, readSearchMode, parseQwenStream, sourcesFromText, dedupeSources, buildSearchContext, dedupeAnnotations, stripTrigger, cleanAnswer };`,
+    `\nglobalThis.api = { main, readConfig, buildEndpoint, parseRequestPath, extractInput, extractUserText, buildUserContent, pickAnnotations, buildTextSSE, makeSummary, pickAnswer, unwrapAnswer, chunkString, looksLikeImageRequest, isComposeRequest, parseComposeInput, composeUserMessage, parseComposeResult, buildComposeValue, isBaiduImageRequest, extractImageBase64, base64ToBytes, detectImage, toBaidu, pickGuessword, multipartImage, readLensConfig, buildReasoningParams, parseExtraBody, readSearchMode, parseQwenStream, sourcesFromText, dedupeSources, buildSearchContext, dedupeAnnotations, stripTrigger, cleanAnswer, looksTimeSensitive };`,
   context,
 );
 const api = context.api;
@@ -971,6 +971,15 @@ test('带时效词的问题跳过判断，直接检索', async () => {
   await api.main(ctx);
   assert.equal(ctx.calls.length, 2); // 检索 + 回答
   assert.equal(ctx.calls[0].target, 'https://api.tavily.com/search');
+});
+
+test('中英文搜索词都能命中，research 不误伤', () => {
+  for (const q of ['search 一下这是什么', 'Search this image', 'google it', 'what is the latest iPhone', '帮我查查', '查一下天气', '今天有什么新闻']) {
+    assert.equal(api.looksTimeSensitive(q), true, q);
+  }
+  for (const q of ['research paper about qwen', '1+1 等于几', '你是什么模型', '写一首诗']) {
+    assert.equal(api.looksTimeSensitive(q), false, q);
+  }
 });
 
 test('EXTRA_BODY 并入请求体但不能覆盖核心字段', async () => {

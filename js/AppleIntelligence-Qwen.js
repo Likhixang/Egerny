@@ -970,8 +970,16 @@ async function qwenSearch(ctx, question, rawBody) {
 const SEARCH_JUDGE_PROMPT = "判断用户问题是否需要联网检索最新或实时信息。只回答 yes 或 no，不要解释。";
 
 // 判断模型偶尔回空（推理模型把预算花在 reasoning 上），兜底按时间敏感词判断
-const TIME_SENSITIVE_RE =
-  /(今天|今日|现在|目前|最新|近期|刚刚|本周|新闻|消息|股价|汇率|比分|天气|气温|价格|多少钱|发布|上市|开售|评测|搜一下|搜搜|查一下|查查|找一下|20[2-9]\d年?\d*月?)/;
+const TIME_SENSITIVE_RE = new RegExp(
+  [
+    "搜一下|搜搜|搜下|搜索|查一下|查查|查下|查询|找一下|找找|帮我搜|帮我查|上网|联网|百度|谷歌",
+    String.raw`\bsearch\b|\bgoogle\b|\blook\s*up\b|\blookup\b|\bbrowse\b|\bweb\s*search\b|\bfind\s+out\b`,
+    "今天|今日|现在|目前|最新|近期|刚刚|本周|新闻|消息|股价|汇率|比分|天气|气温|价格|多少钱|发布|上市|开售|评测",
+    String.raw`\blatest\b|\btoday\b|\bcurrent\b|\bnews\b|\bprice\b|\bweather\b|\bscore\b|\brelease\b`,
+    String.raw`20[2-9]\d年?\d*月?`,
+  ].join("|"),
+  "i",
+);
 
 function looksTimeSensitive(question) {
   return TIME_SENSITIVE_RE.test(str(question));
