@@ -697,9 +697,11 @@ function readSearchMode(value) {
 
 function searchInstruction(question) {
   return (
-    "只做联网检索，不要回答问题，也不要总结。\n" +
-    "搜索：" + question + "\n" +
-    '只输出 JSON 数组，最多 5 条，格式 [{"title":"标题","url":"https://..."}]，不要代码块、不要解释。'
+    "先判断这个问题是否需要联网检索最新信息。\n" +
+    "需要：只输出 JSON 数组（最多 5 条），格式 " +
+    '[{"title":"标题","url":"https://..."}]，不要回答问题、不要代码块、不要解释。\n' +
+    "不需要：只输出 []。\n" +
+    "问题：" + question
   );
 }
 
@@ -857,6 +859,8 @@ async function qwenSearch(ctx, question, rawBody) {
   } catch (_) {
     content = str(stream.value);
   }
+  // 千问自己判断不需要联网时会回 []
+  if (/^\[\s*\]$/.test(content)) return [];
   const sources = dedupeSources([...sourcesFromAnnotations(stream.annotations), ...sourcesFromText(content)]);
   if (!sources.length) throw new Error("千问搜索没有返回来源");
   return sources;

@@ -413,7 +413,7 @@ test('搜索走千问：先取来源，再交给 provider 作答', async () => {
   assert.equal(ctx.calls[0].target, NEW_URL);
   assert.equal(ctx.calls[0].options.headers['x-aiq-search'], '1');
   assert.equal(ctx.calls[0].options.headers.Authorization, 'Bearer jwt-abc');
-  assert.match(ctx.calls[0].options.body.input[0].message.content[0].text, /只做联网检索/);
+  assert.match(ctx.calls[0].options.body.input[0].message.content[0].text, /是否需要联网检索/);
 
   const providerBody = ctx.calls[1].options.body;
   assert.match(providerBody.messages[0].content, /https:\/\/a\.example\/x/);
@@ -423,6 +423,26 @@ test('搜索走千问：先取来源，再交给 provider 作答', async () => {
   const events = parseSSE(out.__responded.body);
   const ann = events.filter(e => e.name.endsWith('annotations[].added')).map(e => e.payload.annotation);
   assert.deepEqual(plain(ann).map(a => a.url_citation.url), ['https://a.example/x', 'https://b.example/y']);
+});
+
+test('千问判断不需要联网时返回空数组，不注入来源', async () => {
+  const notes = [];
+  const ctx = makeCtx({
+    url: NEW_URL,
+    body: BODY,
+    env: { ...ENV, WEB_SEARCH: 'qwen' },
+    route: target => (target === NEW_URL ? { status: 200, text: async () => qwenSSE('[]') } : chatText('普通回答')),
+  });
+  ctx.notify = msg => notes.push(msg);
+
+  const out = await api.main(ctx);
+  const events = parseSSE(out.__responded.body);
+  const done = events.find(e => e.name.endsWith('text.value.done')).payload;
+  assert.match(JSON.parse(done.value).content, /普通回答/);
+  const providerBody = ctx.calls[1].options.body;
+  assert.equal(providerBody.messages[0].content.includes('网页来源'), false);
+  assert.equal(events.some(e => e.name.endsWith('annotations[].added')), false);
+  assert.equal(notes.length, 0);
 });
 
 test('千问搜索失败时降级为无来源，回答照常', async () => {
