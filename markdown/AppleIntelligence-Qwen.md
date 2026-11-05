@@ -244,7 +244,8 @@ SerpAPI 把这一层包掉了：给它图，它返回结构化 JSON。
 | `MODEL` | 是 | 传给 provider 的 `model` 字段 |
 | `EFFORT` | 否 | 思考强度，按 OpenAI 兼容的 `reasoning_effort` 发送：`default` 不发送 / `off` 发 `none` / `low` `medium` `high` `xhigh` `max` |
 | `EXTRA_BODY` | 否 | JSON 对象，原样并入请求体，用于 provider 私有参数 |
-| `WEB_SEARCH` | 否 | 搜索来源：`provider`（默认）/ `qwen` / `off` |
+| `WEB_SEARCH` | 否 | 搜索来源：`provider`（默认）/ `qwen` / `tavily` / `serpapi` / `off` |
+| `SEARCH_KEY` | 否 | Tavily / SerpAPI 密钥；SerpAPI 留空则复用 `SERPAPI_KEY` |
 | `SYSTEM_PROMPT` | 否 | 留空用内置默认，原文：`Your answer must remain neutral, be accurate, and sound natural in spoken language. Output only the final answer.` |
 | `VISION_MODEL` | 否 | 处理视觉智能图片的模型；留空复用 `MODEL` |
 | `VISION_PROMPT` | 否 | 视觉智能只发图片不发文字，用这句引导模型作答 |
@@ -294,6 +295,10 @@ provider 用非标准字段时（百炼 `enable_thinking`/`thinking_budget`、Op
 | `off` | 不联网，也没有引用 | — |
 | `provider`（默认） | 向上游发 OpenAI 兼容的 `tools:[{type:"web_search"}]`，模型自己决定搜不搜、自己回引用 | 零额外调用；要选支持 web_search 的模型 |
 | `qwen` | 先让千问判断要不要联网；需要就只取来源，再交给 provider 作答并把来源回填引用卡片 | 每题多一次千问调用 |
+| `tavily` | 每题都调 Tavily，取 title/url/content，摘要一并拼进 system | 1 credit/次（免费 1000/月） |
+| `serpapi` | 每题都调 Google（`engine=google`），取 organic_results | 按套餐计费，额度小 |
+
+`tavily` / `serpapi` 没有“要不要搜”的判断，选它们就是每题都检索；想省额度或省时间就用 `provider`。
 
 `provider` 模式是模型自己判断，实测（`gpt-6.1-sol`）：
 

@@ -131,6 +131,11 @@ function readConfig(env) {
     extraBody: parseExtraBody(e.EXTRA_BODY),
     searchMode,
     search: searchMode === "provider",
+    searchKey: str(e.SEARCH_KEY),
+    serpApiKey: str(e.SERPAPI_KEY),
+    searchLang: str(e.HL) || "zh-cn",
+    searchCountry: str(e.COUNTRY) || "us",
+    searchTimeoutMs: Math.max(5000, Math.min(timeout > 0 ? timeout : 20, 30) * 1000),
   };
 }
 
@@ -690,7 +695,7 @@ const SEARCH_HEADER = "x-aiq-search";
 
 function readSearchMode(value) {
   const v = str(value).toLowerCase();
-  if (v === "qwen") return "qwen";
+  if (v === "qwen" || v === "tavily" || v === "serpapi") return v;
   if (v === "off" || v === "false" || v === "0" || v === "no") return "off";
   return "provider";
 }
@@ -786,14 +791,20 @@ function dedupeSources(list) {
   for (const s of list || []) {
     if (!s || !str(s.url) || seen.has(s.url)) continue;
     seen.add(s.url);
-    out.push({ title: str(s.title) || str(s.url), url: str(s.url) });
+    out.push({ title: str(s.title) || str(s.url), url: str(s.url), snippet: str(s.snippet) });
     if (out.length >= SEARCH_MAX_SOURCES) break;
   }
   return out;
 }
 
 function buildSearchContext(sources) {
-  const rows = sources.map((s, i) => i + 1 + ". " + s.title + "\n   " + s.url).join("\n");
+  const rows = sources
+    .map((s, i) => {
+      const head = i + 1 + ". " + s.title + "\n   " + s.url;
+      const extra = str(s.snippet).slice(0, 200);
+      return extra ? head + "\n   " + extra : head;
+    })
+    .join("\n");
   return "以下是刚联网检索到的网页来源，请据此回答；能引用时在对应句子后附上链接。\n" + rows;
 }
 
@@ -864,6 +875,66 @@ async function qwenSearch(ctx, question, rawBody) {
   const sources = dedupeSources([...sourcesFromAnnotations(stream.annotations), ...sourcesFromText(content)]);
   if (!sources.length) throw new Error("千问搜索没有返回来源");
   return sources;
+}
+
+/* ------------------------------------------------------- 第三方检索 API */
+
+function searchKeyOf(cfg) {
+  return str(cfg.searchKey) || (cfg.searchMode === "serpapi" ? str(cfg.serpApiKey) : "");
+}
+
+async function tavilySearch(ctx, cfg, question) {
+  const key = searchKeyOf(cfg);
+  if (!key) throw new Error("未填写 SEARCH_KEY（Tavily）");
+  const resp = await ctx.http.post("https://api.tavily.com/search", {
+    headers: { "Content-Type": "application/json", Authorization: "Bearer " + key },
+    body: {
+      query: question,
+      max_results: SEARCH_MAX_SOURCES,
+      search_depth: "basic",
+      include_answer: false,
+    },
+    timeout: cfg.searchTimeoutMs,
+  });
+  const raw = await resp.text();
+  if (resp.status >= 400) throw new Error("Tavily HTTP " + resp.status + "：" + String(raw).slice(0, 120));
+  let data = null;
+  try {
+    data = JSON.parse(raw);
+  } catch (_) {
+    throw new Error("Tavily 返回非 JSON");
+  }
+  const rows = Array.isArray(data && data.results) ? data.results : [];
+  return dedupeSources(
+    rows.map((r) => ({ title: str(r.title) || str(r.url), url: str(r.url), snippet: str(r.content) })),
+  );
+}
+
+async function serpapiSearch(ctx, cfg, question) {
+  const key = searchKeyOf(cfg);
+  if (!key) throw new Error("未填写 SEARCH_KEY（SerpAPI）");
+  const qs = [
+    "engine=google",
+    "q=" + encodeURIComponent(question),
+    "num=" + SEARCH_MAX_SOURCES,
+    "hl=" + encodeURIComponent(cfg.searchLang || "zh-cn"),
+    "gl=" + encodeURIComponent(cfg.searchCountry || "us"),
+    "api_key=" + encodeURIComponent(key),
+  ].join("&");
+  const resp = await ctx.http.get("https://serpapi.com/search.json?" + qs, { timeout: cfg.searchTimeoutMs });
+  const raw = await resp.text();
+  if (resp.status >= 400) throw new Error("SerpAPI HTTP " + resp.status + "：" + String(raw).slice(0, 120));
+  let data = null;
+  try {
+    data = JSON.parse(raw);
+  } catch (_) {
+    throw new Error("SerpAPI 返回非 JSON");
+  }
+  if (data && data.error) throw new Error("SerpAPI：" + String(data.error).slice(0, 120));
+  const rows = Array.isArray(data && data.organic_results) ? data.organic_results : [];
+  return dedupeSources(
+    rows.map((r) => ({ title: str(r.title) || str(r.link), url: str(r.link), snippet: str(r.snippet) })),
+  );
 }
 
 /* ------------------------------------------------------------ 入口 */
@@ -1265,13 +1336,17 @@ export default async function (ctx) {
   const history = loadHistory(ctx, sessionId);
   // 搜索走千问时，先拿来源，再让 provider 依据来源作答
   let sources = [];
-  if (cfg.searchMode === "qwen" && !hasImage && userText) {
+  const engineMode = cfg.searchMode;
+  if (!hasImage && userText && (engineMode === "qwen" || engineMode === "tavily" || engineMode === "serpapi")) {
+    const label = engineMode === "qwen" ? "千问" : engineMode === "tavily" ? "Tavily" : "SerpAPI";
     try {
-      sources = await qwenSearch(ctx, userText, raw);
+      if (engineMode === "qwen") sources = await qwenSearch(ctx, userText, raw);
+      else if (engineMode === "tavily") sources = await tavilySearch(ctx, cfg, userText);
+      else sources = await serpapiSearch(ctx, cfg, userText);
     } catch (error) {
       try {
         ctx.notify({
-          title: "千问搜索不可用",
+          title: label + "搜索不可用",
           body: String((error && error.message) || error).slice(0, 180) + "（本次回答没有来源）",
         });
       } catch (_) {

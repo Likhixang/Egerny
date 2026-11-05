@@ -500,9 +500,85 @@ test('搜索来源配置解析与旧值兼容', () => {
   assert.equal(api.readSearchMode('qwen'), 'qwen');
   assert.equal(api.readSearchMode('provider'), 'provider');
   assert.equal(api.readSearchMode('off'), 'off');
+  assert.equal(api.readSearchMode('tavily'), 'tavily');
+  assert.equal(api.readSearchMode('serpapi'), 'serpapi');
   assert.equal(api.readSearchMode('true'), 'provider');
   assert.equal(api.readSearchMode('false'), 'off');
   assert.equal(api.readSearchMode(''), 'provider');
+});
+
+test('搜索走 Tavily：取结果并注入来源', async () => {
+  const tavily = {
+    status: 200,
+    text: async () =>
+      JSON.stringify({ results: [{ title: 'T 标题', url: 'https://t.example/1', content: 'T 摘要' }] }),
+  };
+  const ctx = makeCtx({
+    url: NEW_URL,
+    body: BODY,
+    env: { ...ENV, WEB_SEARCH: 'tavily', SEARCH_KEY: 'tvly-test' },
+    route: target => (target.includes('api.tavily.com') ? tavily : chatText('按 Tavily 来源作答')),
+  });
+
+  const out = await api.main(ctx);
+  assert.equal(ctx.calls[0].target, 'https://api.tavily.com/search');
+  assert.equal(ctx.calls[0].options.headers.Authorization, 'Bearer tvly-test');
+  assert.equal(ctx.calls[0].options.body.query, '问千问，你是什么模型');
+
+  const system = ctx.calls[1].options.body.messages[0].content;
+  assert.match(system, /https:\/\/t\.example\/1/);
+  assert.match(system, /T 摘要/);
+
+  const events = parseSSE(out.__responded.body);
+  const ann = events.filter(e => e.name.endsWith('annotations[].added')).map(e => e.payload.annotation);
+  assert.deepEqual(plain(ann).map(a => a.url_citation.url), ['https://t.example/1']);
+});
+
+test('搜索走 SerpAPI：解析 organic_results', async () => {
+  const ctx = makeCtx({
+    url: NEW_URL,
+    body: BODY,
+    env: { ...ENV, WEB_SEARCH: 'serpapi', SEARCH_KEY: 'serp-test' },
+    route: () => chatText('按 Google 来源作答'),
+  });
+  ctx.http.get = async (target, options) => {
+    ctx.calls.push({ target, options });
+    return {
+      status: 200,
+      text: async () =>
+        JSON.stringify({ organic_results: [{ title: 'G 标题', link: 'https://g.example/1', snippet: 'G 摘要' }] }),
+    };
+  };
+
+  const out = await api.main(ctx);
+  assert.match(ctx.calls[0].target, /^https:\/\/serpapi\.com\/search\.json\?/);
+  assert.match(ctx.calls[0].target, /engine=google/);
+  assert.match(ctx.calls[0].target, /api_key=serp-test/);
+
+  const system = ctx.calls[1].options.body.messages[0].content;
+  assert.match(system, /https:\/\/g\.example\/1/);
+
+  const events = parseSSE(out.__responded.body);
+  assert.equal(events.some(e => e.name.endsWith('annotations[].added')), true);
+});
+
+test('检索密钥缺失时通知并降级', async () => {
+  const notes = [];
+  const ctx = makeCtx({
+    url: NEW_URL,
+    body: BODY,
+    env: { ...ENV, WEB_SEARCH: 'tavily' },
+    route: () => chatText('没有来源也回答'),
+  });
+  ctx.notify = msg => notes.push(msg);
+
+  const out = await api.main(ctx);
+  const events = parseSSE(out.__responded.body);
+  const done = events.find(e => e.name.endsWith('text.value.done')).payload;
+  assert.match(JSON.parse(done.value).content, /没有来源也回答/);
+  assert.equal(notes[0].title, 'Tavily搜索不可用');
+  assert.match(notes[0].body, /SEARCH_KEY/);
+  assert.equal(events.some(e => e.name.endsWith('annotations[].added')), false);
 });
 
 test('EXTRA_BODY 并入请求体但不能覆盖核心字段', async () => {

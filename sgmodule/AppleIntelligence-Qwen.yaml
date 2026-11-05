@@ -38,12 +38,18 @@ env_schema:
     default_value: ""
   WEB_SEARCH:
     name: 搜索来源
-    description: "provider：模型按需联网；qwen：千问判断后检索；off：关闭。"
+    description: "provider：模型按需联网；qwen：千问判断；tavily/serpapi：每题检索；off：关闭。"
     options:
       - "provider"
       - "qwen"
+      - "tavily"
+      - "serpapi"
       - "off"
     default_value: "provider"
+  SEARCH_KEY:
+    name: 检索密钥
+    description: "Tavily / SerpAPI 的 key；SerpAPI 留空则复用识图密钥。"
+    default_value: ""
   SYSTEM_PROMPT:
     name: 系统提示词
     description: "留空使用内置默认。"
@@ -121,6 +127,7 @@ scriptings:
         EFFORT: "default"
         EXTRA_BODY: ""
         WEB_SEARCH: "provider"
+        SEARCH_KEY: ""
         SYSTEM_PROMPT: ""
         VISION_MODEL: ""
         VISION_PROMPT: ""
