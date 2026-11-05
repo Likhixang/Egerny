@@ -1,0 +1,76 @@
+name: "Apple 智能换模型（问千问）"
+description: "把国行 Apple 智能的「问千问」链路改接到任意 OpenAI 兼容 provider。拦截 prod-yabuli.qianwen.com，按原 SSE 事件壳回包，Siri 无感知。"
+author: "Li Khixang"
+homepage: "https://github.com/Likhixang"
+manual: "https://raw.githubusercontent.com/Likhixang/Egerny/main/markdown/AppleIntelligence-Qwen.md"
+icon: "sparkles"
+
+# 未主动填写时不会写入 env，脚本会在 Siri 里直接回一条「配置错误」而不是静默失败。
+env_schema:
+  PROVIDER_URL:
+    name: 接口地址
+    description: "OpenAI 兼容的完整地址，例如 https://api.example.com/v1/chat/completions；不要填 /v1 根路径。"
+    default_value: "https://api.openai.com/v1/chat/completions"
+  API_KEY:
+    name: 密钥
+    description: "Bearer 密钥。本地网关无鉴权时留空。"
+    default_value: ""
+  MODEL:
+    name: 模型
+    description: "传给 provider 的 model 字段。"
+    default_value: ""
+  SYSTEM_PROMPT:
+    name: 系统提示词
+    description: "留空使用内置默认：简洁、准确、口语化，只输出最终答案。"
+    default_value: ""
+  TEMPERATURE:
+    name: 温度
+    description: "0 到 2，默认 0.7。"
+    default_value: "0.7"
+  TIMEOUT:
+    name: 超时秒数
+    description: "等待上游返回的时间，默认 120，最大 300。"
+    default_value: "120"
+  REPORT_MODEL:
+    name: 上报模型名
+    description: "回给 Siri 的 model 字段，默认与真实后端一致。"
+    default_value: "qwenapp-apple-tqa"
+  CONTINUE_URL:
+    name: 跳转链接
+    description: "Siri 回答下方的「继续在 App 中查看」。留空则不显示。"
+    default_value: ""
+  NOTIFY_ON_ERROR:
+    name: 出错时通知
+    description: "上游失败时发一条系统通知，便于排查。"
+    options:
+      - "true"
+      - "false"
+    default_value: "false"
+
+scriptings:
+  - http_request:
+      name: "Apple-Intelligence-Qwen"
+      match: "^https://prod-yabuli\\.qianwen\\.com/v1/sessions(/sess_[^/?#]+)?/responses"
+      script_url: "https://raw.githubusercontent.com/Likhixang/Egerny/main/js/AppleIntelligence-Qwen.js"
+      body_required: true
+      max_size: 1048576
+      timeout: 300
+      env:
+        # 留空占位：模块设置页（env_schema）写入的模块级 env 会覆盖这里的同名值。
+        PROVIDER_URL: ""
+        API_KEY: ""
+        MODEL: ""
+        SYSTEM_PROMPT: ""
+        TEMPERATURE: "0.7"
+        TIMEOUT: "120"
+        REPORT_MODEL: "qwenapp-apple-tqa"
+        CONTINUE_URL: ""
+        NOTIFY_ON_ERROR: "false"
+
+# 只解密这一个域名。苹果自己的 guzzoni / gateway.icloud.com.cn 有 pinning，加进来没意义还会拖慢连接。
+mitm:
+  hostnames:
+    - "prod-yabuli.qianwen.com"
+
+http_captures:
+  - "prod-yabuli.qianwen.com"
