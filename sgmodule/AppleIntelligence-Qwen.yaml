@@ -48,7 +48,7 @@ env_schema:
     default_value: "provider"
   SEARCH_KEY:
     name: 检索密钥
-    description: "Tavily / SerpAPI 的 key；SerpAPI 留空则复用识图密钥。"
+    description: "Tavily 的 key；SerpAPI 直接用的识图密钥。"
     default_value: ""
   SEARCH_JUDGE:
     name: 先判断再搜

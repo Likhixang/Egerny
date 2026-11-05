@@ -834,6 +834,28 @@ test('搜索调试开关会通知判断与来源数', async () => {
   assert.match(notes[0].body, /来源 1/);
 });
 
+test('选 serpapi 时优先用识图密钥，忽略检索密钥里的 Tavily key', async () => {
+  const ctx = makeCtx({
+    url: NEW_URL,
+    body: BODY,
+    env: {
+      ...ENV,
+      WEB_SEARCH: 'serpapi',
+      SEARCH_KEY: 'tvly-wrong',
+      SERPAPI_KEY: 'serp-right',
+      SEARCH_JUDGE: 'false',
+    },
+    route: () => chatText('ok'),
+  });
+  ctx.http.get = async (target, options) => {
+    ctx.calls.push({ target, options });
+    return { status: 200, text: async () => JSON.stringify({ organic_results: [{ title: 'T', link: 'https://t.example/1' }] }) };
+  };
+  await api.main(ctx);
+  assert.match(ctx.calls[0].target, /api_key=serp-right/);
+  assert.equal(ctx.calls[0].target.includes('tvly-wrong'), false);
+});
+
 test('EXTRA_BODY 并入请求体但不能覆盖核心字段', async () => {
   const ctx = makeCtx({
     url: NEW_URL,

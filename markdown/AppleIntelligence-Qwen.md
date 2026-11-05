@@ -245,7 +245,7 @@ SerpAPI 把这一层包掉了：给它图，它返回结构化 JSON。
 | `EFFORT` | 否 | 思考强度，按 OpenAI 兼容的 `reasoning_effort` 发送：`default` 不发送 / `off` 发 `none` / `low` `medium` `high` `xhigh` `max` |
 | `EXTRA_BODY` | 否 | JSON 对象，原样并入请求体，用于 provider 私有参数 |
 | `WEB_SEARCH` | 否 | 搜索来源：`provider`（默认）/ `qwen` / `tavily` / `serpapi` / `off` |
-| `SEARCH_KEY` | 否 | Tavily / SerpAPI 密钥；SerpAPI 留空则复用 `SERPAPI_KEY` |
+| `SEARCH_KEY` | 否 | Tavily 的密钥；`serpapi` 档直接用 `SERPAPI_KEY`（识图那把），不看这里 |
 | `SEARCH_JUDGE` | 否 | Tavily / SerpAPI 是否先判断再搜，默认 `true` |
 | `SEARCH_JUDGE_MODEL` | 否 | 判断用的模型，留空用主模型 |
 | `SEARCH_DEBUG` | 否 | 每次回答通知「判断结果 + 来源条数」 |

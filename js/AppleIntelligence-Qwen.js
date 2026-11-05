@@ -1019,7 +1019,9 @@ async function judgeNeedsSearch(ctx, cfg, question) {
 /* ------------------------------------------------------- 第三方检索 API */
 
 function searchKeyOf(cfg) {
-  return str(cfg.searchKey) || (cfg.searchMode === "serpapi" ? str(cfg.serpApiKey) : "");
+  // SerpAPI 优先用识图那把 key，避免把 Tavily 的 key 误发过去
+  if (cfg.searchMode === "serpapi") return str(cfg.serpApiKey) || str(cfg.searchKey);
+  return str(cfg.searchKey);
 }
 
 async function tavilySearch(ctx, cfg, question) {
