@@ -653,18 +653,6 @@ test('识图：hl / country / type 传给 SerpAPI', async () => {
   assert.match(target, /type=visual_matches/);
 });
 
-test('识图：THUMB_PROXY 生效', async () => {
-  const ctx = makeImgCtx({
-    env: { SERPAPI_KEY: 'k', THUMB_PROXY: 'https://wsrv.nl/?url=' },
-    route: ({ method }) => (method === 'POST' ? okJson({ image_id: 'i1' }) : okJson(LENS_RESPONSE)),
-  });
-  const json = JSON.parse((await api.main(ctx)).__responded.body);
-  assert.equal(
-    json.result.res_data.res_items[0].thumburl,
-    'https://wsrv.nl/?url=' + encodeURIComponent(LENS_RESPONSE.visual_matches[0].thumbnail),
-  );
-});
-
 test('识图：上传失败回退百度并通知', async () => {
   const ctx = makeImgCtx({ route: () => ({ status: 401, text: async () => JSON.stringify({ error: 'Invalid API key' }) }) });
   assert.deepEqual(plain(await api.main(ctx)), { body: FORM });

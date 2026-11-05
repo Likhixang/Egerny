@@ -50,8 +50,8 @@ env_schema:
     default_value: "zh-cn"
   COUNTRY:
     name: 识图国家
-    description: "Google 国家代码，默认 cn。"
-    default_value: "cn"
+    description: "Google 国家代码，默认 us。"
+    default_value: "us"
   LENS_TYPE:
     name: 识图类型
     description: "all 综合 / visual_matches 相似图片 / exact_matches 完全相同。"
@@ -60,10 +60,6 @@ env_schema:
       - "visual_matches"
       - "exact_matches"
     default_value: "all"
-  THUMB_PROXY:
-    name: 缩略图代理前缀
-    description: "Google 缩略图在墙内可能打不开。填图片代理前缀（如 https://wsrv.nl/?url=）；留空保持原地址。"
-    default_value: ""
   TIMEOUT:
     name: 超时秒数
     description: "等待上游或 SerpAPI 的时间，默认 120，最大 300。"
@@ -105,9 +101,8 @@ scriptings:
         WRITING_PROMPT: ""
         SERPAPI_KEY: ""
         HL: "zh-cn"
-        COUNTRY: "cn"
+        COUNTRY: "us"
         LENS_TYPE: "all"
-        THUMB_PROXY: ""
         TIMEOUT: "120"
         REPORT_MODEL: "qwenapp-apple-tqa"
         CONTINUE_URL: ""

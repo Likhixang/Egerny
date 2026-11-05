@@ -611,9 +611,8 @@ function readLensConfig(env) {
   return {
     apiKey: str(e.SERPAPI_KEY),
     hl: str(e.HL) || "zh-cn",
-    country: str(e.COUNTRY) || "cn",
+    country: str(e.COUNTRY) || "us",
     type: str(e.LENS_TYPE) || "all",
-    thumbProxy: str(e.THUMB_PROXY),
     notifyOnError: bool(e.NOTIFY_ON_ERROR, true),
     timeoutMs: (Number(str(e.TIMEOUT) || "45") || 45) * 1000,
   };
@@ -699,13 +698,7 @@ function extractImageBase64(bodyText) {
   return "";
 }
 
-function proxied(url, prefix) {
-  const s = str(url);
-  if (!s || !prefix) return s;
-  return prefix + encodeURIComponent(s);
-}
-
-function itemFromVisual(v, prefix) {
+function itemFromVisual(v) {
   const w = Number(v.image_width || v.thumbnail_width || 0) || 0;
   const h = Number(v.image_height || v.thumbnail_height || 0) || 0;
   return {
@@ -714,19 +707,19 @@ function itemFromVisual(v, prefix) {
     height: h,
     width: w,
     title: str(v.title),
-    thumburl: proxied(v.thumbnail || v.image, prefix),
+    thumburl: str(v.thumbnail || v.image),
     fromurl: str(v.link),
     objurl: str(v.image || v.thumbnail),
   };
 }
 
-function itemFromOther(v, prefix) {
+function itemFromOther(v) {
   return {
     item_cate: "CATE_SIMI",
     contsign: "",
     title: str(v.title),
     score: 0,
-    thumburl: proxied(v.thumbnail, prefix),
+    thumburl: str(v.thumbnail),
     fromurl: str(v.link || v.redirect_link),
     height: Number(v.thumbnail_height || 0) || 0,
     width: Number(v.thumbnail_width || 0) || 0,
@@ -748,7 +741,7 @@ function pickGuessword(data) {
 }
 
 /** SerpAPI google_lens 响应 → 百度识图 schema */
-function toBaidu(data, prefix) {
+function toBaidu(data) {
   const visual = Array.isArray(data.visual_matches) ? data.visual_matches : [];
   const exact = Array.isArray(data.exact_matches) ? data.exact_matches : [];
   const organic = Array.isArray(data.organic_results) ? data.organic_results : [];
@@ -770,8 +763,8 @@ function toBaidu(data, prefix) {
       post_intention_res: {},
       query_data: {},
       res_data: {
-        res_items: visual.slice(0, MAX_RES_ITEMS).map((v) => itemFromVisual(v, prefix)),
-        sim_items: exact.concat(organic).slice(0, MAX_SIM_ITEMS).map((v) => itemFromOther(v, prefix)),
+        res_items: visual.slice(0, MAX_RES_ITEMS).map((v) => itemFromVisual(v)),
+        sim_items: exact.concat(organic).slice(0, MAX_SIM_ITEMS).map((v) => itemFromOther(v)),
         simi_result_page: "",
         result_page: "",
       },
@@ -890,7 +883,7 @@ async function handleBaiduImage(ctx) {
   return ctx.respond({
     status: 200,
     headers: { "Content-Type": "text/plain; charset=utf-8" },
-    body: JSON.stringify(toBaidu(data, cfg.thumbProxy)),
+    body: JSON.stringify(toBaidu(data)),
   });
 }
 

@@ -249,17 +249,14 @@ SerpAPI 把这一层包掉了：给它图，它返回结构化 JSON。
 | `WRITING_PROMPT` | 否 | 写作工具的系统提示词，留空用内置默认 |
 | `SERPAPI_KEY` | 识图必填 | 留空则识图继续走百度 |
 | `HL` | 否 | 识图语言，默认 `zh-cn` |
-| `COUNTRY` | 否 | 识图国家，默认 `cn` |
+| `COUNTRY` | 否 | 识图国家，默认 `us` |
 | `LENS_TYPE` | 否 | `all` / `visual_matches` / `exact_matches`，默认 `all` |
-| `THUMB_PROXY` | 否 | 缩略图代理前缀，例如 `https://wsrv.nl/?url=`；留空用 Google 原地址 |
 | `TIMEOUT` | 否 | 等待上游或 SerpAPI 的秒数，默认 120，最大 300 |
 | `REPORT_MODEL` | 否 | 回给 Siri 的 `model` 字段，默认 `qwenapp-apple-tqa` |
 | `CONTINUE_URL` | 否 | 回答下方的跳转链接，留空不显示 |
 | `NOTIFY_ON_ERROR` | 否 | 上游 / 识图失败时发系统通知 |
 
 上游对话接口同时兼容 `choices[0].message.content` 和 Responses 的 `output_text` / `output[].content[].text`。
-
-**关于缩略图**：Google 的缩略图在 `encrypted-tbn*.gstatic.com`，墙内直连打不开。如果代理规则已覆盖 Google 域名可以留空；否则填一个图片代理前缀。
 
 ---
 
@@ -289,7 +286,6 @@ SerpAPI 把这一层包掉了：给它图，它返回结构化 JSON。
 | 说「画只猫」却回了文字 | 放行判定没命中，换个更直接的说法；在 Egern 请求记录里确认这次请求是否被脚本接管 |
 | 识图还是百度的结果 | 没填 `SERPAPI_KEY`，或 MITM 名单里没有 `qianfan.baidubce.com` |
 | 弹「Google 识图不可用」通知 | 通知里带具体原因：key 无效、额度用完、网络不通；此时已自动回退百度 |
-| 识图有结果但缩略图空白 | 配 `THUMB_PROXY`，或确认代理规则覆盖 `gstatic.com` |
 | 完全没变化 | 模块没启用；MITM 没开；CA 证书没信任 |
 | 连接直接失败 | 不要把 `*.apple.com` / `gateway.icloud.com.cn` 加进 MITM，那些有 pinning |
 
@@ -303,6 +299,6 @@ SerpAPI 把这一层包掉了：给它图，它返回结构化 JSON。
 node --test tests/apple-intelligence-qwen.test.cjs
 ```
 
-41 条，覆盖：Siri 三条链路的事件序列与抓包逐项一致、deltas 还原、多轮历史、图片输入解析、引用卡片、写作工具入参/出参解析与降级、画图意图放行（含带回原 body）、识图的 form/base64 解析、multipart、上传+搜索+映射、失败回退、500KB 上限、空结果 schema、非目标 URL 透传。
+40 条，覆盖：Siri 三条链路的事件序列与抓包逐项一致、deltas 还原、多轮历史、图片输入解析、引用卡片、写作工具入参/出参解析与降级、画图意图放行（含带回原 body）、识图的 form/base64 解析、multipart、上传+搜索+映射、失败回退、500KB 上限、空结果 schema、非目标 URL 透传。
 
 协议依据来自 2026-11-05 的真机抓包（iOS 27.3 开发者测试版，中国大陆）：Siri 文本、视觉智能、写作工具、百度识图。
