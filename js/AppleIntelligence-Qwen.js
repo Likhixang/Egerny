@@ -971,7 +971,7 @@ const SEARCH_JUDGE_PROMPT = "判断用户问题是否需要联网检索最新或
 
 // 判断模型偶尔回空（推理模型把预算花在 reasoning 上），兜底按时间敏感词判断
 const TIME_SENSITIVE_RE =
-  /(今天|今日|现在|目前|最新|近期|刚刚|本周|新闻|消息|股价|汇率|比分|天气|气温|价格|多少钱|发布|上市|开售|评测|20[2-9]\d年?\d*月?)/;
+  /(今天|今日|现在|目前|最新|近期|刚刚|本周|新闻|消息|股价|汇率|比分|天气|气温|价格|多少钱|发布|上市|开售|评测|搜一下|搜搜|查一下|查查|找一下|20[2-9]\d年?\d*月?)/;
 
 function looksTimeSensitive(question) {
   return TIME_SENSITIVE_RE.test(str(question));
@@ -1530,7 +1530,10 @@ export default async function (ctx) {
     const label = engineMode === "qwen" ? "千问" : engineMode === "tavily" ? "Tavily" : "SerpAPI";
     let needSearch = true;
     try {
-      needSearch = cfg.searchJudge ? await judgeNeedsSearch(ctx, cfg, userText) : true;
+      // 明确带时效词的问题直接搜，省掉一次判断往返（Siri 等不了太久）
+      needSearch = cfg.searchJudge
+        ? looksTimeSensitive(userText) || (await judgeNeedsSearch(ctx, cfg, userText))
+        : true;
       if (needSearch) {
         if (engineMode === "qwen") sources = await qwenSearch(ctx, userText, raw);
         else if (engineMode === "tavily") sources = await tavilySearch(ctx, cfg, userText);

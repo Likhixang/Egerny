@@ -320,7 +320,7 @@ Siri 只有听到唤醒词才会把请求发给千问，这些词本身不该出
 | `tavily` | 先判断是否需要联网，需要就调 Tavily，取 title/url/content，摘要拼进 system | 判断一次 + 检索 1 credit（免费 1000/月） |
 | `serpapi` | 同上，检索走 Google（`engine=google`），取 organic_results | 判断一次 + 按套餐计费 |
 
-`qwen` / `tavily` / `serpapi` 共用同一套判断：由回答模型做一次极小调用（`reasoning_effort: none`、`max_tokens: 8`，只回 yes/no），实测增加 2.5–3.8 秒；想更快就把 `SEARCH_JUDGE_MODEL` 指到一个快模型。判断回空或失败时按时间敏感词兜底（今天/最新/新闻/股价/天气/价格……），也可以把 `SEARCH_JUDGE` 关掉变成每题都搜。
+`qwen` / `tavily` / `serpapi` 共用同一套判断：由回答模型做一次极小调用（`reasoning_effort: none`、`max_tokens: 8`，只回 yes/no），实测增加 2.5–3.8 秒；想更快就把 `SEARCH_JUDGE_MODEL` 指到一个快模型。判断回空或失败时按时间敏感词兜底（今天/最新/新闻/股价/天气/价格……），也可以把 `SEARCH_JUDGE` 关掉变成每题都搜。问题里已经带「今天 / 最新 / 搜一下 / 查一下」这类词时直接检索，省掉一次判断往返——Siri 的等待窗口不长，追问时尤其明显。
 
 `MODEL` 留空时不接管回答：`provider` / `qwen` 两档直接走千问原生（它自己会判断要不要搜）；`tavily` / `serpapi` 仍然按所选执行——判断交给千问，检索结果拼进原请求，回答还是千问。
 

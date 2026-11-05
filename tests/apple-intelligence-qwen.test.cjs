@@ -938,6 +938,41 @@ test('上游超时返回可读错误，不会挂住', async () => {
   assert.match(JSON.parse(done.value).content, /上游超过 45 秒没有响应/);
 });
 
+test('「搜一下」这类明确指令也跳过判断', async () => {
+  const ctx = makeCtx({
+    url: NEW_URL,
+    body: { input: [{ message: { role: 'user', content: [{ type: 'text', text: '搜一下告诉我这是什么' }] }, type: 'message' }] },
+    env: { ...ENV, WEB_SEARCH: 'tavily', SEARCH_KEY: 'tvly-test' },
+    route: (target, options) => {
+      if (target.includes('api.tavily.com')) {
+        return { status: 200, text: async () => JSON.stringify({ results: [{ title: 'T', url: 'https://t.example/1' }] }) };
+      }
+      if (options.body.reasoning_effort === 'none') throw new Error('不该走判断');
+      return chatText('带来源回答');
+    },
+  });
+  await api.main(ctx);
+  assert.equal(ctx.calls.length, 2);
+});
+
+test('带时效词的问题跳过判断，直接检索', async () => {
+  const ctx = makeCtx({
+    url: NEW_URL,
+    body: { input: [{ message: { role: 'user', content: [{ type: 'text', text: '搜一下今天的新闻' }] }, type: 'message' }] },
+    env: { ...ENV, WEB_SEARCH: 'tavily', SEARCH_KEY: 'tvly-test' },
+    route: (target, options) => {
+      if (target.includes('api.tavily.com')) {
+        return { status: 200, text: async () => JSON.stringify({ results: [{ title: 'T', url: 'https://t.example/1' }] }) };
+      }
+      if (options.body.reasoning_effort === 'none') throw new Error('不该走判断');
+      return chatText('带来源回答');
+    },
+  });
+  await api.main(ctx);
+  assert.equal(ctx.calls.length, 2); // 检索 + 回答
+  assert.equal(ctx.calls[0].target, 'https://api.tavily.com/search');
+});
+
 test('EXTRA_BODY 并入请求体但不能覆盖核心字段', async () => {
   const ctx = makeCtx({
     url: NEW_URL,
