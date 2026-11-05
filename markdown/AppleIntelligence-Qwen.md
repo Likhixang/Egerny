@@ -248,6 +248,7 @@ SerpAPI 把这一层包掉了：给它图，它返回结构化 JSON。
 | `SEARCH_KEY` | 否 | Tavily / SerpAPI 密钥；SerpAPI 留空则复用 `SERPAPI_KEY` |
 | `SEARCH_JUDGE` | 否 | Tavily / SerpAPI 是否先判断再搜，默认 `true` |
 | `SEARCH_JUDGE_MODEL` | 否 | 判断用的模型，留空用主模型 |
+| `SEARCH_DEBUG` | 否 | 每次回答通知「判断结果 + 来源条数」 |
 | `SYSTEM_PROMPT` | 否 | 留空用内置默认，原文：`Your answer must remain neutral, be accurate, and sound natural in spoken language. Output only the final answer.` |
 | `VISION_MODEL` | 否 | 处理视觉智能图片的模型；留空复用 `MODEL` |
 | `VISION_PROMPT` | 否 | 视觉智能只发图片不发文字，用这句引导模型作答 |
@@ -320,7 +321,7 @@ Siri 只有听到唤醒词才会把请求发给千问，这些词本身不该出
 
 `MODEL` 留空时不接管回答：`provider` / `qwen` 两档直接走千问原生（它自己会判断要不要搜）；`tavily` / `serpapi` 仍然按所选执行——判断交给千问，检索结果拼进原请求，回答还是千问。
 
-检索结果会以「实时来源（检索时间 X）」注入 system，并声明与训练知识冲突时以来源为准；system 里同时写入当前日期。实测：把 2026-09 的 iPhone 18 来源注入后，原本只会答 iPhone 16 的 `gemini-3.8-flash` 会改答 iPhone 18 Pro。
+检索没有返回结果时会发「没有返回结果」通知，不再静默。检索结果会以「实时来源（检索时间 X）」注入 system，并声明与训练知识冲突时以来源为准；system 里同时写入当前日期。实测：把 2026-09 的 iPhone 18 来源注入后，原本只会答 iPhone 16 的 `gemini-3.8-flash` 会改答 iPhone 18 Pro。
 
 `provider` 模式是模型自己判断，实测（`gpt-6.1-sol`）：
 

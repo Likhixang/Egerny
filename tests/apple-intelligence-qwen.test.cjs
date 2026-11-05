@@ -446,7 +446,8 @@ test('千问判断不需要联网时返回空数组，不注入来源', async ()
   const providerBody = ctx.calls[1].options.body;
   assert.equal(providerBody.messages[0].content.includes('实时来源'), false);
   assert.equal(events.some(e => e.name.endsWith('annotations[].added')), false);
-  assert.equal(notes.length, 0);
+  assert.equal(notes.length, 1);
+  assert.equal(notes[0].title, '千问 没有返回结果');
 });
 
 test('千问搜索失败时降级为无来源，回答照常', async () => {
@@ -796,6 +797,41 @@ test('模型留空 + tavily：需要搜时把来源注回千问请求', async ()
   const forwarded = JSON.parse(out.body);
   assert.match(forwarded.input[0].message.content[0].text, /https:\/\/t\.example\/1/);
   assert.match(forwarded.input[0].message.content[0].text, /今天 AI 新闻/);
+});
+
+test('检索返回空结果时发通知', async () => {
+  const notes = [];
+  const ctx = makeCtx({
+    url: NEW_URL,
+    body: BODY,
+    env: { ...ENV, WEB_SEARCH: 'tavily', SEARCH_KEY: 'tvly-test', SEARCH_JUDGE: 'false' },
+    route: target =>
+      target.includes('api.tavily.com')
+        ? { status: 200, text: async () => JSON.stringify({ results: [] }) }
+        : chatText('无来源回答'),
+  });
+  ctx.notify = msg => notes.push(msg);
+  await api.main(ctx);
+  assert.equal(notes.length, 1);
+  assert.equal(notes[0].title, 'Tavily 没有返回结果');
+});
+
+test('搜索调试开关会通知判断与来源数', async () => {
+  const notes = [];
+  const ctx = makeCtx({
+    url: NEW_URL,
+    body: BODY,
+    env: { ...ENV, WEB_SEARCH: 'tavily', SEARCH_KEY: 'tvly-test', SEARCH_JUDGE: 'false', SEARCH_DEBUG: 'true' },
+    route: target =>
+      target.includes('api.tavily.com')
+        ? { status: 200, text: async () => JSON.stringify({ results: [{ title: 'T', url: 'https://t.example/1' }] }) }
+        : chatText('带来源回答'),
+  });
+  ctx.notify = msg => notes.push(msg);
+  await api.main(ctx);
+  assert.equal(notes.length, 1);
+  assert.equal(notes[0].title, '搜索调试');
+  assert.match(notes[0].body, /来源 1/);
 });
 
 test('EXTRA_BODY 并入请求体但不能覆盖核心字段', async () => {

@@ -154,6 +154,7 @@ function readConfig(env) {
     searchCountry: str(e.COUNTRY) || "us",
     searchTimeoutMs: Math.max(5000, Math.min(timeout > 0 ? timeout : 20, 30) * 1000),
     searchJudge: bool(e.SEARCH_JUDGE, true),
+    searchDebug: bool(e.SEARCH_DEBUG, false),
     judgeModel: str(e.SEARCH_JUDGE_MODEL),
   };
 }
@@ -1483,8 +1484,9 @@ export default async function (ctx) {
     engineMode === "tavily" || engineMode === "serpapi" || (Boolean(cfg.model) && engineMode === "qwen");
   if (!hasImage && userText && useEngine) {
     const label = engineMode === "qwen" ? "千问" : engineMode === "tavily" ? "Tavily" : "SerpAPI";
+    let needSearch = true;
     try {
-      const needSearch = cfg.searchJudge ? await judgeNeedsSearch(ctx, cfg, userText) : true;
+      needSearch = cfg.searchJudge ? await judgeNeedsSearch(ctx, cfg, userText) : true;
       if (needSearch) {
         if (engineMode === "qwen") sources = await qwenSearch(ctx, userText, raw);
         else if (engineMode === "tavily") sources = await tavilySearch(ctx, cfg, userText);
@@ -1495,6 +1497,25 @@ export default async function (ctx) {
         ctx.notify({
           title: label + "搜索不可用",
           body: String((error && error.message) || error).slice(0, 180) + "（本次回答没有来源）",
+        });
+      } catch (_) {
+        /* 通知失败忽略 */
+      }
+    }
+
+    // 检索跑通但没结果时也要说一声，否则看起来像“搜了但没用”
+    if (needSearch && !sources.length) {
+      try {
+        ctx.notify({ title: label + " 没有返回结果", body: "已按无来源回答" });
+      } catch (_) {
+        /* 通知失败忽略 */
+      }
+    }
+    if (cfg.searchDebug) {
+      try {
+        ctx.notify({
+          title: "搜索调试",
+          body: label + "｜判断 " + (needSearch ? "yes" : "no") + "｜来源 " + sources.length,
         });
       } catch (_) {
         /* 通知失败忽略 */
