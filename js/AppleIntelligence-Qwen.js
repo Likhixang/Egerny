@@ -821,6 +821,31 @@ function dedupeSources(list) {
   return out;
 }
 
+/**
+ * Siri 不渲染 markdown，正文里堆裸链接很难看。
+ * 来源交给 annotations 的引用卡片，正文只保留文字。
+ */
+function cleanAnswer(text) {
+  let out = String(text || "");
+  // [标题](链接) -> 标题；[链接](链接) -> 空
+  out = out.replace(/\[([^\]]*)\]\((https?:\/\/[^)\s]+)\)/g, (m, label, url) => {
+    if (!label || label === url || /^https?:\/\//.test(label)) return "";
+    return label;
+  });
+  // 裸链接，含 [] （）包裹
+  out = out.replace(/[\[(（]?https?:\/\/[^\s\])）]+[\])）]?/g, "");
+  // 清理留下的空壳与多余空白
+  out = out.replace(/[（(]\s*[）)]/g, "");
+  out = out.replace(/\[\s*\]/g, "");
+  out = out.replace(/[ \t]{2,}/g, " ");
+  out = out.replace(/\s+([,，。.;；:：])/g, "$1");
+  out = out.replace(/([,，、。])\1+/g, "$1");
+  out = out.replace(/[ \t]+\n/g, "\n");
+  out = out.replace(/\n{3,}/g, "\n\n");
+  out = out.replace(/([。！？!?])[。！？!?]+/g, "$1");
+  return out.trim();
+}
+
 function todayText() {
   const d = new Date();
   const pad = (n) => (n < 10 ? "0" + n : String(n));
@@ -838,7 +863,7 @@ function buildSearchContext(sources) {
   return (
     "以下是刚刚联网检索到的实时来源（检索时间 " +
     todayText() +
-    "）。时效性问题必须以此为准：与你的训练知识冲突时一律采用这些来源，不要凭记忆作答；引用时在对应句子后附上链接。\n" +
+    "）。时效性问题必须以此为准：与你的训练知识冲突时一律采用这些来源，不要凭记忆作答；正文不要写链接，来源卡片由客户端展示。\n" +
     rows
   );
 }
@@ -1584,7 +1609,7 @@ export default async function (ctx) {
     return ctx.respond(sseResponse(sessionId, buildTextSSE(sessionId, message, textOptions)));
   }
 
-  const answer = result.answer || "（上游没有返回内容）";
+  const answer = cleanAnswer(result.answer) || "（上游没有返回内容）";
   const annotations = dedupeAnnotations([...(result.annotations || []), ...toSourceAnnotations(sources)]);
   return finish(
     buildTextSSE(sessionId, answer, { ...textOptions, annotations }),

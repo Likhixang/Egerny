@@ -8,7 +8,7 @@ const source = fs.readFileSync(path.join(__dirname, '../js/AppleIntelligence-Qwe
 const context = vm.createContext({ console, Date, URL, JSON, Math });
 vm.runInContext(
   source.replace('export default async function (ctx)', 'async function main(ctx)') +
-    `\nglobalThis.api = { main, readConfig, buildEndpoint, parseRequestPath, extractInput, extractUserText, buildUserContent, pickAnnotations, buildTextSSE, makeSummary, pickAnswer, unwrapAnswer, chunkString, looksLikeImageRequest, isComposeRequest, parseComposeInput, composeUserMessage, parseComposeResult, buildComposeValue, isBaiduImageRequest, extractImageBase64, base64ToBytes, detectImage, toBaidu, pickGuessword, multipartImage, readLensConfig, buildReasoningParams, parseExtraBody, readSearchMode, parseQwenStream, sourcesFromText, dedupeSources, buildSearchContext, dedupeAnnotations, stripTrigger };`,
+    `\nglobalThis.api = { main, readConfig, buildEndpoint, parseRequestPath, extractInput, extractUserText, buildUserContent, pickAnnotations, buildTextSSE, makeSummary, pickAnswer, unwrapAnswer, chunkString, looksLikeImageRequest, isComposeRequest, parseComposeInput, composeUserMessage, parseComposeResult, buildComposeValue, isBaiduImageRequest, extractImageBase64, base64ToBytes, detectImage, toBaidu, pickGuessword, multipartImage, readLensConfig, buildReasoningParams, parseExtraBody, readSearchMode, parseQwenStream, sourcesFromText, dedupeSources, buildSearchContext, dedupeAnnotations, stripTrigger, cleanAnswer };`,
   context,
 );
 const api = context.api;
@@ -897,6 +897,30 @@ test('换一个档位会重新尝试发送', async () => {
   const low = makeCtx({ url: NEW_URL, body: BODY, env: { ...ENV, EFFORT: 'low' }, storage, route: () => chatText('ok') });
   await api.main(low);
   assert.equal(low.calls[0].options.body.reasoning_effort, 'low');
+});
+
+test('cleanAnswer 洗掉正文里的链接', () => {
+  assert.equal(
+    api.cleanAnswer('最新是 Mate 90 [https://a.example/1][https://b.example/2]。'),
+    '最新是 Mate 90。',
+  );
+  assert.equal(api.cleanAnswer('见 [Apple 官网](https://apple.com/cn) 的说明。'), '见 Apple 官网 的说明。');
+  assert.equal(api.cleanAnswer('没有链接的回答。'), '没有链接的回答。');
+});
+
+test('回答正文里不再出现裸链接', async () => {
+  const ctx = makeCtx({
+    url: NEW_URL,
+    body: BODY,
+    env: ENV,
+    route: () => chatText('Mate 90 是新品 [https://a.example/1]。'),
+  });
+  const out = await api.main(ctx);
+  const events = parseSSE(out.__responded.body);
+  const done = events.find(e => e.name.endsWith('text.value.done')).payload;
+  const content = JSON.parse(done.value).content;
+  assert.equal(content.includes('https://'), false);
+  assert.match(content, /Mate 90 是新品/);
 });
 
 test('EXTRA_BODY 并入请求体但不能覆盖核心字段', async () => {
