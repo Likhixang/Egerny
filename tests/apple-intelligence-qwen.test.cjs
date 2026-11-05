@@ -8,7 +8,7 @@ const source = fs.readFileSync(path.join(__dirname, '../js/AppleIntelligence-Qwe
 const context = vm.createContext({ console, Date, URL, JSON, Math });
 vm.runInContext(
   source.replace('export default async function (ctx)', 'async function main(ctx)') +
-    `\nglobalThis.api = { main, readConfig, parseRequestPath, extractUserText, buildTextSSE, buildImageSSE, makeSummary, pickAnswer, parseToolCall, unwrapAnswer, chunkString, looksLikeImageRequest };`,
+    `\nglobalThis.api = { main, readConfig, buildEndpoint, parseRequestPath, extractUserText, buildTextSSE, buildImageSSE, makeSummary, pickAnswer, parseToolCall, unwrapAnswer, chunkString, looksLikeImageRequest };`,
   context,
 );
 const api = context.api;
@@ -131,11 +131,15 @@ function makeCtx({ url, body, env, route, storage = new Map() }) {
   };
 }
 
+const PROVIDER_BASE = 'https://unit.invalid/v1';
+const IMAGE_BASE = 'https://unit.invalid/v1';
+const PROVIDER_URL = PROVIDER_BASE + '/chat/completions';
+const IMAGE_URL = IMAGE_BASE + '/images/generations';
 const ENV = {
-  PROVIDER_URL: 'https://unit.invalid/v1/chat/completions',
+  PROVIDER_URL: PROVIDER_BASE,
   API_KEY: 'sk-test',
   MODEL: 'test-model',
-  IMAGE_URL: 'https://unit.invalid/v1/images/generations',
+  IMAGE_URL: IMAGE_BASE,
   IMAGE_MODEL: 'test-image',
 };
 const NEW_URL = 'https://prod-yabuli.qianwen.com/v1/sessions/responses';
@@ -267,7 +271,7 @@ test('模型调用 image_generator 时走图片链路', async () => {
     url: NEW_URL,
     body: DRAW_BODY,
     env: ENV,
-    route: target => (target === ENV.IMAGE_URL
+    route: target => (target === IMAGE_URL
       ? ok({ data: [{ url: 'https://img.example/cat.png' }] })
       : chatToolCall('一只成年狸花猫，蹲坐在深色实木地板上')),
   });
@@ -276,9 +280,11 @@ test('模型调用 image_generator 时走图片链路', async () => {
 
   // 第一次请求带 tools，第二次打图片接口
   assert.equal(ctx.calls.length, 2);
+  assert.equal(ctx.calls[0].target, PROVIDER_URL);
   assert.ok(Array.isArray(ctx.calls[0].options.body.tools));
   assert.equal(ctx.calls[0].options.body.tools[0].function.name, 'image_generator');
-  assert.equal(ctx.calls[1].target, ENV.IMAGE_URL);
+  assert.equal('temperature' in ctx.calls[0].options.body, false);
+  assert.equal(ctx.calls[1].target, IMAGE_URL);
   assert.equal(ctx.calls[1].options.body.prompt, '一只成年狸花猫，蹲坐在深色实木地板上');
   assert.equal(ctx.calls[1].options.body.size, '1024x1024');
 
@@ -292,7 +298,7 @@ test('上游拒绝 tools 参数时自动重试，并用句式兜底出图', asyn
     body: DRAW_BODY,
     env: ENV,
     route: target => {
-      if (target === ENV.IMAGE_URL) return ok({ data: [{ url: 'https://img.example/cat.png' }] });
+      if (target === IMAGE_URL) return ok({ data: [{ url: 'https://img.example/cat.png' }] });
       n += 1;
       if (n === 1) return err(400, { error: { message: 'tools is not supported by this model' } });
       return chatText('我画不了');
@@ -318,7 +324,7 @@ test('图片接口只回 base64 且没配转存时降级为文本', async () => 
     url: NEW_URL,
     body: DRAW_BODY,
     env: ENV,
-    route: target => (target === ENV.IMAGE_URL
+    route: target => (target === IMAGE_URL
       ? ok({ data: [{ b64_json: 'AAAA' }] })
       : chatToolCall('一只狸花猫')),
   });
@@ -337,7 +343,7 @@ test('配置了转存接口时 base64 也能出图', async () => {
     body: DRAW_BODY,
     env,
     route: target => {
-      if (target === ENV.IMAGE_URL) return ok({ data: [{ b64_json: 'AAAA' }] });
+      if (target === IMAGE_URL) return ok({ data: [{ b64_json: 'AAAA' }] });
       if (target === env.IMAGE_UPLOAD_URL) return ok({ url: 'https://cdn.example/a.png' });
       return chatToolCall('一只狸花猫');
     },
@@ -412,8 +418,28 @@ test('句式兜底只在明确要图时命中', () => {
   }
 });
 
-test('配置默认值：图片开关打开、尺寸解析', () => {
+test('接口地址只写到 /v1 甚至只写域名都能补全', () => {
+  const chat = 'chat/completions';
+  assert.equal(api.buildEndpoint('https://api.example.com', chat), 'https://api.example.com/v1/chat/completions');
+  assert.equal(api.buildEndpoint('https://api.example.com/', chat), 'https://api.example.com/v1/chat/completions');
+  assert.equal(api.buildEndpoint('https://api.example.com/v1', chat), 'https://api.example.com/v1/chat/completions');
+  assert.equal(api.buildEndpoint('https://api.example.com/v1/', chat), 'https://api.example.com/v1/chat/completions');
+  assert.equal(api.buildEndpoint('https://api.example.com/v1/chat/completions', chat), 'https://api.example.com/v1/chat/completions');
+  assert.equal(api.buildEndpoint('https://gw.example.com/openai', chat), 'https://gw.example.com/openai/v1/chat/completions');
+  assert.equal(api.buildEndpoint('https://gw.example.com/openai/v1', chat), 'https://gw.example.com/openai/v1/chat/completions');
+  assert.equal(api.buildEndpoint('http://192.168.1.10:8080', chat), 'http://192.168.1.10:8080/v1/chat/completions');
+  // 带 query 视为完整地址
+  assert.equal(api.buildEndpoint('https://x.example.com/v1/chat/completions?api-version=1', chat), 'https://x.example.com/v1/chat/completions?api-version=1');
+  // 图像接口走同一套规则
+  assert.equal(api.buildEndpoint('https://api.example.com/v1', 'images/generations'), 'https://api.example.com/v1/images/generations');
+  assert.equal(api.buildEndpoint('', 'images/generations'), '');
+});
+
+test('配置默认值：图片开关打开、尺寸解析、不含温度', () => {
   const cfg = api.readConfig(ENV);
+  assert.equal(cfg.providerUrl, PROVIDER_URL);
+  assert.equal(cfg.imageUrl, IMAGE_URL);
+  assert.equal('temperature' in cfg, false);
   assert.equal(cfg.imageEnable, true);
   assert.equal(cfg.imageWidth, 1024);
   assert.equal(cfg.imageHeight, 1024);

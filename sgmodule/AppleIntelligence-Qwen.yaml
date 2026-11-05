@@ -9,8 +9,8 @@ icon: "sparkles"
 env_schema:
   PROVIDER_URL:
     name: 接口地址
-    description: "OpenAI 兼容的完整地址，例如 https://api.example.com/v1/chat/completions；不要填 /v1 根路径。"
-    default_value: "https://api.openai.com/v1/chat/completions"
+    description: "填到 /v1 即可，会自动补 /chat/completions；只填域名也行，会自动补 /v1。"
+    default_value: "https://api.openai.com/v1"
   API_KEY:
     name: 密钥
     description: "Bearer 密钥。本地网关无鉴权时留空。"
@@ -23,10 +23,6 @@ env_schema:
     name: 系统提示词
     description: "留空使用内置默认：简洁、准确、口语化，只输出最终答案。"
     default_value: ""
-  TEMPERATURE:
-    name: 温度
-    description: "0 到 2，默认 0.7。"
-    default_value: "0.7"
   TIMEOUT:
     name: 超时秒数
     description: "等待上游返回的时间，默认 120，最大 300。"
@@ -56,8 +52,8 @@ env_schema:
     default_value: "true"
   IMAGE_URL:
     name: 图像接口地址
-    description: "OpenAI 兼容的 /images/generations 地址。留空则不出图。"
-    default_value: "https://api.openai.com/v1/images/generations"
+    description: "同样填到 /v1 即可，会自动补 /images/generations。留空则不出图。"
+    default_value: "https://api.openai.com/v1"
   IMAGE_MODEL:
     name: 图像模型
     description: "例如 dall-e-3、gpt-image-1、flux-schnell。"
@@ -100,7 +96,6 @@ scriptings:
         API_KEY: ""
         MODEL: ""
         SYSTEM_PROMPT: ""
-        TEMPERATURE: "0.7"
         TIMEOUT: "120"
         REPORT_MODEL: "qwenapp-apple-tqa"
         CONTINUE_URL: ""

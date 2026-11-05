@@ -112,11 +112,27 @@ Content-Type: application/json
 ## 安装
 
 1. Egern → 配置 → 模块 → 添加模块，填上面的地址。
-2. 进入模块设置，至少填 **接口地址**、**密钥**、**模型**。
-3. 需要出图就再填 **图像接口地址** 和 **图像模型**。
+2. 进入模块设置，至少填 **接口地址**、**密钥**、**模型**。接口地址写到 `/v1` 就行，例如 `https://api.openai.com/v1`。
+3. 需要出图就再填 **图像接口地址**（同样写到 `/v1`）和 **图像模型**。
 4. 确认模块已启用，MITM 里包含 `prod-yabuli.qianwen.com`（模块会自动合并）。
 5. 手机上装好 Egern 的 CA 证书，并在「设置 → 通用 → 关于本机 → 证书信任设置」打开完全信任。
 6. 重开 Siri，选千问问一句。
+
+---
+
+## 接口地址怎么填
+
+不用写全路径，脚本会自己补：
+
+| 你填的 | 实际请求 |
+| --- | --- |
+| `https://api.example.com` | `https://api.example.com/v1/chat/completions` |
+| `https://api.example.com/v1` | `https://api.example.com/v1/chat/completions` |
+| `https://gw.example.com/openai/v1` | `https://gw.example.com/openai/v1/chat/completions` |
+| `https://api.example.com/v1/chat/completions` | 原样使用 |
+| `https://x.example.com/v1/chat/completions?api-version=1` | 原样使用（带 query 视为完整地址） |
+
+图像接口同理，补的是 `/images/generations`。
 
 ---
 
@@ -124,17 +140,16 @@ Content-Type: application/json
 
 | 参数 | 必填 | 说明 |
 | --- | --- | --- |
-| `PROVIDER_URL` | 是 | 完整的 `/chat/completions` 地址，不是 `/v1` 根路径 |
+| `PROVIDER_URL` | 是 | 填到 `/v1` 即可，会自动补 `/chat/completions`；只写域名也行，会自动补 `/v1` |
 | `API_KEY` | 否 | Bearer 密钥；本地网关无鉴权可留空 |
 | `MODEL` | 是 | 传给 provider 的 `model` 字段 |
 | `SYSTEM_PROMPT` | 否 | 留空用内置默认：简洁、准确、口语化 |
-| `TEMPERATURE` | 否 | 0–2，默认 `0.7` |
 | `TIMEOUT` | 否 | 等待上游的秒数，默认 120，最大 300 |
 | `REPORT_MODEL` | 否 | 回给 Siri 的 `model` 字段，默认 `qwenapp-apple-tqa` |
 | `CONTINUE_URL` | 否 | 回答下方的跳转链接，留空不显示 |
 | `NOTIFY_ON_ERROR` | 否 | 上游失败时发系统通知 |
 | `IMAGE_ENABLE` | 否 | 出图总开关，默认 `true` |
-| `IMAGE_URL` | 出图必填 | `/images/generations` 地址 |
+| `IMAGE_URL` | 出图必填 | 同样填到 `/v1` 即可，会自动补 `/images/generations` |
 | `IMAGE_MODEL` | 出图必填 | 例如 `dall-e-3`、`gpt-image-1`、`flux-schnell` |
 | `IMAGE_SIZE` | 否 | `宽x高`，默认 `1024x1024`，同时决定回包的 `width`/`height` |
 | `IMAGE_KEY` | 否 | 留空复用 `API_KEY` |

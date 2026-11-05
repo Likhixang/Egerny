@@ -57,17 +57,36 @@ function bool(value, fallback) {
   return fallback;
 }
 
+/**
+ * 补全接口地址。用户只写到 /v1 甚至只写域名都能用：
+ *   https://api.example.com                        → https://api.example.com/v1/chat/completions
+ *   https://api.example.com/v1                     → https://api.example.com/v1/chat/completions
+ *   https://gw.example.com/openai                  → https://gw.example.com/openai/v1/chat/completions
+ *   https://api.example.com/v1/chat/completions    → 原样
+ * 已带 query/fragment 的地址视为完整地址，不做改动。
+ */
+function buildEndpoint(raw, leaf) {
+  let s = str(raw);
+  if (!s) return "";
+  if (/[?#]/.test(s)) return s;
+  s = s.replace(/\/+$/, "");
+  const leafPath = "/" + leaf;
+  if (s.toLowerCase().endsWith(leafPath)) return s;
+  if (/\/v\d+[a-z0-9]*$/i.test(s)) return s + leafPath;
+  return s + "/v1" + leafPath;
+}
+
 /* ---------------------------------------------------------------- 配置 */
 
 function readConfig(env) {
   const e = env || {};
-  const providerUrl = str(e.PROVIDER_URL);
-  if (!providerUrl) throw new Error("未填写 PROVIDER_URL（OpenAI 兼容的 /chat/completions 地址）");
-  if (!/^https?:\/\/[^\s]+$/i.test(providerUrl)) throw new Error("PROVIDER_URL 必须是 http(s) 地址");
+  const rawProvider = str(e.PROVIDER_URL);
+  if (!rawProvider) throw new Error("未填写 PROVIDER_URL（填到 /v1 即可，会自动补 /chat/completions）");
+  if (!/^https?:\/\/[^\s]+$/i.test(rawProvider)) throw new Error("PROVIDER_URL 必须是 http(s) 地址");
+  const providerUrl = buildEndpoint(rawProvider, "chat/completions");
   const model = str(e.MODEL);
   if (!model) throw new Error("未填写 MODEL");
 
-  const temperature = Number(str(e.TEMPERATURE) || "0.7");
   const timeout = Number(str(e.TIMEOUT) || "120");
 
   const imageSize = str(e.IMAGE_SIZE) || "1024x1024";
@@ -77,7 +96,6 @@ function readConfig(env) {
     providerUrl,
     apiKey: str(e.API_KEY),
     model,
-    temperature: Number.isFinite(temperature) ? Math.min(Math.max(temperature, 0), 2) : 0.7,
     timeoutMs: Number.isFinite(timeout) && timeout > 0 ? Math.min(timeout, 300) * 1000 : 120000,
     system: str(e.SYSTEM_PROMPT) || DEFAULT_SYSTEM,
     reportModel: str(e.REPORT_MODEL) || "qwenapp-apple-tqa",
@@ -85,7 +103,7 @@ function readConfig(env) {
     notifyOnError: bool(e.NOTIFY_ON_ERROR, false),
 
     imageEnable: bool(e.IMAGE_ENABLE, true),
-    imageUrl: str(e.IMAGE_URL),
+    imageUrl: buildEndpoint(e.IMAGE_URL, "images/generations"),
     imageKey: str(e.IMAGE_KEY) || str(e.API_KEY),
     imageModel: str(e.IMAGE_MODEL),
     imageSize,
@@ -197,7 +215,6 @@ async function postChat(ctx, cfg, messages, withTools) {
   const body = {
     model: cfg.model,
     messages,
-    temperature: cfg.temperature,
     stream: false,
   };
   if (withTools) {
