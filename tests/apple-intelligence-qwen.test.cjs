@@ -8,7 +8,7 @@ const source = fs.readFileSync(path.join(__dirname, '../js/AppleIntelligence-Qwe
 const context = vm.createContext({ console, Date, URL, JSON, Math });
 vm.runInContext(
   source.replace('export default async function (ctx)', 'async function main(ctx)') +
-    `\nglobalThis.api = { main, readConfig, buildEndpoint, parseRequestPath, extractInput, extractUserText, buildUserContent, pickAnnotations, buildTextSSE, makeSummary, pickAnswer, unwrapAnswer, chunkString, looksLikeImageRequest, isComposeRequest, parseComposeInput, composeUserMessage, parseComposeResult, buildComposeValue, isBaiduImageRequest, extractImageBase64, base64ToBytes, detectImage, toBaidu, pickGuessword, multipartImage, readLensConfig, buildReasoningParams, parseExtraBody };`,
+    `\nglobalThis.api = { main, readConfig, buildEndpoint, parseRequestPath, extractInput, extractUserText, buildUserContent, pickAnnotations, buildTextSSE, makeSummary, pickAnswer, unwrapAnswer, chunkString, looksLikeImageRequest, isComposeRequest, parseComposeInput, composeUserMessage, parseComposeResult, buildComposeValue, isBaiduImageRequest, extractImageBase64, base64ToBytes, detectImage, toBaidu, pickGuessword, multipartImage, readLensConfig, buildReasoningParams, parseExtraBody, readSearchMode, parseQwenStream, sourcesFromText, dedupeSources, buildSearchContext, dedupeAnnotations };`,
   context,
 );
 const api = context.api;
@@ -63,7 +63,7 @@ function chatText(content) {
   return ok({ choices: [{ message: { role: 'assistant', content } }] });
 }
 
-function makeCtx({ url, body, env, route, storage = new Map() }) {
+function makeCtx({ url, body, env, route, storage = new Map(), headers = { get: () => null } }) {
   const calls = [];
   return {
     env: env || {},
@@ -71,7 +71,7 @@ function makeCtx({ url, body, env, route, storage = new Map() }) {
     request: {
       url,
       method: 'POST',
-      headers: {},
+      headers,
       json: async () => body,
       text: async () => JSON.stringify(body),
     },
@@ -386,6 +386,103 @@ test('识图请求不带联网工具', async () => {
   const ctx = makeCtx({ url: NEW_URL, body: VISION_BODY, env, route: () => chatText('图里是猫') });
   await api.main(ctx);
   assert.equal('tools' in ctx.calls[0].options.body, false);
+});
+
+function qwenSSE(content, annotations = []) {
+  const ev = (name, payload) => `event: ${name}\ndata: ${JSON.stringify({ [name]: payload, type: name })}\n\n`;
+  const inner = JSON.stringify({ content, isRequestingUserInput: false, summary: 's', suggestions: ['', '', ''] });
+  let out = ev('session.response.choices[].items[].message.content[].text.value.done', { value: inner });
+  for (const a of annotations) {
+    out += ev('session.response.choices[].items[].message.content[].text.annotations[].added', { annotation: a });
+  }
+  return out;
+}
+
+test('搜索走千问：先取来源，再交给 provider 作答', async () => {
+  const sse = qwenSSE('[{"title":"来源A","url":"https://a.example/x"},{"title":"来源B","url":"https://b.example/y"}]');
+  const ctx = makeCtx({
+    url: NEW_URL,
+    body: BODY,
+    env: { ...ENV, WEB_SEARCH: 'qwen' },
+    headers: { get: name => (name.toLowerCase() === 'authorization' ? 'Bearer jwt-abc' : null) },
+    route: target => (target === NEW_URL ? { status: 200, text: async () => sse } : chatText('按来源作答')),
+  });
+
+  const out = await api.main(ctx);
+  assert.equal(ctx.calls.length, 2);
+  assert.equal(ctx.calls[0].target, NEW_URL);
+  assert.equal(ctx.calls[0].options.headers['x-aiq-search'], '1');
+  assert.equal(ctx.calls[0].options.headers.Authorization, 'Bearer jwt-abc');
+  assert.match(ctx.calls[0].options.body.input[0].message.content[0].text, /只做联网检索/);
+
+  const providerBody = ctx.calls[1].options.body;
+  assert.match(providerBody.messages[0].content, /https:\/\/a\.example\/x/);
+  assert.match(providerBody.messages[0].content, /https:\/\/b\.example\/y/);
+  assert.equal('tools' in providerBody, false);
+
+  const events = parseSSE(out.__responded.body);
+  const ann = events.filter(e => e.name.endsWith('annotations[].added')).map(e => e.payload.annotation);
+  assert.deepEqual(plain(ann).map(a => a.url_citation.url), ['https://a.example/x', 'https://b.example/y']);
+});
+
+test('千问搜索失败时降级为无来源，回答照常', async () => {
+  const notes = [];
+  const ctx = makeCtx({
+    url: NEW_URL,
+    body: BODY,
+    env: { ...ENV, WEB_SEARCH: 'qwen' },
+    route: () => ({ status: 500, text: async () => 'boom' }),
+  });
+  // 第一次（千问）500，第二次（provider）要成功
+  const original = ctx.http.post;
+  let n = 0;
+  ctx.http.post = async (target, options) => {
+    n += 1;
+    ctx.calls.push({ target, options });
+    return n === 1 ? { status: 500, text: async () => 'boom' } : chatText('没有来源也能答');
+  };
+  ctx.notify = msg => notes.push(msg);
+
+  const out = await api.main(ctx);
+  const events = parseSSE(out.__responded.body);
+  const done = events.find(e => e.name.endsWith('text.value.done')).payload;
+  assert.match(JSON.parse(done.value).content, /没有来源也能答/);
+  assert.equal(notes[0].title, '千问搜索不可用');
+  assert.equal(events.some(e => e.name.endsWith('annotations[].added')), false);
+});
+
+test('检索请求带标记时直接透传，避免递归', async () => {
+  const ctx = makeCtx({
+    url: NEW_URL,
+    body: BODY,
+    env: { ...ENV, WEB_SEARCH: 'qwen' },
+    headers: { get: name => (name.toLowerCase() === 'x-aiq-search' ? '1' : null) },
+    route: () => chatText('不该被调用'),
+  });
+  assert.equal(await api.main(ctx), undefined);
+  assert.equal(ctx.calls.length, 0);
+});
+
+test('检索走新会话，不污染当前会话', async () => {
+  const sse = qwenSSE('[{"title":"A","url":"https://a.example/x"}]');
+  const ctx = makeCtx({
+    url: CONT_URL,
+    body: { ...BODY, session_id: 'sess_123' },
+    env: { ...ENV, WEB_SEARCH: 'qwen' },
+    route: target => (target === NEW_URL ? { status: 200, text: async () => sse } : chatText('ok')),
+  });
+  await api.main(ctx);
+  assert.equal(ctx.calls[0].target, NEW_URL);
+  assert.equal('session_id' in ctx.calls[0].options.body, false);
+});
+
+test('搜索来源配置解析与旧值兼容', () => {
+  assert.equal(api.readSearchMode('qwen'), 'qwen');
+  assert.equal(api.readSearchMode('provider'), 'provider');
+  assert.equal(api.readSearchMode('off'), 'off');
+  assert.equal(api.readSearchMode('true'), 'provider');
+  assert.equal(api.readSearchMode('false'), 'off');
+  assert.equal(api.readSearchMode(''), 'provider');
 });
 
 test('EXTRA_BODY 并入请求体但不能覆盖核心字段', async () => {

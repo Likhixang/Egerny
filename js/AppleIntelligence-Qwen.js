@@ -112,6 +112,7 @@ function readConfig(env) {
   if (!model) throw new Error("未填写 MODEL");
 
   const timeout = Number(str(e.TIMEOUT) || "120");
+  const searchMode = readSearchMode(e.WEB_SEARCH || "provider");
 
   return {
     providerUrl,
@@ -128,7 +129,8 @@ function readConfig(env) {
     notifyOnError: bool(e.NOTIFY_ON_ERROR, false),
     reasoning: buildReasoningParams(e.EFFORT),
     extraBody: parseExtraBody(e.EXTRA_BODY),
-    search: bool(e.WEB_SEARCH, true),
+    searchMode,
+    search: searchMode === "provider",
   };
 }
 
@@ -674,6 +676,192 @@ function sseResponse(sessionId, sseBody) {
   };
 }
 
+/* ==================================================== 借用千问自己的搜索
+ *
+ * 千问的联网搜索不是独立 API，而是挂在对话接口上的 server_tools.browser。
+ * search= qwen 时先把同一个请求再打一次千问（保留原 body 与 Authorization），
+ * 只让它做检索、吐出标题+链接；拿到来源后再交给 provider 生成回答，
+ * 并把来源按 url_citation 填回 Siri 的引用卡片。
+ */
+
+const SEARCH_MAX_SOURCES = 5;
+const SEARCH_TIMEOUT_MS = 30000;
+const SEARCH_HEADER = "x-aiq-search";
+
+function readSearchMode(value) {
+  const v = str(value).toLowerCase();
+  if (v === "qwen") return "qwen";
+  if (v === "off" || v === "false" || v === "0" || v === "no") return "off";
+  return "provider";
+}
+
+function searchInstruction(question) {
+  return (
+    "只做联网检索，不要回答问题，也不要总结。\n" +
+    "搜索：" + question + "\n" +
+    '只输出 JSON 数组，最多 5 条，格式 [{"title":"标题","url":"https://..."}]，不要代码块、不要解释。'
+  );
+}
+
+function headerValue(headers, name) {
+  if (!headers) return "";
+  try {
+    if (typeof headers.get === "function") return str(headers.get(name));
+    const direct = headers[name] || headers[name.toLowerCase()] || headers[name.toUpperCase()];
+    if (Array.isArray(direct)) return str(direct[0]);
+    return str(direct);
+  } catch (_) {
+    return "";
+  }
+}
+
+/** 千问侧是 SSE：取 text.value.done 的完整内层 JSON，同时收集 annotations */
+function parseQwenStream(text) {
+  const out = { value: "", annotations: [] };
+  for (const block of String(text || "").split("\n\n")) {
+    let name = "";
+    let data = "";
+    for (const line of block.split("\n")) {
+      if (line.startsWith("event: ")) name = line.slice(7).trim();
+      else if (line.startsWith("data: ")) data += line.slice(6);
+    }
+    if (!data) continue;
+    let payload = null;
+    try {
+      payload = JSON.parse(data);
+    } catch (_) {
+      continue;
+    }
+    const body = name && payload && payload[name] !== undefined ? payload[name] : payload;
+    if (!body) continue;
+    if (name.endsWith("text.value.done") && typeof body.value === "string") out.value = body.value;
+    if (name.endsWith("annotations[].added") && body.annotation) out.annotations.push(body.annotation);
+  }
+  return out;
+}
+
+function sourcesFromAnnotations(annotations) {
+  const out = [];
+  for (const a of annotations || []) {
+    const c = a && a.url_citation;
+    if (!c || !str(c.url)) continue;
+    out.push({ title: str(c.title) || str(c.url), url: str(c.url) });
+  }
+  return out;
+}
+
+function sourcesFromText(text) {
+  const raw = str(text);
+  const out = [];
+  if (!raw) return out;
+  const start = raw.indexOf("[");
+  const end = raw.lastIndexOf("]");
+  if (start >= 0 && end > start) {
+    try {
+      const arr = JSON.parse(raw.slice(start, end + 1));
+      if (Array.isArray(arr)) {
+        for (const item of arr) {
+          const url = str(item && (item.url || item.link));
+          if (!url) continue;
+          out.push({ title: str(item.title) || url, url });
+        }
+      }
+    } catch (_) {
+      /* 落到下面按链接抓 */
+    }
+  }
+  if (!out.length) {
+    const re = /https?:\/\/[^\s"')]+/g;
+    let m;
+    while ((m = re.exec(raw)) && out.length < SEARCH_MAX_SOURCES) out.push({ title: m[0], url: m[0] });
+  }
+  return out;
+}
+
+function dedupeSources(list) {
+  const seen = new Set();
+  const out = [];
+  for (const s of list || []) {
+    if (!s || !str(s.url) || seen.has(s.url)) continue;
+    seen.add(s.url);
+    out.push({ title: str(s.title) || str(s.url), url: str(s.url) });
+    if (out.length >= SEARCH_MAX_SOURCES) break;
+  }
+  return out;
+}
+
+function buildSearchContext(sources) {
+  const rows = sources.map((s, i) => i + 1 + ". " + s.title + "\n   " + s.url).join("\n");
+  return "以下是刚联网检索到的网页来源，请据此回答；能引用时在对应句子后附上链接。\n" + rows;
+}
+
+function toSourceAnnotations(sources) {
+  return sources.map((s, i) => ({
+    type: "url_citation",
+    url_citation: { index: i, title: s.title, url: s.url },
+  }));
+}
+
+function dedupeAnnotations(list) {
+  const seen = new Set();
+  const out = [];
+  for (const a of list || []) {
+    const url = str(a && a.url_citation && a.url_citation.url);
+    if (!url || seen.has(url)) continue;
+    seen.add(url);
+    out.push({
+      type: "url_citation",
+      url_citation: {
+        index: out.length,
+        title: str(a.url_citation.title) || url,
+        url,
+      },
+    });
+  }
+  return out;
+}
+
+/** 再打一次千问，只要来源；失败由调用方决定降级 */
+async function qwenSearch(ctx, question, rawBody) {
+  const parsed = rawBody ? JSON.parse(rawBody) : {};
+  // 检索用独立的新会话，避免把检索指令写进正在进行的对话
+  const url = String(ctx.request.url || "").replace(/\/v1\/sessions\/sess_[^/?#]+\/responses/, "/v1/sessions/responses");
+  for (const key of Object.keys(parsed)) {
+    if (/^(session_?id|previous_response_id|thread_id)$/i.test(key)) delete parsed[key];
+  }
+
+  const headers = { "Content-Type": "application/json", [SEARCH_HEADER]: "1" };
+  const auth = headerValue(ctx.request.headers, "authorization");
+  if (auth) headers.Authorization = auth;
+  const accept = headerValue(ctx.request.headers, "accept");
+  if (accept) headers.Accept = accept;
+
+  const body = {
+    ...parsed,
+    input: [
+      {
+        type: "message",
+        message: { role: "user", content: [{ text: searchInstruction(question), type: "text" }] },
+      },
+    ],
+  };
+
+  const resp = await ctx.http.post(url, { headers, body, timeout: SEARCH_TIMEOUT_MS });
+  const text = await resp.text();
+  if (resp.status >= 400) throw new Error("千问搜索 HTTP " + resp.status);
+
+  const stream = parseQwenStream(text);
+  let content = "";
+  try {
+    content = str(JSON.parse(stream.value).content);
+  } catch (_) {
+    content = str(stream.value);
+  }
+  const sources = dedupeSources([...sourcesFromAnnotations(stream.annotations), ...sourcesFromText(content)]);
+  if (!sources.length) throw new Error("千问搜索没有返回来源");
+  return sources;
+}
+
 /* ------------------------------------------------------------ 入口 */
 
 /**
@@ -1027,6 +1215,9 @@ async function handleBaiduImage(ctx) {
 }
 
 export default async function (ctx) {
+  // 自己发起的检索请求可能再次被本脚本匹配到，带标记的直接透传，避免递归
+  if (headerValue(ctx.request.headers, SEARCH_HEADER)) return undefined;
+
   // 视觉搜索（百度识图）与 Siri 对话是两条完全不同的链路，先按域名分流
   if (isBaiduImageRequest(ctx.request.url)) return handleBaiduImage(ctx);
 
@@ -1068,7 +1259,25 @@ export default async function (ctx) {
   }
 
   const history = loadHistory(ctx, sessionId);
-  const messages = [{ role: "system", content: cfg.system }];
+  // 搜索走千问时，先拿来源，再让 provider 依据来源作答
+  let sources = [];
+  if (cfg.searchMode === "qwen" && !hasImage && userText) {
+    try {
+      sources = await qwenSearch(ctx, userText, raw);
+    } catch (error) {
+      try {
+        ctx.notify({
+          title: "千问搜索不可用",
+          body: String((error && error.message) || error).slice(0, 180) + "（本次回答没有来源）",
+        });
+      } catch (_) {
+        /* 通知失败忽略 */
+      }
+    }
+  }
+
+  const systemText = sources.length ? cfg.system + "\n\n" + buildSearchContext(sources) : cfg.system;
+  const messages = [{ role: "system", content: systemText }];
   for (const turn of history) {
     if (turn && turn.role && typeof turn.content === "string") messages.push(turn);
   }
@@ -1110,8 +1319,9 @@ export default async function (ctx) {
   }
 
   const answer = result.answer || "（上游没有返回内容）";
+  const annotations = dedupeAnnotations([...(result.annotations || []), ...toSourceAnnotations(sources)]);
   return finish(
-    buildTextSSE(sessionId, answer, { ...textOptions, annotations: result.annotations || [] }),
+    buildTextSSE(sessionId, answer, { ...textOptions, annotations }),
     answer,
   );
 }
