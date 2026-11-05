@@ -296,6 +296,50 @@ test('上游 400 拒绝 reasoning_effort 时去掉字段重试', async () => {
   assert.match(notes[0].body, /思考强度/);
 });
 
+test('上游不支持 xhigh 时按它给的档位映射成 max', async () => {
+  const ctx = makeCtx({
+    url: NEW_URL,
+    body: BODY,
+    env: { ...ENV, EFFORT: 'xhigh' },
+    route: (target, options, n) => {
+      if (n === 1) throw new Error('level "xhigh" not supported, valid levels: low, high, max');
+      return chatText('映射成功');
+    },
+  });
+  const out = await api.main(ctx);
+  const done = parseSSE(out.__responded.body).find(e => e.name.endsWith('text.value.done')).payload;
+  assert.match(JSON.parse(done.value).content, /映射成功/);
+  assert.equal(ctx.calls.length, 2);
+  assert.equal(ctx.calls[0].options.body.reasoning_effort, 'xhigh');
+  assert.equal(ctx.calls[1].options.body.reasoning_effort, 'max');
+});
+
+test('记住上游档位后直接映射，不再白跑一次 400', async () => {
+  const storage = new Map();
+  const first = makeCtx({
+    url: NEW_URL,
+    body: BODY,
+    env: { ...ENV, EFFORT: 'medium' },
+    storage,
+    route: (target, options, n) => {
+      if (n === 1) throw new Error('level "medium" not supported, valid levels: low, high, max');
+      return chatText('第一次');
+    },
+  });
+  await api.main(first);
+
+  const second = makeCtx({
+    url: NEW_URL,
+    body: BODY,
+    env: { ...ENV, EFFORT: 'medium' },
+    storage,
+    route: () => chatText('第二次'),
+  });
+  await api.main(second);
+  assert.equal(second.calls.length, 1);
+  assert.equal(second.calls[0].options.body.reasoning_effort, 'low');
+});
+
 test('被拒后一小时内不再发送 reasoning_effort', async () => {
   const storage = new Map();
   const env = { ...ENV, EFFORT: 'high' };
@@ -989,6 +1033,22 @@ test('只说一个「搜」也命中，搜集/搜狗不误伤', () => {
   for (const q of ['搜集资料', '搜狗输入法', '你是什么模型']) {
     assert.equal(api.looksTimeSensitive(q), false, q);
   }
+});
+
+test('判断调用给推理模型留够 token', async () => {
+  const ctx = makeCtx({
+    url: NEW_URL,
+    body: { input: [{ message: { role: 'user', content: [{ type: 'text', text: '你是什么模型' }] }, type: 'message' }] },
+    env: { ...ENV, WEB_SEARCH: 'tavily', SEARCH_KEY: 'tvly-test', SEARCH_JUDGE: 'true' },
+    route: (target, options) => {
+      if (options.body.reasoning_effort === 'none') return chatText('no');
+      if (target.includes('api.tavily.com')) throw new Error('不该检索');
+      return chatText('回答');
+    },
+  });
+  await api.main(ctx);
+  const judge = ctx.calls.find(c => c.options.body.reasoning_effort === 'none');
+  assert.equal(judge.options.body.max_tokens, 64);
 });
 
 test('EXTRA_BODY 并入请求体但不能覆盖核心字段', async () => {

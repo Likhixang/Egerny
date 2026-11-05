@@ -407,6 +407,82 @@ function notifyDegraded(ctx, model, status, dropped) {
   }
 }
 
+const EFFORT_ORDER = ["none", "minimal", "low", "medium", "high", "xhigh", "max"];
+
+// 上游会在 400 里列出自己支持的档位，例如 deepseek：low, high, max
+function parseValidLevels(message) {
+  const match = /valid levels?:?\s*([a-z][a-z\s,]*)/i.exec(str(message));
+  if (!match) return null;
+  const list = match[1]
+    .split(/[,\s]+/)
+    .map(item => item.trim().toLowerCase())
+    .filter(item => item && EFFORT_ORDER.includes(item));
+  return list.length ? list : null;
+}
+
+function effortRank(value) {
+  const index = EFFORT_ORDER.indexOf(str(value).toLowerCase());
+  return index < 0 ? 99 : index;
+}
+
+// 把用户选的档位映射到上游支持的档位，按偏好顺序取第一个可用的
+const EFFORT_FALLBACK = {
+  minimal: ["minimal", "low", "medium", "high", "max"],
+  low: ["low", "minimal", "medium", "high", "max"],
+  medium: ["medium", "low", "high", "minimal", "max"],
+  high: ["high", "xhigh", "max", "medium", "low"],
+  xhigh: ["xhigh", "max", "high", "medium", "low"],
+  max: ["max", "xhigh", "high", "medium", "low"],
+};
+
+function fitEffort(effort, levels) {
+  const next = { ...effort };
+  const wanted = str(next.reasoning_effort).toLowerCase();
+  if (!wanted || levels.includes(wanted)) return next;
+  if (wanted === "none" || wanted === "off") {
+    delete next.reasoning_effort;
+    return next;
+  }
+  const order = EFFORT_FALLBACK[wanted] || [];
+  let picked = order.find(level => levels.includes(level));
+  if (!picked) {
+    // 没见过的档位名：退回按距离取最近，同距离取更高
+    let bestGap = Infinity;
+    for (const level of levels) {
+      const gap = Math.abs(effortRank(level) - effortRank(wanted));
+      if (gap < bestGap || (gap === bestGap && effortRank(level) > effortRank(picked))) {
+        picked = level;
+        bestGap = gap;
+      }
+    }
+  }
+  if (picked) next.reasoning_effort = picked;
+  else delete next.reasoning_effort;
+  return next;
+}
+
+function levelsKey(cfg, model) {
+  return "aiq.levels." + cfg.providerUrl + "|" + model;
+}
+
+function readLevels(ctx, cfg, model) {
+  try {
+    const cached = ctx.storage.getJSON(levelsKey(cfg, model));
+    if (cached && Array.isArray(cached.levels) && Date.now() - cached.at < 3600000) return cached.levels;
+  } catch (_) {
+    /* 读不到就当未知 */
+  }
+  return null;
+}
+
+function saveLevels(ctx, cfg, model, levels) {
+  try {
+    ctx.storage.setJSON(levelsKey(cfg, model), { levels, at: Date.now() });
+  } catch (_) {
+    /* 存不下不影响本次重试 */
+  }
+}
+
 async function postChat(ctx, cfg, messages, model, options = {}) {
   const headers = { "Content-Type": "application/json" };
   if (cfg.apiKey) headers.Authorization = "Bearer " + cfg.apiKey;
@@ -446,7 +522,10 @@ async function postChat(ctx, cfg, messages, model, options = {}) {
   const effortValue = str(effort.reasoning_effort);
   const effortKeyName = capabilityKey(NO_EFFORT_PREFIX, cfg, modelName, context + ":" + effortValue);
   const searchKeyName = capabilityKey(NO_SEARCH_PREFIX, cfg, modelName, cfg.searchMode);
-  const effortWanted = Object.keys(effort).length > 0 && !isSuppressed(ctx, effortKeyName);
+  // 已知上游档位时先映射，省掉一次注定 400 的往返（deepseek 只认 low/high/max）
+  const knownLevels = readLevels(ctx, cfg, modelName);
+  let effortPayload = knownLevels ? fitEffort(effort, knownLevels) : effort;
+  const effortWanted = Object.keys(effortPayload).length > 0 && !isSuppressed(ctx, effortKeyName);
   const searchWanted =
     Boolean(cfg.search) && options.search !== false && !isSuppressed(ctx, searchKeyName);
 
@@ -466,8 +545,10 @@ async function postChat(ctx, cfg, messages, model, options = {}) {
 
   let lastError = null;
   for (const plan of plans) {
-    const extra = { ...(plan.search ? SEARCH_PARAM : {}), ...(plan.effort ? effort : {}) };
-    try {
+    let retried = false;
+    for (;;) {
+      const extra = { ...(plan.search ? SEARCH_PARAM : {}), ...(plan.effort ? effortPayload : {}) };
+      try {
       const data = await send(extra);
       const dropped = [];
       if (searchWanted && !plan.search) {
@@ -489,8 +570,18 @@ async function postChat(ctx, cfg, messages, model, options = {}) {
         timeoutError.status = 0;
         throw timeoutError;
       }
+      // 上游说「不支持这个档位」时按它给的档位重映射后重试一次
+      const levels = parseValidLevels(message);
+      if (levels && plan.effort && !retried) {
+        saveLevels(ctx, cfg, modelName, levels);
+        effortPayload = fitEffort(effort, levels);
+        retried = true;
+        continue;
+      }
       if (status !== 400 && status !== 422) throw error;
       lastError = error;
+      break;
+      }
     }
   }
   throw lastError;
@@ -1048,7 +1139,9 @@ async function judgeNeedsSearch(ctx, cfg, question) {
       { role: "user", content: question },
     ],
     stream: false,
-    max_tokens: 8,
+    // 推理型模型（deepseek-flash）会把前几十个 token 花在 reasoning 上，
+    // 8 个 token 时 content 永远是空的，判断就白跑了
+    max_tokens: 64,
     temperature: 0,
     reasoning_effort: "none",
   };
