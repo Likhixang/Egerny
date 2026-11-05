@@ -18,6 +18,10 @@ const MAX_TURNS = 20;
 const DEFAULT_SYSTEM =
   "你是用户的私人助理，回答要简洁、准确、口语化。只输出最终答案，不要解释推理过程。";
 
+// 视觉智能的原始请求里只有图片、没有文字，通用模型需要一句引导
+const DEFAULT_VISION_PROMPT =
+  "请识别图片中的内容，用中文简洁说明这是什么、有什么可见信息。";
+
 const IMAGE_TOOL = {
   type: "function",
   function: {
@@ -98,6 +102,8 @@ function readConfig(env) {
     model,
     timeoutMs: Number.isFinite(timeout) && timeout > 0 ? Math.min(timeout, 300) * 1000 : 120000,
     system: str(e.SYSTEM_PROMPT) || DEFAULT_SYSTEM,
+    visionPrompt: str(e.VISION_PROMPT) || DEFAULT_VISION_PROMPT,
+    visionModel: str(e.VISION_MODEL) || model,
     reportModel: str(e.REPORT_MODEL) || "qwenapp-apple-tqa",
     continueUrl: str(e.CONTINUE_URL),
     notifyOnError: bool(e.NOTIFY_ON_ERROR, false),
@@ -130,9 +136,14 @@ function parseRequestPath(url) {
   return { sessionId: m[1] ? m[1].slice(1) : null, isNew: !m[1] };
 }
 
-function extractUserText(body) {
+/**
+ * 解析 input。视觉智能只发图片（data:image/jpeg;base64,...），没有文字；
+ * 普通对话只有文字。两种都要能取出来。
+ */
+function extractInput(body) {
+  const result = { text: "", images: [] };
   const input = body && body.input;
-  if (!Array.isArray(input)) return "";
+  if (!Array.isArray(input)) return result;
   const parts = [];
   for (const item of input) {
     const message = item && item.message;
@@ -141,10 +152,28 @@ function extractUserText(body) {
     const content = message.content;
     if (!Array.isArray(content)) continue;
     for (const c of content) {
-      if (c && c.type === "text" && typeof c.text === "string") parts.push(c.text);
+      if (!c) continue;
+      if (c.type === "text" && typeof c.text === "string") parts.push(c.text);
+      if (c.type === "image_url" && c.image_url && typeof c.image_url.url === "string") {
+        result.images.push(c.image_url.url);
+      }
+      if (c.type === "input_image" && typeof c.image_url === "string") result.images.push(c.image_url);
     }
   }
-  return parts.join("\n").trim();
+  result.text = parts.join("\n").trim();
+  return result;
+}
+
+function extractUserText(body) {
+  return extractInput(body).text;
+}
+
+/** 有图片时转成 OpenAI 视觉消息；没有文字就补一句引导语 */
+function buildUserContent(input, visionPrompt) {
+  if (!input.images.length) return input.text || "(空输入)";
+  const content = [{ type: "text", text: input.text || visionPrompt }];
+  for (const url of input.images) content.push({ type: "image_url", image_url: { url } });
+  return content;
 }
 
 /* ------------------------------------------------------------ 上游调用 */
@@ -166,6 +195,29 @@ function pickAnswer(data) {
     if (chunks.length) return chunks.join("");
   }
   return "";
+}
+
+/** 上游若返回 url_citation 引用，透传给 Siri 的来源卡片 */
+function pickAnnotations(data) {
+  const out = [];
+  const push = (a) => {
+    if (!a || a.type !== "url_citation" || !a.url_citation || !a.url_citation.url) return;
+    const url = str(a.url_citation.url);
+    out.push({
+      type: "url_citation",
+      url_citation: { index: out.length, title: str(a.url_citation.title) || url, url },
+    });
+  };
+  const choice = data && Array.isArray(data.choices) ? data.choices[0] : null;
+  const message = choice && choice.message;
+  if (message && Array.isArray(message.annotations)) message.annotations.forEach(push);
+  if (data && Array.isArray(data.citations)) {
+    for (const c of data.citations) {
+      if (typeof c === "string") push({ type: "url_citation", url_citation: { title: c, url: c } });
+      else push(c);
+    }
+  }
+  return out;
 }
 
 /** 从 choices[0].message.tool_calls 里取出 image_generator 的 prompt */
@@ -209,11 +261,11 @@ function errorText(data, raw, status) {
   return "上游 HTTP " + status + "：" + String(detail).slice(0, 200);
 }
 
-async function postChat(ctx, cfg, messages, withTools) {
+async function postChat(ctx, cfg, messages, withTools, model) {
   const headers = { "Content-Type": "application/json" };
   if (cfg.apiKey) headers.Authorization = "Bearer " + cfg.apiKey;
   const body = {
-    model: cfg.model,
+    model: model || cfg.model,
     messages,
     stream: false,
   };
@@ -243,25 +295,30 @@ async function postChat(ctx, cfg, messages, withTools) {
  */
 async function callUpstream(ctx, cfg, messages, options = {}) {
   const wantTools = Boolean(options.tools) && cfg.imageEnable;
+  const model = options.model || cfg.model;
   let data;
   let toolsUnsupported = false;
 
   if (wantTools) {
     try {
-      data = await postChat(ctx, cfg, messages, true);
+      data = await postChat(ctx, cfg, messages, true, model);
     } catch (error) {
       const rejectedTools = error.status === 400 && /tool/i.test(String(error.message));
       if (!rejectedTools) throw error;
       toolsUnsupported = true;
-      data = await postChat(ctx, cfg, messages, false);
+      data = await postChat(ctx, cfg, messages, false, model);
     }
   } else {
-    data = await postChat(ctx, cfg, messages, false);
+    data = await postChat(ctx, cfg, messages, false, model);
   }
 
   const toolCall = parseToolCall(data);
-  if (toolCall) return { toolCall, toolsUnsupported };
-  return { answer: unwrapAnswer(pickAnswer(data)), toolsUnsupported };
+  if (toolCall) return { toolCall, toolsUnsupported, annotations: [] };
+  return {
+    answer: unwrapAnswer(pickAnswer(data)),
+    toolsUnsupported,
+    annotations: pickAnnotations(data),
+  };
 }
 
 /* --------------------------------------------------------------- 图像 */
@@ -395,12 +452,12 @@ function innerPayload(answer) {
   });
 }
 
-function textContent(value) {
-  return { text: { annotations: [], value }, type: "text" };
+function textContent(value, annotations) {
+  return { text: { annotations: annotations || [], value }, type: "text" };
 }
 
-function textMessageItem(value) {
-  return { type: "message", message: { role: "assistant", content: [textContent(value)] } };
+function textMessageItem(value, annotations) {
+  return { type: "message", message: { role: "assistant", content: [textContent(value, annotations)] } };
 }
 
 /** 打开响应：session.created（仅新会话）+ response.created + choices.added */
@@ -470,6 +527,7 @@ function buildTextSSE(sessionId, answer, options = {}) {
   };
   const { out, now } = openSSE(base);
   const inner = innerPayload(answer);
+  const annotations = options.annotations || [];
 
   out.push(event("session.response.choices[].items[].added", {
     choice_index: 0,
@@ -496,19 +554,29 @@ function buildTextSSE(sessionId, answer, options = {}) {
     content_index: 0,
     value: inner,
   }));
+  // 引用卡片：只在有 url_citation 时出现，普通回答没有这一段
+  for (let i = 0; i < annotations.length; i += 1) {
+    out.push(event("session.response.choices[].items[].message.content[].text.annotations[].added", {
+      annotation: annotations[i],
+      item_index: 0,
+      choice_index: 0,
+      content_index: 0,
+      index: i,
+    }));
+  }
   out.push(event("session.response.choices[].items[].message.content[].done", {
     item_index: 0,
     choice_index: 0,
     index: 0,
-    content: textContent(inner),
+    content: textContent(inner, annotations),
   }));
   out.push(event("session.response.choices[].items[].done", {
     choice_index: 0,
-    item: textMessageItem(inner),
+    item: textMessageItem(inner, annotations),
     index: 0,
   }));
 
-  return closeSSE(out, { ...base, now, output: [textMessageItem(inner)] });
+  return closeSSE(out, { ...base, now, output: [textMessageItem(inner, annotations)] });
 }
 
 /**
@@ -683,7 +751,9 @@ export default async function (ctx) {
     body = {};
   }
 
-  const userText = extractUserText(body);
+  const input = extractInput(body);
+  const userText = input.text;
+  const hasImage = input.images.length > 0;
 
   let cfg;
   try {
@@ -698,12 +768,12 @@ export default async function (ctx) {
   for (const turn of history) {
     if (turn && turn.role && typeof turn.content === "string") messages.push(turn);
   }
-  messages.push({ role: "user", content: userText || "(空输入)" });
+  messages.push({ role: "user", content: buildUserContent(input, cfg.visionPrompt) });
 
   const finish = (sseBody, answerForHistory) => {
     saveHistory(ctx, sessionId, [
       ...history,
-      { role: "user", content: userText },
+      { role: "user", content: hasImage ? "[图片]" + (userText ? " " + userText : "") : userText },
       { role: "assistant", content: answerForHistory },
     ]);
     return ctx.respond(sseResponse(sessionId, sseBody));
@@ -722,9 +792,15 @@ export default async function (ctx) {
 
   let result;
   try {
-    result = await callUpstream(ctx, cfg, messages, { tools: cfg.imageEnable });
+    result = await callUpstream(ctx, cfg, messages, {
+      tools: cfg.imageEnable,
+      model: hasImage ? cfg.visionModel : cfg.model,
+    });
   } catch (error) {
-    const message = "（后端不可用：" + String((error && error.message) || error) + "）";
+    const detail = String((error && error.message) || error);
+    const message = hasImage
+      ? "（图片识别失败：" + detail + "。请确认 VISION_MODEL 支持图片输入）"
+      : "（后端不可用：" + detail + "）";
     notify(message);
     return ctx.respond(sseResponse(sessionId, buildTextSSE(sessionId, message, textOptions)));
   }
@@ -760,5 +836,8 @@ export default async function (ctx) {
   }
 
   const answer = result.answer || "（上游没有返回内容）";
-  return finish(buildTextSSE(sessionId, answer, textOptions), answer);
+  return finish(
+    buildTextSSE(sessionId, answer, { ...textOptions, annotations: result.annotations || [] }),
+    answer,
+  );
 }

@@ -8,7 +8,7 @@ const source = fs.readFileSync(path.join(__dirname, '../js/AppleIntelligence-Qwe
 const context = vm.createContext({ console, Date, URL, JSON, Math });
 vm.runInContext(
   source.replace('export default async function (ctx)', 'async function main(ctx)') +
-    `\nglobalThis.api = { main, readConfig, buildEndpoint, parseRequestPath, extractUserText, buildTextSSE, buildImageSSE, makeSummary, pickAnswer, parseToolCall, unwrapAnswer, chunkString, looksLikeImageRequest };`,
+    `\nglobalThis.api = { main, readConfig, buildEndpoint, parseRequestPath, extractInput, extractUserText, buildUserContent, pickAnnotations, buildTextSSE, buildImageSSE, makeSummary, pickAnswer, parseToolCall, unwrapAnswer, chunkString, looksLikeImageRequest };`,
   context,
 );
 const api = context.api;
@@ -151,6 +151,18 @@ const BODY = {
 };
 const DRAW_BODY = {
   input: [{ message: { role: 'user', content: [{ text: '问千问，画只狸花猫', type: 'text' }] }, type: 'message' }],
+  stream: true,
+};
+
+// 视觉智能：只有图片，没有文字；configuration 里是 siri.visualIntelligenceCamera
+const IMG_URL = 'data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQ==';
+const VISION_BODY = {
+  configuration: {
+    query: { locale: 'zh_CN', os_major_version: 27, os_minor_version: 3, platform: 'iOS' },
+    response_configuration_group_id: 'siri.visualIntelligenceCamera',
+  },
+  input: [{ type: 'message', message: { role: 'user', content: [{ type: 'image_url', image_url: { url: IMG_URL } }] } }],
+  server_tools: [{ type: 'image_generator' }, { type: 'file_generator' }],
   stream: true,
 };
 
@@ -447,6 +459,119 @@ test('配置默认值：图片开关打开、尺寸解析、不含温度', () =>
   assert.equal(wide.imageWidth, 1792);
   assert.equal(wide.imageHeight, 1024);
   assert.equal(wide.imageEnable, false);
+});
+
+// 抓包 entry 14（视觉智能识别抽纸）的事件序列，含引用卡片那一段
+const VISION_CAPTURED = [
+  'session.response.created',
+  'session.response.choices[].added',
+  'session.response.choices[].items[].added',
+  'session.response.choices[].items[].message.content[].added',
+  'session.response.choices[].items[].message.content[].text.value.delta',
+  'session.response.choices[].items[].message.content[].text.value.done',
+  'session.response.choices[].items[].message.content[].text.annotations[].added',
+  'session.response.choices[].items[].message.content[].done',
+  'session.response.choices[].items[].done',
+  'session.response.choices[].completed',
+  'session.response.choices[].done',
+  'session.response.done',
+];
+
+test('视觉智能请求：从 input 里取出图片，没有文字', () => {
+  const parsed = plain(api.extractInput(VISION_BODY));
+  assert.equal(parsed.text, '');
+  assert.deepEqual(parsed.images, [IMG_URL]);
+  // 纯文字请求不受影响
+  const chat = plain(api.extractInput(BODY));
+  assert.equal(chat.text, '问千问，你是什么模型');
+  assert.deepEqual(chat.images, []);
+});
+
+test('视觉消息转成 OpenAI 格式，缺文字时补引导语', () => {
+  const content = plain(api.buildUserContent({ text: '', images: [IMG_URL] }, '看图说话'));
+  assert.equal(content.length, 2);
+  assert.deepEqual(content[0], { type: 'text', text: '看图说话' });
+  assert.deepEqual(content[1], { type: 'image_url', image_url: { url: IMG_URL } });
+
+  const withText = plain(api.buildUserContent({ text: '这是什么', images: [IMG_URL] }, '看图说话'));
+  assert.equal(withText[0].text, '这是什么');
+
+  // 没有图片时保持字符串，和普通对话一致
+  assert.equal(api.buildUserContent({ text: '你好', images: [] }, 'x'), '你好');
+  assert.equal(api.buildUserContent({ text: '', images: [] }, 'x'), '(空输入)');
+});
+
+test('视觉请求走 VISION_MODEL 并带上图片', async () => {
+  const env = { ...ENV, VISION_MODEL: 'vision-model' };
+  const ctx = makeCtx({
+    url: NEW_URL,
+    body: VISION_BODY,
+    env,
+    route: () => chatText('这是一包心相印抽纸'),
+  });
+  const out = await api.main(ctx);
+  const sent = ctx.calls[0].options.body;
+  assert.equal(sent.model, 'vision-model');
+  const user = sent.messages[1];
+  assert.ok(Array.isArray(user.content));
+  assert.equal(user.content[1].type, 'image_url');
+  assert.equal(user.content[1].image_url.url, IMG_URL);
+  assert.deepEqual(collapse(parseSSE(out.__responded.body).map(e => e.name).slice(1)), TEXT_CAPTURED);
+});
+
+test('视觉响应带引用时事件序列与抓包一致', async () => {
+  const ctx = makeCtx({
+    url: NEW_URL,
+    body: VISION_BODY,
+    env: ENV,
+    route: () => ok({
+      choices: [{
+        message: {
+          content: '这是一包抽纸',
+          annotations: [{ type: 'url_citation', url_citation: { title: '来源标题', url: 'https://example.com/a' } }],
+        },
+      }],
+    }),
+  });
+  const out = await api.main(ctx);
+  const events = parseSSE(out.__responded.body);
+  assert.deepEqual(collapse(events.map(e => e.name).slice(1)), VISION_CAPTURED);
+
+  const ann = events.find(e => e.name.endsWith('annotations[].added')).payload;
+  assert.deepEqual(plain(ann.annotation), {
+    type: 'url_citation',
+    url_citation: { index: 0, title: '来源标题', url: 'https://example.com/a' },
+  });
+  assert.equal(ann.content_index, 0);
+
+  const done = events.find(e => e.name.endsWith('content[].done')).payload;
+  assert.equal(done.content.text.annotations.length, 1);
+});
+
+test('视觉请求失败时提示检查 VISION_MODEL', async () => {
+  const ctx = makeCtx({
+    url: NEW_URL,
+    body: VISION_BODY,
+    env: ENV,
+    route: () => err(400, { error: { message: 'model does not support image input' } }),
+  });
+  const out = await api.main(ctx);
+  const done = parseSSE(out.__responded.body).find(e => e.name.endsWith('text.value.done')).payload;
+  assert.match(JSON.parse(done.value).content, /图片识别失败/);
+  assert.match(JSON.parse(done.value).content, /VISION_MODEL/);
+});
+
+test('引用解析：支持 annotations 与 citations 两种来源', () => {
+  const a = api.pickAnnotations({ choices: [{ message: { annotations: [{ type: 'url_citation', url_citation: { title: 't', url: 'https://a' } }] } }] });
+  assert.equal(a.length, 1);
+  assert.equal(a[0].url_citation.index, 0);
+
+  const b = api.pickAnnotations({ citations: ['https://b', 'https://c'] });
+  assert.equal(b.length, 2);
+  assert.equal(b[1].url_citation.index, 1);
+
+  assert.deepEqual(plain(api.pickAnnotations({})), []);
+  assert.deepEqual(plain(api.pickAnnotations(null)), []);
 });
 
 test('长文本分片不超过 40 字符且可无损还原', () => {
