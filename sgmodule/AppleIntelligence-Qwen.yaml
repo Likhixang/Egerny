@@ -36,6 +36,13 @@ env_schema:
     name: 额外请求字段
     description: "可选 JSON 对象，原样并入请求体（如 {\"enable_thinking\":true}）。model / messages / stream 不会被覆盖。"
     default_value: ""
+  WEB_SEARCH:
+    name: 联网搜索
+    description: "向 provider 发送 tools:[{type:web_search}]，回答里的来源链接会回填到 Siri 的引用卡片。provider 不支持时自动关闭并通知（1 小时内不再尝试）。"
+    options:
+      - "true"
+      - "false"
+    default_value: "true"
   SYSTEM_PROMPT:
     name: 系统提示词
     description: "留空使用内置默认。默认原文：Your answer must remain neutral, be accurate, and sound natural in spoken language. Output only the final answer."
@@ -112,6 +119,7 @@ scriptings:
         MODEL: ""
         EFFORT: "default"
         EXTRA_BODY: ""
+        WEB_SEARCH: "true"
         SYSTEM_PROMPT: ""
         VISION_MODEL: ""
         VISION_PROMPT: ""

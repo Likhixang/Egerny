@@ -128,6 +128,7 @@ function readConfig(env) {
     notifyOnError: bool(e.NOTIFY_ON_ERROR, false),
     reasoning: buildReasoningParams(e.EFFORT),
     extraBody: parseExtraBody(e.EXTRA_BODY),
+    search: bool(e.WEB_SEARCH, true),
   };
 }
 
@@ -327,7 +328,10 @@ function errorText(data, raw, status) {
 }
 
 const NO_EFFORT_PREFIX = "AIQ:noeffort:";
+const NO_SEARCH_PREFIX = "AIQ:nosearch:";
 const NO_EFFORT_TTL_MS = 60 * 60 * 1000;
+// OpenAI 兼容的联网搜索写法；上游不认时会被降级移除
+const SEARCH_PARAM = { tools: [{ type: "web_search" }] };
 
 /** Egern 的 http 客户端在非 2xx 时可能直接抛错，状态码只能从消息里抠 */
 function statusFromError(error) {
@@ -337,11 +341,11 @@ function statusFromError(error) {
   return m ? Number(m[1]) : 0;
 }
 
-function effortKey(cfg, model) {
-  return NO_EFFORT_PREFIX + cfg.providerUrl + "|" + (model || cfg.model);
+function capabilityKey(prefix, cfg, model) {
+  return prefix + cfg.providerUrl + "|" + (model || cfg.model);
 }
 
-function effortSuppressed(ctx, key) {
+function isSuppressed(ctx, key) {
   try {
     const hit = ctx.storage.getJSON(key);
     return Boolean(hit && hit.at && Date.now() - hit.at < NO_EFFORT_TTL_MS);
@@ -350,7 +354,7 @@ function effortSuppressed(ctx, key) {
   }
 }
 
-function suppressEffort(ctx, key) {
+function markSuppressed(ctx, key) {
   try {
     ctx.storage.setJSON(key, { at: Date.now() });
   } catch (_) {
@@ -358,22 +362,24 @@ function suppressEffort(ctx, key) {
   }
 }
 
-/** 该 provider 不认 reasoning_effort：去掉字段重试一次，并明确告诉用户 */
-function notifyEffortDropped(ctx, model, status) {
+/** 上游拒了可选参数：降级重试，并明确告诉用户丢了什么 */
+function notifyDegraded(ctx, model, status, dropped) {
   try {
     ctx.notify({
-      title: "思考强度未生效",
-      body: (model || "当前模型") + " 拒绝 reasoning_effort（HTTP " + status + "），已按默认重试",
+      title: "部分能力未生效",
+      body:
+        (model || "当前模型") +
+        " 拒绝了 " + dropped.join("、") + "（HTTP " + (status || "?") + "），已降级重试",
     });
   } catch (_) {
     /* 通知失败忽略 */
   }
 }
 
-async function postChat(ctx, cfg, messages, model) {
+async function postChat(ctx, cfg, messages, model, options = {}) {
   const headers = { "Content-Type": "application/json" };
   if (cfg.apiKey) headers.Authorization = "Bearer " + cfg.apiKey;
-  // 顺序：先铺 EXTRA_BODY 的私有参数，再压上协议核心字段，最后叠加思考强度，
+  // 顺序：先铺 EXTRA_BODY 的私有参数，再压上协议核心字段，最后叠加可选能力，
   // 避免用户手写的 JSON 覆盖 model / messages / stream 把请求拆坏。
   const core = {
     ...(cfg.extraBody || {}),
@@ -381,9 +387,7 @@ async function postChat(ctx, cfg, messages, model) {
     messages,
     stream: false,
   };
-  const effort = cfg.reasoning || {};
-  const hasEffort = Object.keys(effort).length > 0;
-  const key = effortKey(cfg, core.model);
+  const modelName = core.model;
 
   const send = async (extra) => {
     const body = { ...core, ...extra };
@@ -405,22 +409,55 @@ async function postChat(ctx, cfg, messages, model) {
     return data;
   };
 
-  const skip = hasEffort && effortSuppressed(ctx, key);
-  try {
-    return await send(skip ? {} : effort);
-  } catch (error) {
-    if (!hasEffort || skip) throw error;
-    const status = statusFromError(error);
-    if (status !== 400 && status !== 422) throw error;
-    suppressEffort(ctx, key);
-    notifyEffortDropped(ctx, core.model, status);
-    return await send({});
+  const effort = cfg.reasoning || {};
+  const effortKeyName = capabilityKey(NO_EFFORT_PREFIX, cfg, modelName);
+  const searchKeyName = capabilityKey(NO_SEARCH_PREFIX, cfg, modelName);
+  const effortWanted = Object.keys(effort).length > 0 && !isSuppressed(ctx, effortKeyName);
+  const searchWanted =
+    Boolean(cfg.search) && options.search !== false && !isSuppressed(ctx, searchKeyName);
+
+  // 降级顺序：全量 → 只联网 → 只思考 → 裸请求；只在 400/422 时往下走
+  const plans = [];
+  const seen = new Set();
+  const addPlan = (search, wantEffort) => {
+    const id = (search ? 1 : 0) + "-" + (wantEffort ? 1 : 0);
+    if (seen.has(id)) return;
+    seen.add(id);
+    plans.push({ search, effort: wantEffort });
+  };
+  addPlan(searchWanted, effortWanted);
+  addPlan(searchWanted, false);
+  addPlan(false, effortWanted);
+  addPlan(false, false);
+
+  let lastError = null;
+  for (const plan of plans) {
+    const extra = { ...(plan.search ? SEARCH_PARAM : {}), ...(plan.effort ? effort : {}) };
+    try {
+      const data = await send(extra);
+      const dropped = [];
+      if (searchWanted && !plan.search) {
+        dropped.push("联网搜索");
+        markSuppressed(ctx, searchKeyName);
+      }
+      if (effortWanted && !plan.effort) {
+        dropped.push("思考强度");
+        markSuppressed(ctx, effortKeyName);
+      }
+      if (dropped.length) notifyDegraded(ctx, modelName, statusFromError(lastError), dropped);
+      return data;
+    } catch (error) {
+      const status = statusFromError(error);
+      if (status !== 400 && status !== 422) throw error;
+      lastError = error;
+    }
   }
+  throw lastError;
 }
 
 /** 调用对话接口，返回文本与引用 */
 async function callUpstream(ctx, cfg, messages, options = {}) {
-  const data = await postChat(ctx, cfg, messages, options.model || cfg.model);
+  const data = await postChat(ctx, cfg, messages, options.model || cfg.model, { search: options.search });
   return {
     answer: unwrapAnswer(pickAnswer(data)),
     annotations: pickAnnotations(data),
@@ -668,6 +705,7 @@ async function handleCompose(ctx, cfg, body, sessionId, isNew) {
         { role: "user", content: composeUserMessage(input) },
       ],
       cfg.writingModel,
+      { search: false },
     );
     answer = pickAnswer(data);
   } catch (error) {
@@ -1060,6 +1098,7 @@ export default async function (ctx) {
   try {
     result = await callUpstream(ctx, cfg, messages, {
       model: hasImage ? cfg.visionModel : cfg.model,
+      search: !hasImage,
     });
   } catch (error) {
     const detail = String((error && error.message) || error);

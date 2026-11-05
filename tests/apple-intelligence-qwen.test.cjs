@@ -99,6 +99,8 @@ const ENV = {
   PROVIDER_URL: PROVIDER_BASE,
   API_KEY: 'sk-test',
   MODEL: 'test-model',
+  // 绝大多数用例只关心对话字段，联网搜索单独测
+  WEB_SEARCH: 'false',
 };
 // 画图请求：只用于验证「放行给千问」的判定
 const DRAW_BODY = {
@@ -286,7 +288,8 @@ test('上游 400 拒绝 reasoning_effort 时去掉字段重试', async () => {
   assert.equal(ctx.calls.length, 2);
   assert.equal('reasoning_effort' in ctx.calls[1].options.body, false);
   assert.equal(notes.length, 1);
-  assert.match(notes[0].title, /思考强度未生效/);
+  assert.match(notes[0].title, /部分能力未生效/);
+  assert.match(notes[0].body, /思考强度/);
 });
 
 test('被拒后一小时内不再发送 reasoning_effort', async () => {
@@ -340,6 +343,49 @@ test('未选档位时 400 原样报错，不重试', async () => {
   const done = events.find((e) => e.name.endsWith('text.value.done')).payload;
   assert.match(JSON.parse(done.value).content, /bad request/);
   assert.equal(ctx.calls.length, 1);
+});
+
+test('联网搜索默认开启，对话请求带 web_search 工具', async () => {
+  const env = { PROVIDER_URL: PROVIDER_BASE, API_KEY: 'sk-test', MODEL: 'test-model' };
+  const ctx = makeCtx({ url: NEW_URL, body: BODY, env, route: () => chatText('ok') });
+  await api.main(ctx);
+  assert.deepEqual(plain(ctx.calls[0].options.body.tools), [{ type: 'web_search' }]);
+});
+
+test('上游拒绝 web_search 时关闭联网并通知', async () => {
+  const notes = [];
+  const env = { PROVIDER_URL: PROVIDER_BASE, API_KEY: 'sk-test', MODEL: 'test-model' };
+  const ctx = makeCtx({
+    url: NEW_URL,
+    body: BODY,
+    env,
+    route: (target, options) => {
+      if (options.body.tools) throw new Error('HTTP error! status: 400, body: Error');
+      return chatText('无联网也回答');
+    },
+  });
+  ctx.notify = (msg) => notes.push(msg);
+
+  const out = await api.main(ctx);
+  const events = parseSSE(out.__responded.body);
+  const done = events.find((e) => e.name.endsWith('text.value.done')).payload;
+  assert.match(JSON.parse(done.value).content, /无联网也回答/);
+  assert.equal(ctx.calls.length, 2);
+  assert.equal('tools' in ctx.calls[1].options.body, false);
+  assert.match(notes[0].body, /联网搜索/);
+});
+
+test('联网关闭时不发 tools', async () => {
+  const ctx = makeCtx({ url: NEW_URL, body: BODY, env: ENV, route: () => chatText('ok') });
+  await api.main(ctx);
+  assert.equal('tools' in ctx.calls[0].options.body, false);
+});
+
+test('识图请求不带联网工具', async () => {
+  const env = { PROVIDER_URL: PROVIDER_BASE, API_KEY: 'sk-test', MODEL: 'test-model' };
+  const ctx = makeCtx({ url: NEW_URL, body: VISION_BODY, env, route: () => chatText('图里是猫') });
+  await api.main(ctx);
+  assert.equal('tools' in ctx.calls[0].options.body, false);
 });
 
 test('EXTRA_BODY 并入请求体但不能覆盖核心字段', async () => {

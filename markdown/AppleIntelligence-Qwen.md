@@ -244,6 +244,7 @@ SerpAPI 把这一层包掉了：给它图，它返回结构化 JSON。
 | `MODEL` | 是 | 传给 provider 的 `model` 字段 |
 | `EFFORT` | 否 | 思考强度，按 OpenAI 兼容的 `reasoning_effort` 发送：`default` 不发送 / `off` 发 `none` / `low` `medium` `high` `xhigh` `max` |
 | `EXTRA_BODY` | 否 | JSON 对象，原样并入请求体，用于 provider 私有参数 |
+| `WEB_SEARCH` | 否 | 是否向 provider 发 `tools:[{type:web_search}]`，默认开；不支持时自动关闭并通知 |
 | `SYSTEM_PROMPT` | 否 | 留空用内置默认，原文：`Your answer must remain neutral, be accurate, and sound natural in spoken language. Output only the final answer.` |
 | `VISION_MODEL` | 否 | 处理视觉智能图片的模型；留空复用 `MODEL` |
 | `VISION_PROMPT` | 否 | 视觉智能只发图片不发文字，用这句引导模型作答 |
@@ -282,6 +283,22 @@ provider 用非标准字段时（百炼 `enable_thinking`/`thinking_budget`、Op
 
 `EXTRA_BODY` 会原样并入请求体，但不会覆盖 `model` / `messages` / `stream`。
 
+### 联网搜索与来源卡片
+
+原生千问的「多来源」不是客户端能力：Siri 的请求体里带 `server_tools`（`browser` / `image_generator`），由千问服务端执行，结果通过 `text.annotations[].added` 事件回传。模块在请求发出前就把 body 重写了，`server_tools` 不会带过去，所以接自定义 provider 后联网搜索和来源会一起消失——**不是抓包漏了，这条能力本来就跑在千问服务端**。
+
+现在的做法：`WEB_SEARCH` 打开（默认）时向上游发 OpenAI 兼容的 `tools:[{type:"web_search"}]`，由模型自己决定是否搜索；上游返回 `message.annotations` 或 `citations` 时，脚本按原协议填进 `text.annotations[].added`，Siri 就会显示来源卡片。识图和写作工具不发这个工具。
+
+支持度取决于 provider 和模型，同一个网关实测：
+
+| 模型 | 结果 |
+| --- | --- |
+| `gpt-6.1-sol` | 真搜索，回归 url_citation，模块实测出现 2 个来源事件 |
+| `gemini-3.8-flash` | 接受参数但不搜索，回答不带引用 |
+| `deepseek-flash` | 不搜索，直接在正文里说无法联网 |
+
+上游把 `tools` 当非法字段回 400/422 时，脚本会关掉联网重试并通知，同一 provider + 模型 1 小时内不再尝试。
+
 ### 为什么模型不是下拉
 
 Egern 的 `env_schema.options` 只接受静态数组（官方文档：`options` 为可选值列表，`["true","false"]` 生成开关，其余生成 Picker，未设置生成输入框），没有从 URL 动态拉取的字段，Picker 也没有手输入口。所以「填完接口地址和密钥 → 自动列出 `/v1/models`」在模块设置页做不到，硬塞一个模型名清单反而是假下拉。
@@ -303,6 +320,7 @@ Egern 的 `env_schema.options` 只接受静态数组（官方文档：`options` 
 - **视觉图片只用于当轮**。会话历史里只存 `[图片]` 占位，后续追问看不到那张图。
 - **模型只能手填**。Egern 的 `env_schema` 不支持动态选项，设置页无法列出 provider 的模型清单，见上文「为什么模型不是下拉」。
 - **思考强度只发标准字段**。统一按 `reasoning_effort` 发送；上游不认时脚本会去掉字段重试并通知，但这也意味着该 provider 上档位不会生效，需要私有参数就写进 `EXTRA_BODY`。
+- **来源卡片看模型**。联网搜索靠上游的 `web_search` 工具，模型不支持就只有正文、没有引用；同一网关里 `gpt-6.1-sol` 可以，`gemini-3.8-flash` 不行。
 - **识图没有 AI 摘要**。百度原包里的 `mllm_abstract` 是一段商品总结，Google 不给等价物，脚本只填识别词，摘要留空。
 - **识图结果质量取决于 Google**。中文商品图的匹配度通常不如百度，尤其是国内电商和小众商品。
 - **识图没有缓存**：同一张图搜两次会计两次 SerpAPI 额度。
