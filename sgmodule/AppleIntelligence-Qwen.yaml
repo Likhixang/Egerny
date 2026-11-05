@@ -108,9 +108,13 @@ env_schema:
       - "visual_matches"
       - "exact_matches"
     default_value: "all"
+  CHAT_TIMEOUT:
+    name: 回答超时
+    description: "等待模型回答的秒数，默认 45。"
+    default_value: "45"
   TIMEOUT:
     name: 超时秒数
-    description: "超时秒数，最大 300。"
+    description: "检索与识图的超时秒数，最大 300。"
     default_value: "120"
   REPORT_MODEL:
     name: 上报模型名
@@ -158,6 +162,7 @@ scriptings:
         HL: "zh-cn"
         COUNTRY: "us"
         LENS_TYPE: "all"
+        CHAT_TIMEOUT: "45"
         TIMEOUT: "120"
         REPORT_MODEL: "qwenapp-apple-tqa"
         CONTINUE_URL: ""

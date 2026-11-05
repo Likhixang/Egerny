@@ -258,7 +258,8 @@ SerpAPI 把这一层包掉了：给它图，它返回结构化 JSON。
 | `HL` | 否 | 识图语言，默认 `zh-cn` |
 | `COUNTRY` | 否 | 识图国家，默认 `us` |
 | `LENS_TYPE` | 否 | `all` / `visual_matches` / `exact_matches`，默认 `all` |
-| `TIMEOUT` | 否 | 等待上游或 SerpAPI 的秒数，默认 120，最大 300 |
+| `CHAT_TIMEOUT` | 否 | 等待模型回答的秒数，默认 45 |
+| `TIMEOUT` | 否 | 检索与识图的超时秒数，默认 120，最大 300 |
 | `REPORT_MODEL` | 否 | 回给 Siri 的 `model` 字段，默认 `qwenapp-apple-tqa` |
 | `CONTINUE_URL` | 否 | 回答下方的跳转链接，留空不显示 |
 | `NOTIFY_ON_ERROR` | 否 | 上游 / 识图失败时发系统通知 |
@@ -375,6 +376,7 @@ Egern 的 `env_schema.options` 只接受静态数组（官方文档：`options` 
 - **模型只能手填**。Egern 的 `env_schema` 不支持动态选项，设置页无法列出 provider 的模型清单，见上文「为什么模型不是下拉」。
 - **思考强度只发标准字段**。统一按 `reasoning_effort` 发送；上游不认时脚本会去掉字段重试并通知，但这也意味着该 provider 上档位不会生效，需要私有参数就写进 `EXTRA_BODY`。
 - **来源卡片取决于搜索来源**。`provider` 模式要模型支持 `web_search`（同网关里 `gpt-6.1-sol` 可以、`gemini-3.8-flash` 不行）；`qwen` 模式不挑模型，但每题多一次千问调用，且依赖 Siri 的 JWT。
+- **回答超时会直接报错**。`CHAT_TIMEOUT` 默认 45 秒，超时就回「上游超过 N 秒没有响应」，而不是让 Siri 一直等到弹「请重试」。上游偶发挂死（AxonHub 里表现为 `processing` 卡住）时这条会先触发。
 - **识图没有 AI 摘要**。百度原包里的 `mllm_abstract` 是一段商品总结，Google 不给等价物，脚本只填识别词，摘要留空。
 - **识图结果质量取决于 Google**。中文商品图的匹配度通常不如百度，尤其是国内电商和小众商品。
 - **识图没有缓存**：同一张图搜两次会计两次 SerpAPI 额度。

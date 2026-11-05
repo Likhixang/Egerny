@@ -923,6 +923,21 @@ test('回答正文里不再出现裸链接', async () => {
   assert.match(content, /Mate 90 是新品/);
 });
 
+test('上游超时返回可读错误，不会挂住', async () => {
+  const ctx = makeCtx({
+    url: NEW_URL,
+    body: BODY,
+    env: ENV,
+    route: () => {
+      throw new Error('The operation was aborted due to timeout');
+    },
+  });
+  const out = await api.main(ctx);
+  const events = parseSSE(out.__responded.body);
+  const done = events.find(e => e.name.endsWith('text.value.done')).payload;
+  assert.match(JSON.parse(done.value).content, /上游超过 45 秒没有响应/);
+});
+
 test('EXTRA_BODY 并入请求体但不能覆盖核心字段', async () => {
   const ctx = makeCtx({
     url: NEW_URL,

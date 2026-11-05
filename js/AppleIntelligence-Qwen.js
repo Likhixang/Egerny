@@ -129,6 +129,9 @@ function readConfig(env) {
   const providerUrl = model ? buildEndpoint(rawProvider, "chat/completions") : "";
 
   const timeout = Number(str(e.TIMEOUT) || "120");
+  const chatSeconds = Number(str(e.CHAT_TIMEOUT) || "45");
+  const chatTimeoutMs =
+    Number.isFinite(chatSeconds) && chatSeconds > 0 ? Math.min(chatSeconds, 300) * 1000 : 45000;
   const searchMode = readSearchMode(e.WEB_SEARCH || "provider");
 
   return {
@@ -136,6 +139,7 @@ function readConfig(env) {
     apiKey: str(e.API_KEY),
     model,
     timeoutMs: Number.isFinite(timeout) && timeout > 0 ? Math.min(timeout, 300) * 1000 : 120000,
+    chatTimeoutMs,
     system: str(e.SYSTEM_PROMPT) || DEFAULT_SYSTEM,
     visionPrompt: str(e.VISION_PROMPT) || DEFAULT_VISION_PROMPT,
     visionModel: str(e.VISION_MODEL) || model,
@@ -418,7 +422,7 @@ async function postChat(ctx, cfg, messages, model, options = {}) {
 
   const send = async (extra) => {
     const body = { ...core, ...extra };
-    const resp = await ctx.http.post(cfg.providerUrl, { headers, body, timeout: cfg.timeoutMs });
+    const resp = await ctx.http.post(cfg.providerUrl, { headers, body, timeout: cfg.chatTimeoutMs });
     const raw = await resp.text();
     let data = null;
     try {
@@ -478,6 +482,13 @@ async function postChat(ctx, cfg, messages, model, options = {}) {
       return data;
     } catch (error) {
       const status = statusFromError(error);
+      const message = String((error && error.message) || error);
+      if (!status && /timed? ?out|timeout|ETIMEDOUT|abort/i.test(message)) {
+        const seconds = Math.round(cfg.chatTimeoutMs / 1000);
+        const timeoutError = new Error("上游超过 " + seconds + " 秒没有响应（可调大 CHAT_TIMEOUT）");
+        timeoutError.status = 0;
+        throw timeoutError;
+      }
       if (status !== 400 && status !== 422) throw error;
       lastError = error;
     }
@@ -1035,7 +1046,7 @@ async function judgeNeedsSearch(ctx, cfg, question) {
     const resp = await ctx.http.post(cfg.providerUrl, {
       headers,
       body,
-      timeout: Math.min(cfg.timeoutMs, 15000),
+      timeout: Math.min(cfg.chatTimeoutMs, 15000),
     });
     if (resp.status >= 400) return looksTimeSensitive(question);
     const text = str(pickAnswer(JSON.parse(await resp.text())));
