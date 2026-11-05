@@ -516,7 +516,7 @@ test('搜索走 Tavily：取结果并注入来源', async () => {
   const ctx = makeCtx({
     url: NEW_URL,
     body: BODY,
-    env: { ...ENV, WEB_SEARCH: 'tavily', SEARCH_KEY: 'tvly-test' },
+    env: { ...ENV, WEB_SEARCH: 'tavily', SEARCH_KEY: 'tvly-test', SEARCH_JUDGE: 'false' },
     route: target => (target.includes('api.tavily.com') ? tavily : chatText('按 Tavily 来源作答')),
   });
 
@@ -538,7 +538,7 @@ test('搜索走 SerpAPI：解析 organic_results', async () => {
   const ctx = makeCtx({
     url: NEW_URL,
     body: BODY,
-    env: { ...ENV, WEB_SEARCH: 'serpapi', SEARCH_KEY: 'serp-test' },
+    env: { ...ENV, WEB_SEARCH: 'serpapi', SEARCH_KEY: 'serp-test', SEARCH_JUDGE: 'false' },
     route: () => chatText('按 Google 来源作答'),
   });
   ctx.http.get = async (target, options) => {
@@ -562,12 +562,102 @@ test('搜索走 SerpAPI：解析 organic_results', async () => {
   assert.equal(events.some(e => e.name.endsWith('annotations[].added')), true);
 });
 
+test('Tavily：判断不需要联网时不检索', async () => {
+  const ctx = makeCtx({
+    url: NEW_URL,
+    body: BODY,
+    env: { ...ENV, WEB_SEARCH: 'tavily', SEARCH_KEY: 'tvly-test' },
+    route: (target, options) => {
+      if (target.includes('api.tavily.com')) return { status: 200, text: async () => JSON.stringify({ results: [] }) };
+      if (options.body.reasoning_effort === 'none') return chatText('no');
+      return chatText('直接回答');
+    },
+  });
+
+  const out = await api.main(ctx);
+  assert.equal(ctx.calls.length, 2); // 判断 + 回答
+  assert.equal(ctx.calls.some(c => c.target.includes('api.tavily.com')), false);
+  const events = parseSSE(out.__responded.body);
+  assert.equal(events.some(e => e.name.endsWith('annotations[].added')), false);
+});
+
+test('Tavily：判断需要联网时才检索', async () => {
+  const ctx = makeCtx({
+    url: NEW_URL,
+    body: BODY,
+    env: { ...ENV, WEB_SEARCH: 'tavily', SEARCH_KEY: 'tvly-test' },
+    route: (target, options) => {
+      if (target.includes('api.tavily.com')) {
+        return { status: 200, text: async () => JSON.stringify({ results: [{ title: 'T', url: 'https://t.example/1' }] }) };
+      }
+      if (options.body.reasoning_effort === 'none') return chatText('yes');
+      return chatText('带来源回答');
+    },
+  });
+
+  const out = await api.main(ctx);
+  assert.equal(ctx.calls.length, 3); // 判断 + 检索 + 回答
+  assert.equal(ctx.calls[1].target, 'https://api.tavily.com/search');
+  const events = parseSSE(out.__responded.body);
+  assert.equal(events.some(e => e.name.endsWith('annotations[].added')), true);
+});
+
+test('判断调用失败时按需要联网处理', async () => {
+  const ctx = makeCtx({
+    url: NEW_URL,
+    body: { input: [{ message: { role: 'user', content: [{ type: 'text', text: '今天有什么 AI 新闻' }] }, type: 'message' }] },
+    env: { ...ENV, WEB_SEARCH: 'tavily', SEARCH_KEY: 'tvly-test' },
+    route: (target, options) => {
+      if (target.includes('api.tavily.com')) {
+        return { status: 200, text: async () => JSON.stringify({ results: [{ title: 'T', url: 'https://t.example/1' }] }) };
+      }
+      if (options.body.reasoning_effort === 'none') return err(500, { error: { message: 'judge down' } });
+      return chatText('带来源回答');
+    },
+  });
+
+  await api.main(ctx);
+  assert.equal(ctx.calls.some(c => c.target.includes('api.tavily.com')), true);
+});
+
+test('判断返回空时按时间敏感词兜底', async () => {
+  const routes = [];
+  const ctx = makeCtx({
+    url: NEW_URL,
+    body: { input: [{ message: { role: 'user', content: [{ type: 'text', text: '今天有什么 AI 新闻' }] }, type: 'message' }] },
+    env: { ...ENV, WEB_SEARCH: 'tavily', SEARCH_KEY: 'tvly-test' },
+    route: (target, options) => {
+      if (target.includes('api.tavily.com')) {
+        return { status: 200, text: async () => JSON.stringify({ results: [{ title: 'T', url: 'https://t.example/1' }] }) };
+      }
+      if (options.body.reasoning_effort === 'none') return chatText('');
+      routes.push(options.body);
+      return chatText('回答');
+    },
+  });
+  await api.main(ctx);
+  assert.equal(ctx.calls.some(c => c.target.includes('api.tavily.com')), true);
+
+  const quiet = makeCtx({
+    url: NEW_URL,
+    body: { input: [{ message: { role: 'user', content: [{ type: 'text', text: '一加一等于几' }] }, type: 'message' }] },
+    env: { ...ENV, WEB_SEARCH: 'tavily', SEARCH_KEY: 'tvly-test' },
+    route: (target, options) => {
+      if (target.includes('api.tavily.com')) return { status: 200, text: async () => JSON.stringify({ results: [] }) };
+      if (options.body.reasoning_effort === 'none') return chatText('');
+      return chatText('回答');
+    },
+  });
+  await api.main(quiet);
+  assert.equal(quiet.calls.some(c => c.target.includes('api.tavily.com')), false);
+});
+
 test('检索密钥缺失时通知并降级', async () => {
   const notes = [];
   const ctx = makeCtx({
     url: NEW_URL,
     body: BODY,
-    env: { ...ENV, WEB_SEARCH: 'tavily' },
+    env: { ...ENV, WEB_SEARCH: 'tavily', SEARCH_JUDGE: 'false' },
     route: () => chatText('没有来源也回答'),
   });
   ctx.notify = msg => notes.push(msg);

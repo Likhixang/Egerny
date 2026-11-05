@@ -246,6 +246,8 @@ SerpAPI 把这一层包掉了：给它图，它返回结构化 JSON。
 | `EXTRA_BODY` | 否 | JSON 对象，原样并入请求体，用于 provider 私有参数 |
 | `WEB_SEARCH` | 否 | 搜索来源：`provider`（默认）/ `qwen` / `tavily` / `serpapi` / `off` |
 | `SEARCH_KEY` | 否 | Tavily / SerpAPI 密钥；SerpAPI 留空则复用 `SERPAPI_KEY` |
+| `SEARCH_JUDGE` | 否 | Tavily / SerpAPI 是否先判断再搜，默认 `true` |
+| `SEARCH_JUDGE_MODEL` | 否 | 判断用的模型，留空用主模型 |
 | `SYSTEM_PROMPT` | 否 | 留空用内置默认，原文：`Your answer must remain neutral, be accurate, and sound natural in spoken language. Output only the final answer.` |
 | `VISION_MODEL` | 否 | 处理视觉智能图片的模型；留空复用 `MODEL` |
 | `VISION_PROMPT` | 否 | 视觉智能只发图片不发文字，用这句引导模型作答 |
@@ -295,10 +297,10 @@ provider 用非标准字段时（百炼 `enable_thinking`/`thinking_budget`、Op
 | `off` | 不联网，也没有引用 | — |
 | `provider`（默认） | 向上游发 OpenAI 兼容的 `tools:[{type:"web_search"}]`，模型自己决定搜不搜、自己回引用 | 零额外调用；要选支持 web_search 的模型 |
 | `qwen` | 先让千问判断要不要联网；需要就只取来源，再交给 provider 作答并把来源回填引用卡片 | 每题多一次千问调用 |
-| `tavily` | 每题都调 Tavily，取 title/url/content，摘要一并拼进 system | 1 credit/次（免费 1000/月） |
-| `serpapi` | 每题都调 Google（`engine=google`），取 organic_results | 按套餐计费，额度小 |
+| `tavily` | 先判断是否需要联网，需要就调 Tavily，取 title/url/content，摘要拼进 system | 判断一次 + 检索 1 credit（免费 1000/月） |
+| `serpapi` | 同上，检索走 Google（`engine=google`），取 organic_results | 判断一次 + 按套餐计费 |
 
-`tavily` / `serpapi` 没有“要不要搜”的判断，选它们就是每题都检索；想省额度或省时间就用 `provider`。
+`tavily` / `serpapi` 的判断由 provider 做一次极小调用完成（`reasoning_effort: none`、`max_tokens: 8`，只回 yes/no），实测增加 2.5–3.8 秒；想更快就把 `SEARCH_JUDGE_MODEL` 指到一个快模型。判断回空或失败时按时间敏感词兜底（今天/最新/新闻/股价/天气/价格……），也可以把 `SEARCH_JUDGE` 关掉变成每题都搜。
 
 `provider` 模式是模型自己判断，实测（`gpt-6.1-sol`）：
 
