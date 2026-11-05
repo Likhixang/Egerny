@@ -8,7 +8,7 @@ const source = fs.readFileSync(path.join(__dirname, '../js/AppleIntelligence-Qwe
 const context = vm.createContext({ console, Date, URL, JSON, Math });
 vm.runInContext(
   source.replace('export default async function (ctx)', 'async function main(ctx)') +
-    `\nglobalThis.api = { main, readConfig, buildEndpoint, parseRequestPath, extractInput, extractUserText, buildUserContent, pickAnnotations, buildTextSSE, buildImageSSE, makeSummary, pickAnswer, parseToolCall, unwrapAnswer, chunkString, looksLikeImageRequest };`,
+    `\nglobalThis.api = { main, readConfig, buildEndpoint, parseRequestPath, extractInput, extractUserText, buildUserContent, pickAnnotations, buildTextSSE, buildImageSSE, makeSummary, pickAnswer, parseToolCall, unwrapAnswer, chunkString, looksLikeImageRequest, isComposeRequest, parseComposeInput, composeUserMessage, parseComposeResult, buildComposeValue };`,
   context,
 );
 const api = context.api;
@@ -579,4 +579,117 @@ test('长文本分片不超过 40 字符且可无损还原', () => {
   const chunks = api.chunkString(inner, 40);
   assert.ok(chunks.every(c => c.length <= 40));
   assert.equal(chunks.join(''), inner);
+});
+
+/* ------------------------------------------------- 写作工具（compose） */
+
+// 抓包 entry（12:04）的真实报文：选中一段文本，要求「更优雅」
+const COMPOSE_TEXT = JSON.stringify({ originalText: '# **我来一桥上，怀古轻吟风**\n', prompt: '更优雅' });
+const COMPOSE_BODY = {
+  configuration: {
+    query: { locale: 'zh_CN', os_major_version: 27, os_minor_version: 3, os_patch_version: 0, platform: 'iOS' },
+    response_configuration_group_id: 'compose_selectedAndAllText',
+    template_variable_definition_overrides: [],
+    template_variables: [],
+  },
+  input: [{ type: 'message', message: { role: 'user', content: [{ text: COMPOSE_TEXT, type: 'text' }] } }],
+  response_format: { type: 'json_schema' },
+  server_tools: [{ type: 'image_generator' }],
+  stream: true,
+};
+const COMPOSE_REPLY = JSON.stringify({
+  body: '登桥怀古，临风浅吟。',
+  refinements: ['增加诗句的历史背景描述', '用更具体的意象替代浅吟', '调整句式以增强节奏感'],
+});
+
+test('写作工具识别：只看 configuration 的 compose_ 前缀', () => {
+  assert.equal(api.isComposeRequest(COMPOSE_BODY), true);
+  assert.equal(api.isComposeRequest(BODY), false);
+  assert.equal(api.isComposeRequest(VISION_BODY), false);
+  assert.equal(api.isComposeRequest({}), false);
+  assert.equal(api.isComposeRequest(null), false);
+});
+
+test('写作工具入参解析：原文与要求，解析失败整段当原文', () => {
+  const parsed = plain(api.parseComposeInput(COMPOSE_TEXT));
+  assert.equal(parsed.originalText, '# **我来一桥上，怀古轻吟风**');
+  assert.equal(parsed.prompt, '更优雅');
+
+  const broken = plain(api.parseComposeInput('{不是 JSON'));
+  assert.equal(broken.originalText, '{不是 JSON');
+  assert.equal(broken.prompt, '');
+
+  assert.deepEqual(plain(api.parseComposeInput('')), { originalText: '', prompt: '' });
+});
+
+test('写作工具走 WRITING_MODEL，SSE 事件序列与抓包一致', async () => {
+  const env = { ...ENV, WRITING_MODEL: 'writing-model' };
+  const ctx = makeCtx({ url: NEW_URL, body: COMPOSE_BODY, env, route: () => chatText(COMPOSE_REPLY) });
+  const out = await api.main(ctx);
+
+  const sent = ctx.calls[0].options.body;
+  assert.equal(sent.model, 'writing-model');
+  assert.equal(sent.tools, undefined);
+  assert.match(sent.messages[1].content, /我来一桥上/);
+  assert.match(sent.messages[1].content, /更优雅/);
+
+  const events = parseSSE(out.__responded.body);
+  assert.equal(events[0].name, 'session.created');
+  assert.deepEqual(collapse(events.map(e => e.name).slice(1)), TEXT_CAPTURED);
+
+  const done = events.find(e => e.name.endsWith('text.value.done')).payload;
+  assert.deepEqual(JSON.parse(done.value), {
+    body: '登桥怀古，临风浅吟。',
+    refinements: ['增加诗句的历史背景描述', '用更具体的意象替代浅吟', '调整句式以增强节奏感'],
+  });
+});
+
+test('写作工具：deltas 还原后是 {body, refinements}，并忽略多余建议', async () => {
+  const reply = '```json\n' + JSON.stringify({
+    body: '登桥怀古，临风浅吟。',
+    refinements: ['一', '二', '三', '四'],
+  }) + '\n```';
+  const ctx = makeCtx({ url: NEW_URL, body: COMPOSE_BODY, env: ENV, route: () => chatText(reply) });
+  const events = parseSSE((await api.main(ctx)).__responded.body);
+
+  let acc = '';
+  for (const { name, payload } of events) if (name.endsWith('text.value.delta')) acc += payload.delta;
+  const value = JSON.parse(acc);
+  assert.equal(value.body, '登桥怀古，临风浅吟。');
+  assert.deepEqual(value.refinements, ['一', '二', '三']);
+
+  const completed = events.find(e => e.name === 'session.response.choices[].completed').payload.choice;
+  assert.equal(completed.status, 'completed');
+  assert.equal(completed.output[0].message.content[0].text.value, acc);
+});
+
+test('写作工具：模型不回 JSON 时降级为原文，不让 App 拿到裸文本', () => {
+  const fallback = plain(api.parseComposeResult('抱歉，我无法完成', '原文'));
+  assert.equal(fallback.body, '原文');
+  assert.deepEqual(fallback.refinements, []);
+
+  const wrapped = plain(api.parseComposeResult('好的：{"body":"改写后","refinements":["更简洁"]}（完）', '原文'));
+  assert.equal(wrapped.body, '改写后');
+  assert.deepEqual(wrapped.refinements, ['更简洁']);
+
+  const value = api.buildComposeValue('改写后', ['更简洁']);
+  assert.equal(value, '{"body":"改写后","refinements":["更简洁"]}');
+});
+
+test('写作工具：上游失败也回合法 JSON，且不写 Siri 会话历史', async () => {
+  const storage = new Map();
+  const ctx = makeCtx({
+    url: NEW_URL,
+    body: COMPOSE_BODY,
+    env: ENV,
+    storage,
+    route: () => err(500, { error: { message: 'boom' } }),
+  });
+  const events = parseSSE((await api.main(ctx)).__responded.body);
+  const done = events.find(e => e.name.endsWith('text.value.done')).payload;
+  const value = JSON.parse(done.value);
+  assert.match(value.body, /写作后端不可用/);
+  assert.match(value.body, /boom/);
+  assert.deepEqual(value.refinements, []);
+  assert.equal(storage.size, 0);
 });

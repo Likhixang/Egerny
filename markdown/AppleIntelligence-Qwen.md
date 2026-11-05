@@ -1,6 +1,6 @@
 # Apple 智能换模型（问千问）
 
-把国行 Apple 智能里「问千问」那条链路，改接到你自己的 OpenAI 兼容 provider。文本和出图都支持。
+把国行 Apple 智能里「问千问」那条链路，改接到你自己的 OpenAI 兼容 provider。文本、出图、视觉智能和写作工具都支持。
 
 模块地址：
 
@@ -23,6 +23,7 @@ https://raw.githubusercontent.com/Likhixang/Egerny/main/sgmodule/AppleIntelligen
 | 响应 | `text/event-stream` + brotli，事件名 `session.response.*` |
 | 服务端工具 | `image_generator` / `file_generator` / `browser` |
 | 视觉智能 | 同一端点，UA 换成 `VisualIntelligence (iPhone - Version 27.3.0)`，`response_configuration_group_id` 为 `siri.visualIntelligenceCamera` |
+| 写作工具 | 同一端点，UA 换成 `WritingTools (iPhone - Version 27.3.0)`，`response_configuration_group_id` 为 `compose_selectedAndAllText` |
 
 所以可以在 Egern 的 `http_request` 脚本里直接吞掉请求，按原样 SSE 事件壳回包。
 
@@ -37,7 +38,7 @@ https://raw.githubusercontent.com/Likhixang/Egerny/main/sgmodule/AppleIntelligen
 
 ---
 
-## 三条链路
+## 四条链路
 
 ### 纯文本：14 个事件
 
@@ -120,6 +121,29 @@ message.content[].done          ← annotations 会写进这里
 
 上游如果返回 `message.annotations` 或 `citations`，脚本会透传；没有就跳过这段，事件序列退化成纯文本那 14 个。
 
+### 写作工具：原文进，改写稿出
+
+系统写作工具（WritingTools）打的是**同一个端点**，UA 换成 `WritingTools (iPhone - Version 27.3.0)`，`response_configuration_group_id` 为 `compose_selectedAndAllText`。
+
+`input` 里不是自然语言，而是一条被转义的 JSON 字符串：
+
+```json
+"content": [{
+  "text": "{\"originalText\":\"# **我来一桥上，怀古轻吟风**\\n\",\"prompt\":\"更优雅\"}",
+  "type": "text"
+}]
+```
+
+回包的事件壳和纯文本一模一样（`session.created` → `session.response.done`，中间 N 个 delta），区别只在 `text.value` 里必须是 JSON：
+
+```json
+{"body":"登桥怀古，临风浅吟。","refinements":["增加诗句的历史背景描述","用更具体的意象替代浅吟","调整句式以增强节奏感"]}
+```
+
+`refinements` 就是界面上那 3 个可点的改写方向。脚本只保留前 3 条、丢弃空串；模型没按 JSON 回时，`body` 退回原文、`refinements` 给空数组，避免 App 拿到裸文本解析失败。
+
+写作链路不读写 Siri 的会话历史：原文每次都由客户端带上来，存历史反而会串味。
+
 ---
 
 ## 出图是怎么触发的
@@ -181,6 +205,8 @@ Content-Type: application/json
 | `SYSTEM_PROMPT` | 否 | 留空用内置默认：简洁、准确、口语化 |
 | `VISION_MODEL` | 否 | 处理视觉智能图片的模型；留空复用 `MODEL`，主模型不支持图片时填多模态模型 |
 | `VISION_PROMPT` | 否 | 视觉智能只发图片不发文字，用这句引导模型作答 |
+| `WRITING_MODEL` | 否 | 写作工具用的模型，留空复用 `MODEL`；想要更好的改写效果可以单独指一个 |
+| `WRITING_PROMPT` | 否 | 写作工具的系统提示词，留空用内置默认（输出 `{body, refinements}`） |
 | `TIMEOUT` | 否 | 等待上游的秒数，默认 120，最大 300 |
 | `REPORT_MODEL` | 否 | 回给 Siri 的 `model` 字段，默认 `qwenapp-apple-tqa` |
 | `CONTINUE_URL` | 否 | 回答下方的跳转链接，留空不显示 |
@@ -200,7 +226,9 @@ Content-Type: application/json
 
 ## 已知限制
 
-- **只覆盖「问千问」和视觉智能的识别/询问**。端侧模型和苹果自研云端模型不经过这个接口，拦截不到。
+- **只覆盖「问千问」、视觉智能的识别/询问和写作工具**。端侧模型和苹果自研云端模型不经过这个接口，拦截不到。
+- **写作工具只认 `compose_` 前缀的配置组**。抓到的是 `compose_selectedAndAllText`；如果后续系统换了 group id 或不带这个字段，请求会掉回 Siri 对话逻辑。
+- **写作工具是单轮的**。不读会话历史，每次只按客户端带上来的原文和改写要求处理；App 里连续点建议时若只发增量、不带原文，效果会退化。
 - **视觉搜索（以图搜物/以图搜图）还没接**。目前抓到的视觉智能只有 `siri.visualIntelligenceCamera` 这一条，没有独立的搜图请求；等抓到再补。
 - **只实现了 `image_generator` 一个工具**。抓包里的 `call_emergency_services` 不会转发给上游，所以「让 Siri 报警」不会触发；`file_generator` / `browser` 同样不支持。
 - **视觉图片只用于当轮**。会话历史里只存 `[图片]` 占位，后续追问看不到那张图。
@@ -217,6 +245,7 @@ Content-Type: application/json
 | Siri 回「后端不可用」 | 上游地址写错、密钥失效，或网关不通 |
 | 该出图却回了文字 | 上游不支持 tool calling，或提示词没被识别；看 `IMAGE_URL` / `IMAGE_MODEL` 是否填了 |
 | 视觉智能回「图片识别失败」 | `VISION_MODEL`（或 `MODEL`）不是多模态模型，换一个支持图片输入的 |
+| 写作工具没变化，或回的是原文 | 看 Egern 请求记录里 `compose_` 请求是否命中脚本；`WRITING_MODEL` 是否只会长篇解释、不按 JSON 输出（必要时换模型或改 `WRITING_PROMPT`） |
 | 「图片生成失败：… IMAGE_UPLOAD_URL」 | 图像模型只回 base64，配转存地址或换回 url 型的模型 |
 | 完全没变化 | 模块没启用；MITM 没开；CA 证书没信任 |
 | 连接直接失败 | 不要把 `*.apple.com` / `gateway.icloud.com.cn` 加进 MITM，那些有 pinning |
@@ -231,6 +260,6 @@ Content-Type: application/json
 node --test tests/apple-intelligence-qwen.test.cjs
 ```
 
-28 条，覆盖：三条链路的事件序列与抓包逐项一致、deltas 还原、多轮历史、图片输入解析、工具调用、tools 被拒后的降级、base64 转存、引用卡片、非目标 URL 透传。
+34 条，覆盖：四条链路的事件序列与抓包逐项一致、deltas 还原、多轮历史、图片输入解析、工具调用、tools 被拒后的降级、base64 转存、引用卡片、写作工具入参/出参解析与降级、非目标 URL 透传。
 
-协议依据来自 2026-11-05 的两次真实抓包（iOS 27.3 开发者测试版，中国大陆）：一次文本/出图，一次视觉智能。
+协议依据来自 2026-11-05 的三次真实抓包（iOS 27.3 开发者测试版，中国大陆）：文本/出图、视觉智能、写作工具。

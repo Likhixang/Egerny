@@ -6,7 +6,7 @@
  * 该域名无证书 pinning，也没有 Private Cloud Compute 的 OHTTP/HPKE 端到端层。
  *
  * 本脚本在请求发出前拦截，改发到自定义 provider，再按原样 SSE 事件壳回包。
- * 支持纯文本回答与 image_generator 出图两条链路。
+ * 支持纯文本回答、image_generator 出图、视觉智能识别与写作工具（compose）四条链路。
  * 协议细节与抓包依据见 ../markdown/AppleIntelligence-Qwen.md
  */
 
@@ -21,6 +21,15 @@ const DEFAULT_SYSTEM =
 // 视觉智能的原始请求里只有图片、没有文字，通用模型需要一句引导
 const DEFAULT_VISION_PROMPT =
   "请识别图片中的内容，用中文简洁说明这是什么、有什么可见信息。";
+
+// 写作工具：原文 + 改写要求，回包必须是 {body, refinements[]}
+const DEFAULT_WRITING_PROMPT =
+  "你是中文写作助手。用户给出原文和改写要求，你按要求重写，保持原意、原语言，不添加原文没有的事实。" +
+  '只输出 JSON：{"body":"改写后的全文","refinements":["建议1","建议2","建议3"]}。' +
+  "body 要包含完整文本，未改动的部分也照抄，不要省略；" +
+  "refinements 是 3 条中文短语，从结构、语气、意象、节奏等角度给出，供用户下一步选择。";
+
+const COMPOSE_GROUP_PREFIX = "compose_";
 
 const IMAGE_TOOL = {
   type: "function",
@@ -104,6 +113,8 @@ function readConfig(env) {
     system: str(e.SYSTEM_PROMPT) || DEFAULT_SYSTEM,
     visionPrompt: str(e.VISION_PROMPT) || DEFAULT_VISION_PROMPT,
     visionModel: str(e.VISION_MODEL) || model,
+    writingPrompt: str(e.WRITING_PROMPT) || DEFAULT_WRITING_PROMPT,
+    writingModel: str(e.WRITING_MODEL) || model,
     reportModel: str(e.REPORT_MODEL) || "qwenapp-apple-tqa",
     continueUrl: str(e.CONTINUE_URL),
     notifyOnError: bool(e.NOTIFY_ON_ERROR, false),
@@ -174,6 +185,81 @@ function buildUserContent(input, visionPrompt) {
   const content = [{ type: "text", text: input.text || visionPrompt }];
   for (const url of input.images) content.push({ type: "image_url", image_url: { url } });
   return content;
+}
+
+/* --------------------------------------------------------- 写作工具解析 */
+
+/**
+ * 写作工具（WritingTools）走同一端点，靠 configuration 里的
+ * response_configuration_group_id 区分，抓到的值是 compose_selectedAndAllText。
+ */
+function isComposeRequest(body) {
+  const configuration = body && body.configuration;
+  return str(configuration && configuration.response_configuration_group_id).startsWith(COMPOSE_GROUP_PREFIX);
+}
+
+/**
+ * compose 的 input 不是自然语言，而是一条 JSON 字符串：
+ *   {"originalText":"# **我来一桥上，怀古轻吟风**\n","prompt":"更优雅"}
+ * 解析失败时把整段当原文，避免直接丢内容。
+ */
+function parseComposeInput(text) {
+  const raw = str(text);
+  if (!raw) return { originalText: "", prompt: "" };
+  let obj = null;
+  if (raw.charAt(0) === "{") {
+    try {
+      obj = JSON.parse(raw);
+    } catch (_) {
+      obj = null;
+    }
+  }
+  if (!obj || typeof obj !== "object") return { originalText: raw, prompt: "" };
+  const originalText = str(obj.originalText || obj.original_text || obj.text) || raw;
+  const prompt = str(obj.prompt || obj.instruction || obj.request);
+  return { originalText, prompt };
+}
+
+function composeUserMessage(input) {
+  return (
+    "原文：\n" + (input.originalText || "(空)") + "\n\n改写要求：" +
+    (input.prompt || "保持原意，表达更顺畅、更得体")
+  );
+}
+
+function stripCodeFence(text) {
+  const s = String(text || "").trim();
+  const m = /^```[a-zA-Z]*\s*([\s\S]*?)\s*```$/.exec(s);
+  return m ? m[1].trim() : s;
+}
+
+/** 模型可能带解释、代码围栏或前后缀，尽量把 {body, refinements} 抠出来 */
+function parseComposeResult(answer, fallbackBody) {
+  const raw = stripCodeFence(unwrapAnswer(answer));
+  let obj = null;
+  const start = raw.indexOf("{");
+  const end = raw.lastIndexOf("}");
+  if (start >= 0 && end > start) {
+    try {
+      obj = JSON.parse(raw.slice(start, end + 1));
+    } catch (_) {
+      obj = null;
+    }
+  }
+  const refinements = [];
+  if (obj && Array.isArray(obj.refinements)) {
+    for (const item of obj.refinements) {
+      const s = str(item);
+      if (s && refinements.length < 3) refinements.push(s);
+    }
+  }
+  const body = str(obj && obj.body) || str(fallbackBody) || raw;
+  return { body, refinements };
+}
+
+/** 回包内层就是这段 JSON 字符串，字段顺序与抓包一致 */
+function buildComposeValue(body, refinements) {
+  return JSON.stringify({ body: str(body), refinements: refinements || [] });
 }
 
 /* ------------------------------------------------------------ 上游调用 */
@@ -526,7 +612,7 @@ function buildTextSSE(sessionId, answer, options = {}) {
     isNew: Boolean(options.isNew),
   };
   const { out, now } = openSSE(base);
-  const inner = innerPayload(answer);
+  const inner = typeof options.value === "string" ? options.value : innerPayload(answer);
   const annotations = options.annotations || [];
 
   out.push(event("session.response.choices[].items[].added", {
@@ -738,6 +824,58 @@ async function describeImage(ctx, cfg, prompt) {
   }
 }
 
+/**
+ * 写作工具（compose）：input 是 {originalText, prompt}，回包必须是
+ * {"body":"…","refinements":["…"]} 的 JSON 字符串，塞进同样的文本 SSE 壳。
+ * 与 Siri 对话不同，这里不读写会话历史：原文每次都由客户端带上来。
+ */
+async function handleCompose(ctx, cfg, body, sessionId, isNew) {
+  const input = parseComposeInput(extractUserText(body));
+  const options = { isNew, reportModel: cfg.reportModel, continueUrl: cfg.continueUrl };
+
+  const notify = (message) => {
+    if (!cfg.notifyOnError) return;
+    try {
+      ctx.notify({ title: "写作工具换模型", body: String(message).slice(0, 200) });
+    } catch (_) {
+      /* 通知失败忽略 */
+    }
+  };
+
+  let answer = "";
+  let failure = "";
+  try {
+    const data = await postChat(
+      ctx,
+      cfg,
+      [
+        { role: "system", content: cfg.writingPrompt },
+        { role: "user", content: composeUserMessage(input) },
+      ],
+      false,
+      cfg.writingModel,
+    );
+    answer = pickAnswer(data);
+  } catch (error) {
+    failure = String((error && error.message) || error);
+  }
+
+  if (failure) {
+    notify("写作后端不可用：" + failure);
+    const value = buildComposeValue("（写作后端不可用：" + failure + "）", []);
+    return ctx.respond(sseResponse(sessionId, buildTextSSE(sessionId, "", { ...options, value })));
+  }
+
+  if (!str(answer)) {
+    const value = buildComposeValue("（上游没有返回内容）", []);
+    return ctx.respond(sseResponse(sessionId, buildTextSSE(sessionId, "", { ...options, value })));
+  }
+
+  const parsed = parseComposeResult(answer, input.originalText);
+  const value = buildComposeValue(parsed.body, parsed.refinements);
+  return ctx.respond(sseResponse(sessionId, buildTextSSE(sessionId, parsed.body, { ...options, value })));
+}
+
 export default async function (ctx) {
   const parsed = parseRequestPath(ctx.request.url);
   if (!parsed) return undefined; // 非目标路径，透传
@@ -761,6 +899,11 @@ export default async function (ctx) {
   } catch (error) {
     return ctx.respond(sseResponse(sessionId,
       buildTextSSE(sessionId, "配置错误：" + error.message, { isNew: parsed.isNew })));
+  }
+
+  // 写作工具（compose）与 Siri 对话共用端点，但报文结构完全不同，先分流
+  if (isComposeRequest(body)) {
+    return handleCompose(ctx, cfg, body, sessionId, parsed.isNew);
   }
 
   const history = loadHistory(ctx, sessionId);
