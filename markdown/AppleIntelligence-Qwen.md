@@ -242,7 +242,7 @@ SerpAPI 把这一层包掉了：给它图，它返回结构化 JSON。
 | `PROVIDER_URL` | 是 | Siri / 写作工具的接口，填到 `/v1` 即可 |
 | `API_KEY` | 否 | Bearer 密钥；本地网关无鉴权可留空 |
 | `MODEL` | 否 | 传给 provider 的 `model` 字段；**留空则不接管，整条请求继续走千问** |
-| `EFFORT` | 否 | 思考强度，按 OpenAI 兼容的 `reasoning_effort` 发送：`default` 不发送 / `off` 发 `none` / `low` `medium` `high` `xhigh` `max`。上游不认这个档位时自动映射（deepseek 只有 low/high/max：`xhigh`→`max`、`medium`→`low`、`minimal`→`low`），并记住一小时 |
+| `EFFORT` | 否 | 思考强度，按 OpenAI 兼容的 `reasoning_effort` 发送：`default` 不发送 / `off` 发 `none` / `low` `medium` `high` `xhigh` `max`。上游不认这个档位时自动映射，并记住一小时。deepseek 按官方映射表：`xhigh`→`high`、`medium`→`high`、`minimal`→`low`、`off`→`none`（官方只有 low/high/max） |
 | `EXTRA_BODY` | 否 | JSON 对象，原样并入请求体，用于 provider 私有参数 |
 | `WEB_SEARCH` | 否 | 搜索来源：`provider`（默认）/ `qwen` / `tavily` / `serpapi` / `off` |
 | `SEARCH_KEY` | 否 | Tavily 的密钥；`serpapi` 档直接用 `SERPAPI_KEY`（识图那把），不看这里 |

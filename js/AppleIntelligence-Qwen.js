@@ -462,13 +462,35 @@ function fitEffort(effort, levels) {
 }
 
 // 有些上游会把不支持档位的 400 自己吞掉重试（AxonHub 就是这样），
-// 插件看不到错误，只能按模型名预置它认识的档位，避免白等几十秒
-const MODEL_EFFORT_LEVELS = [{ test: /deepseek/i, levels: ["low", "high", "max"] }];
+// 插件看不到错误，只能按模型名预置它认识的档位，避免白等几十秒。
+// DeepSeek 官方只认 low/high/max，且明确给了别名映射：
+// minimal→low、medium→high、xhigh→high、max→max，默认 high。
+const MODEL_EFFORT_RULES = [
+  {
+    test: /deepseek/i,
+    levels: ["low", "high", "max"],
+    map: { none: "none", minimal: "low", low: "low", medium: "high", high: "high", xhigh: "high", max: "max" },
+  },
+];
 
-function knownModelLevels(model) {
+function matchEffortRule(model) {
   const name = str(model);
-  const hit = MODEL_EFFORT_LEVELS.find(item => item.test.test(name));
-  return hit ? hit.levels : null;
+  return MODEL_EFFORT_RULES.find(item => item.test.test(name)) || null;
+}
+
+// 按官方映射表改写档位，未列出的档位原样透传
+function applyEffortRule(effort, rule) {
+  const next = { ...effort };
+  const wanted = str(next.reasoning_effort).toLowerCase();
+  if (!wanted) return next;
+  if (wanted === "off") {
+    next.reasoning_effort = rule.map.none || "none";
+    return next;
+  }
+  const mapped = rule.map[wanted];
+  if (mapped) next.reasoning_effort = mapped;
+  else if (!rule.levels.includes(wanted)) delete next.reasoning_effort;
+  return next;
 }
 
 function levelsKey(cfg, model) {
@@ -533,8 +555,13 @@ async function postChat(ctx, cfg, messages, model, options = {}) {
   const effortKeyName = capabilityKey(NO_EFFORT_PREFIX, cfg, modelName, context + ":" + effortValue);
   const searchKeyName = capabilityKey(NO_SEARCH_PREFIX, cfg, modelName, cfg.searchMode);
   // 已知上游档位时先映射，省掉一次注定 400 的往返（deepseek 只认 low/high/max）
-  const knownLevels = readLevels(ctx, cfg, modelName) || knownModelLevels(modelName);
-  let effortPayload = knownLevels ? fitEffort(effort, knownLevels) : effort;
+  const effortRule = matchEffortRule(modelName);
+  const knownLevels = readLevels(ctx, cfg, modelName);
+  let effortPayload = effortRule
+    ? applyEffortRule(effort, effortRule)
+    : knownLevels
+      ? fitEffort(effort, knownLevels)
+      : effort;
   const effortWanted = Object.keys(effortPayload).length > 0 && !isSuppressed(ctx, effortKeyName);
   const searchWanted =
     Boolean(cfg.search) && options.search !== false && !isSuppressed(ctx, searchKeyName);
