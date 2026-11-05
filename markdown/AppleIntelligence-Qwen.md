@@ -242,9 +242,7 @@ SerpAPI 把这一层包掉了：给它图，它返回结构化 JSON。
 | `PROVIDER_URL` | 是 | Siri / 写作工具的接口，填到 `/v1` 即可 |
 | `API_KEY` | 否 | Bearer 密钥；本地网关无鉴权可留空 |
 | `MODEL` | 是 | 传给 provider 的 `model` 字段 |
-| `EFFORT_PROTOCOL` | 否 | 思考强度的真实写法：`none` / `openai` / `openrouter` / `qwen` / `vllm`，默认 `none` 不发送 |
-| `EFFORT` | 否 | `default` 不干预 / `off` 关闭 / `low` `medium` `high` `xhigh` `max` |
-| `EFFORT_BUDGET` | 否 | 仅 `qwen` 写法生效，`thinking_budget` 上限 |
+| `EFFORT` | 否 | 思考强度，按 OpenAI 兼容的 `reasoning_effort` 发送：`default` 不发送 / `off` 发 `none` / `low` `medium` `high` `xhigh` `max` |
 | `EXTRA_BODY` | 否 | JSON 对象，原样并入请求体，用于 provider 私有参数 |
 | `SYSTEM_PROMPT` | 否 | 留空用内置默认：保持中立、准确、口语自然，只输出最终答案 |
 | `VISION_MODEL` | 否 | 处理视觉智能图片的模型；留空复用 `MODEL` |
@@ -262,28 +260,25 @@ SerpAPI 把这一层包掉了：给它图，它返回结构化 JSON。
 
 上游对话接口同时兼容 `choices[0].message.content` 和 Responses 的 `output_text` / `output[].content[].text`。
 
-### 思考强度怎么传
+### 思考强度
 
-统一档位 → 各家真实字段，脚本按 `EFFORT_PROTOCOL` 决定发哪一个。`EFFORT_PROTOCOL=none` 或 `EFFORT=default` 时一个字段都不发，请求体与旧版完全一致：
+只发 OpenAI 兼容的标准字段 `reasoning_effort`，不再区分 provider 写法。`EFFORT=default`（默认）时一个字段都不发，请求体与旧版完全一致：
 
-| 写法 | 实际请求字段 | 档位映射 |
-| --- | --- | --- |
-| `none` | 不发送 | — |
-| `openai` | `reasoning_effort` | `off` → `none`，其余原样 |
-| `openrouter` | `reasoning.effort` + `exclude:false` | `off` → `none`，其余原样 |
-| `qwen` | `enable_thinking` + `thinking_budget` | `off` → `false`，其余 `true`；`EFFORT_BUDGET` 有值才带 budget |
-| `vllm` | `chat_template_kwargs.enable_thinking` | 同上 |
+| `EFFORT` | 实际请求字段 |
+| --- | --- |
+| `default` | 不发送 |
+| `off` | `reasoning_effort: "none"` |
+| `low` / `medium` / `high` / `xhigh` / `max` | `reasoning_effort` 原样发送 |
 
-依据：
+`reasoning_effort` 的可选值与模型支持范围由上游决定（OpenAI 文档给出 `none` / `minimal` / `low` / `medium` / `high` / `xhigh` / `max`，不同模型支持不全）；档位里没放 `minimal`，确实需要时用 `EXTRA_BODY` 传 `{"reasoning_effort":"minimal"}`。
 
-- OpenAI Chat Completions 的 `reasoning_effort` 取值 `none` / `minimal` / `low` / `medium` / `high` / `xhigh` / `max`，不同模型支持不全；Gemini 的 OpenAI 兼容层把 `minimal` / `low` / `medium` / `high` 映射到 `thinking_level`。
-- OpenRouter 用 `reasoning: {effort, exclude}`，档位含 `max` / `xhigh`。
-- 档位只留 `low` → `max`，不再放 `minimal`：官方虽然还认，但实际模型基本不用这一档。确实要发时用 `EXTRA_BODY` 塞 `{"reasoning_effort":"minimal"}`。
-- `qwen` 写法的档位只切成开关（`off` 之外都为 `true`），要细调就填 `EFFORT_BUDGET`。
-- 百炼（DashScope）OpenAI 兼容接口用 `enable_thinking`（布尔）与 `thinking_budget`（整数）；qwen3.8 的 `reasoning_effort` 与 `thinking_budget` 互斥，所以 qwen 写法只走 `enable_thinking` + budget，避免撞报错。
-- vLLM / SGLang 服务 Qwen3 时用 `chat_template_kwargs.enable_thinking` 开关思考。
+provider 用非标准字段时（百炼 `enable_thinking`/`thinking_budget`、OpenRouter `reasoning.effort`、Gemini `google.thinking_config` 等），同样走 `EXTRA_BODY`，例如：
 
-`EXTRA_BODY` 是兜底：provider 私有字段都能塞进去，例如 Gemini 的 `{"google":{"thinking_config":{"thinking_level":"low"}}}`。合并顺序保证 `model` / `messages` / `stream` 不会被它覆盖。
+```json
+{"enable_thinking": true, "thinking_budget": 8192}
+```
+
+`EXTRA_BODY` 会原样并入请求体，但不会覆盖 `model` / `messages` / `stream`。
 
 ### 为什么模型不是下拉
 
@@ -305,7 +300,7 @@ Egern 的 `env_schema.options` 只接受静态数组（官方文档：`options` 
 - **写作工具是单轮的**。不读会话历史，连续点建议时若只发增量、不带原文，效果会退化。
 - **视觉图片只用于当轮**。会话历史里只存 `[图片]` 占位，后续追问看不到那张图。
 - **模型只能手填**。Egern 的 `env_schema` 不支持动态选项，设置页无法列出 provider 的模型清单，见上文「为什么模型不是下拉」。
-- **思考强度写错会 400**。`EFFORT_PROTOCOL` 必须和 provider 对齐：把 `openai` 写法发给只认 `enable_thinking` 的 Qwen 旧模型，或反过来，都可能被上游拒绝；不确定时保持 `none`。
+- **思考强度只发标准字段**。统一按 `reasoning_effort` 发送，provider 若只认 `enable_thinking` 之类的私有参数，需要自己写进 `EXTRA_BODY`，否则可能被上游忽略或 400。
 - **识图没有 AI 摘要**。百度原包里的 `mllm_abstract` 是一段商品总结，Google 不给等价物，脚本只填识别词，摘要留空。
 - **识图结果质量取决于 Google**。中文商品图的匹配度通常不如百度，尤其是国内电商和小众商品。
 - **识图没有缓存**：同一张图搜两次会计两次 SerpAPI 额度。

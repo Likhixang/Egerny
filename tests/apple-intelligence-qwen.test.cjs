@@ -236,60 +236,34 @@ test('默认不发送任何思考字段，请求体与旧版一致', async () =>
   assert.deepEqual(Object.keys(body).sort(), ['messages', 'model', 'stream']);
 });
 
-test('openai 写法发 reasoning_effort，off 映射 none', async () => {
-  assert.deepEqual(plain(api.buildReasoningParams('openai', 'high', '')), { reasoning_effort: 'high' });
-  assert.deepEqual(plain(api.buildReasoningParams('openai', 'xhigh', '')), { reasoning_effort: 'xhigh' });
-  assert.deepEqual(plain(api.buildReasoningParams('openai', 'max', '')), { reasoning_effort: 'max' });
-  assert.deepEqual(plain(api.buildReasoningParams('openai', 'off', '')), { reasoning_effort: 'none' });
+test('思考强度只发 OpenAI 兼容的 reasoning_effort', async () => {
+  assert.deepEqual(plain(api.buildReasoningParams('high')), { reasoning_effort: 'high' });
+  assert.deepEqual(plain(api.buildReasoningParams('xhigh')), { reasoning_effort: 'xhigh' });
+  assert.deepEqual(plain(api.buildReasoningParams('max')), { reasoning_effort: 'max' });
+  assert.deepEqual(plain(api.buildReasoningParams('off')), { reasoning_effort: 'none' });
+
   const ctx = makeCtx({
     url: NEW_URL,
     body: BODY,
-    env: { ...ENV, EFFORT_PROTOCOL: 'openai', EFFORT: 'medium' },
+    env: { ...ENV, EFFORT: 'medium' },
     route: () => chatText('ok'),
   });
   await api.main(ctx);
   assert.equal(ctx.calls[0].options.body.reasoning_effort, 'medium');
 });
 
-test('openrouter 写法发 reasoning.effort', () => {
-  assert.deepEqual(plain(api.buildReasoningParams('openrouter', 'xhigh', '')), {
-    reasoning: { effort: 'xhigh', exclude: false },
-  });
-  assert.deepEqual(plain(api.buildReasoningParams('openrouter', 'max', '')), {
-    reasoning: { effort: 'max', exclude: false },
-  });
-  assert.deepEqual(plain(api.buildReasoningParams('openrouter', 'off', '')), {
-    reasoning: { effort: 'none', exclude: false },
-  });
-});
-
-test('qwen 写法发 enable_thinking 与 thinking_budget', async () => {
-  assert.deepEqual(plain(api.buildReasoningParams('qwen', 'medium', '8192')), {
-    enable_thinking: true,
-    thinking_budget: 8192,
-  });
-  assert.deepEqual(plain(api.buildReasoningParams('qwen', 'off', '8192')), { enable_thinking: false });
-  assert.deepEqual(plain(api.buildReasoningParams('qwen', 'medium', '')), { enable_thinking: true });
-
+test('已下线的写法与预算选项被忽略', async () => {
   const ctx = makeCtx({
     url: NEW_URL,
     body: BODY,
-    env: { ...ENV, EFFORT_PROTOCOL: 'qwen', EFFORT: 'low', EFFORT_BUDGET: '4096' },
+    env: { ...ENV, EFFORT: 'low', EFFORT_PROTOCOL: 'qwen', EFFORT_BUDGET: '4096' },
     route: () => chatText('ok'),
   });
   await api.main(ctx);
   const body = ctx.calls[0].options.body;
-  assert.equal(body.enable_thinking, true);
-  assert.equal(body.thinking_budget, 4096);
-});
-
-test('vllm 写法走 chat_template_kwargs', () => {
-  assert.deepEqual(plain(api.buildReasoningParams('vllm', 'high', '')), {
-    chat_template_kwargs: { enable_thinking: true },
-  });
-  assert.deepEqual(plain(api.buildReasoningParams('vllm', 'off', '')), {
-    chat_template_kwargs: { enable_thinking: false },
-  });
+  assert.equal(body.reasoning_effort, 'low');
+  assert.equal('enable_thinking' in body, false);
+  assert.equal('thinking_budget' in body, false);
 });
 
 test('EXTRA_BODY 并入请求体但不能覆盖核心字段', async () => {
@@ -321,14 +295,12 @@ test('EXTRA_BODY 非法 JSON 给配置错误，不请求上游', async () => {
   assert.equal(ctx.calls.length, 0);
 });
 
-test('思考写法与档位做白名单校验', () => {
-  assert.throws(() => api.buildReasoningParams('nope', 'low', ''), /EFFORT_PROTOCOL/);
-  assert.throws(() => api.buildReasoningParams('openai', 'insane', ''), /EFFORT/);
+test('档位做白名单校验，空值与 default 不发送', () => {
+  assert.throws(() => api.buildReasoningParams('insane'), /EFFORT/);
   // minimal 已从档位里去掉，需要时走 EXTRA_BODY
-  assert.throws(() => api.buildReasoningParams('openai', 'minimal', ''), /EFFORT/);
-  assert.deepEqual(plain(api.buildReasoningParams('openai', 'default', '')), {});
-  assert.deepEqual(plain(api.buildReasoningParams('openai', '', '')), {});
-  assert.deepEqual(plain(api.buildReasoningParams('none', 'high', '')), {});
+  assert.throws(() => api.buildReasoningParams('minimal'), /EFFORT/);
+  assert.deepEqual(plain(api.buildReasoningParams('default')), {});
+  assert.deepEqual(plain(api.buildReasoningParams('')), {});
 });
 
 test('非目标 URL 透传（返回 undefined）', async () => {

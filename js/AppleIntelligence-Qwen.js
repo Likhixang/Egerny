@@ -72,38 +72,18 @@ function buildEndpoint(raw, leaf) {
 /* ---------------------------------------------------------------- 配置 */
 
 /**
- * 思考强度：把统一的档位翻译成各家真实存在的请求字段。
- *   openai     → reasoning_effort（OpenAI、Gemini 兼容层都认这套）
- *   openrouter → reasoning.effort
- *   qwen       → enable_thinking + thinking_budget（百炼 / DashScope OpenAI 兼容）
- *   vllm       → chat_template_kwargs.enable_thinking（本地 vLLM / SGLang）
- *   none       → 一个字段都不发（默认，避免严格 schema 的上游直接 400）
- * off 只对 openai / openrouter 发 none，对其余两家发 enable_thinking=false。
+ * 思考强度：只发 OpenAI 兼容的标准字段 reasoning_effort。
+ * 不猜 provider、不切写法；默认不发送，避免严格 schema 的上游直接 400。
+ * 需要非标准字段（enable_thinking / reasoning.effort / thinking_config 等）时，
+ * 用 EXTRA_BODY 自己传。
  */
 const EFFORT_LEVELS = ["default", "off", "low", "medium", "high", "xhigh", "max"];
-const EFFORT_PROTOCOLS = ["none", "openai", "openrouter", "qwen", "vllm"];
 
-function buildReasoningParams(protocol, effort, budget) {
-  const p = str(protocol).toLowerCase();
+function buildReasoningParams(effort) {
   const lv = str(effort).toLowerCase();
-  if (!p || p === "none" || !lv || lv === "default") return {};
-  if (!EFFORT_PROTOCOLS.includes(p)) {
-    throw new Error("EFFORT_PROTOCOL 只能是 " + EFFORT_PROTOCOLS.join(" / "));
-  }
+  if (!lv || lv === "default") return {};
   if (!EFFORT_LEVELS.includes(lv)) throw new Error("EFFORT 只能是 " + EFFORT_LEVELS.join(" / "));
-
-  const thinking = lv !== "off";
-  if (p === "openai") return { reasoning_effort: thinking ? lv : "none" };
-  if (p === "openrouter") return { reasoning: { effort: thinking ? lv : "none", exclude: false } };
-
-  const tokens = Number(str(budget));
-  if (p === "qwen") {
-    const out = { enable_thinking: thinking };
-    // thinking_budget 是 Qwen 的真实参数；档位粗调交给 enable_thinking，细调留在这里
-    if (thinking && Number.isFinite(tokens) && tokens > 0) out.thinking_budget = Math.floor(tokens);
-    return out;
-  }
-  return { chat_template_kwargs: { enable_thinking: thinking } };
+  return { reasoning_effort: lv === "off" ? "none" : lv };
 }
 
 /** 兜底：允许用户塞任意 provider 私有参数，必须能解析成对象 */
@@ -146,7 +126,7 @@ function readConfig(env) {
     reportModel: str(e.REPORT_MODEL) || "qwenapp-apple-tqa",
     continueUrl: str(e.CONTINUE_URL),
     notifyOnError: bool(e.NOTIFY_ON_ERROR, false),
-    reasoning: buildReasoningParams(e.EFFORT_PROTOCOL, e.EFFORT, e.EFFORT_BUDGET),
+    reasoning: buildReasoningParams(e.EFFORT),
     extraBody: parseExtraBody(e.EXTRA_BODY),
   };
 }
