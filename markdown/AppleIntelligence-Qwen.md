@@ -277,7 +277,9 @@ SerpAPI 把这一层包掉了：给它图，它返回结构化 JSON。
 
 `reasoning_effort` 的可选值与模型支持范围由上游决定（OpenAI 文档给出 `none` / `minimal` / `low` / `medium` / `high` / `xhigh` / `max`，不同模型支持不全）；档位里没放 `minimal`，确实需要时用 `EXTRA_BODY` 传 `{"reasoning_effort":"minimal"}`。
 
-上游不认这个字段时（返回 400 或 422），脚本会自动去掉它重试一次，并弹一条「思考强度未生效」通知，不会把整条回答拖垮；同一 provider + 模型在 1 小时内不再重复尝试，避免每次多打一次请求。
+上游不认这个字段时（返回 400 或 422），脚本会自动去掉它重试一次，并弹一条「思考强度未生效」通知，不会把整条回答拖垮。
+
+降级记忆按 `provider + 模型 + 上下文 + 档位` 隔离，保留 1 小时：识图请求带 `reasoning_effort` 被 400 后，只记住「识图 + 该档位」不发送，纯文本照常发送；换一个档位会立刻重新尝试。
 
 provider 用非标准字段时（百炼 `enable_thinking`/`thinking_budget`、OpenRouter `reasoning.effort`、Gemini `google.thinking_config` 等），同样走 `EXTRA_BODY`，例如：
 

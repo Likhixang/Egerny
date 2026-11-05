@@ -368,8 +368,8 @@ function statusFromError(error) {
   return m ? Number(m[1]) : 0;
 }
 
-function capabilityKey(prefix, cfg, model) {
-  return prefix + cfg.providerUrl + "|" + (model || cfg.model);
+function capabilityKey(prefix, cfg, model, extra) {
+  return prefix + cfg.providerUrl + "|" + (model || cfg.model) + (extra ? "|" + extra : "");
 }
 
 function isSuppressed(ctx, key) {
@@ -437,8 +437,11 @@ async function postChat(ctx, cfg, messages, model, options = {}) {
   };
 
   const effort = cfg.reasoning || {};
-  const effortKeyName = capabilityKey(NO_EFFORT_PREFIX, cfg, modelName);
-  const searchKeyName = capabilityKey(NO_SEARCH_PREFIX, cfg, modelName);
+  // 抑制按「上下文 + 档位」隔离：带图失败不该影响纯文本，换档位也应重新尝试
+  const context = options.context || "chat";
+  const effortValue = str(effort.reasoning_effort);
+  const effortKeyName = capabilityKey(NO_EFFORT_PREFIX, cfg, modelName, context + ":" + effortValue);
+  const searchKeyName = capabilityKey(NO_SEARCH_PREFIX, cfg, modelName, cfg.searchMode);
   const effortWanted = Object.keys(effort).length > 0 && !isSuppressed(ctx, effortKeyName);
   const searchWanted =
     Boolean(cfg.search) && options.search !== false && !isSuppressed(ctx, searchKeyName);
@@ -484,7 +487,10 @@ async function postChat(ctx, cfg, messages, model, options = {}) {
 
 /** 调用对话接口，返回文本与引用 */
 async function callUpstream(ctx, cfg, messages, options = {}) {
-  const data = await postChat(ctx, cfg, messages, options.model || cfg.model, { search: options.search });
+  const data = await postChat(ctx, cfg, messages, options.model || cfg.model, {
+    search: options.search,
+    context: options.context,
+  });
   return {
     answer: unwrapAnswer(pickAnswer(data)),
     annotations: pickAnnotations(data),
@@ -1109,7 +1115,7 @@ async function handleCompose(ctx, cfg, body, sessionId, isNew) {
         { role: "user", content: composeUserMessage(input) },
       ],
       cfg.writingModel,
-      { search: false },
+      { search: false, context: "compose" },
     );
     answer = pickAnswer(data);
   } catch (error) {
@@ -1567,6 +1573,7 @@ export default async function (ctx) {
     result = await callUpstream(ctx, cfg, messages, {
       model: hasImage ? cfg.visionModel : cfg.model,
       search: !hasImage,
+      context: hasImage ? "vision" : "chat",
     });
   } catch (error) {
     const detail = String((error && error.message) || error);

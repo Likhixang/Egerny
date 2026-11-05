@@ -856,6 +856,49 @@ test('选 serpapi 时优先用识图密钥，忽略检索密钥里的 Tavily key
   assert.equal(ctx.calls[0].target.includes('tvly-wrong'), false);
 });
 
+test('识图失败不污染文字提问的思考强度', async () => {
+  const storage = new Map();
+  const env = { ...ENV, EFFORT: 'high' };
+
+  const vision = makeCtx({
+    url: NEW_URL,
+    body: VISION_BODY,
+    env,
+    storage,
+    route: (target, options) => {
+      if (options.body.reasoning_effort) throw new Error('HTTP error! status: 400, body: Error');
+      return chatText('图里是猫');
+    },
+  });
+  vision.notify = () => {};
+  await api.main(vision);
+
+  const text = makeCtx({ url: NEW_URL, body: BODY, env, storage, route: () => chatText('ok') });
+  await api.main(text);
+  assert.equal(text.calls[0].options.body.reasoning_effort, 'high');
+});
+
+test('换一个档位会重新尝试发送', async () => {
+  const storage = new Map();
+
+  const high = makeCtx({
+    url: NEW_URL,
+    body: BODY,
+    env: { ...ENV, EFFORT: 'high' },
+    storage,
+    route: (target, options) => {
+      if (options.body.reasoning_effort === 'high') throw new Error('HTTP error! status: 400, body: Error');
+      return chatText('ok');
+    },
+  });
+  high.notify = () => {};
+  await api.main(high);
+
+  const low = makeCtx({ url: NEW_URL, body: BODY, env: { ...ENV, EFFORT: 'low' }, storage, route: () => chatText('ok') });
+  await api.main(low);
+  assert.equal(low.calls[0].options.body.reasoning_effort, 'low');
+});
+
 test('EXTRA_BODY 并入请求体但不能覆盖核心字段', async () => {
   const ctx = makeCtx({
     url: NEW_URL,
