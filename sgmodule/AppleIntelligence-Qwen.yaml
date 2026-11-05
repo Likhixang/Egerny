@@ -18,11 +18,41 @@ env_schema:
     default_value: ""
   MODEL:
     name: 模型
-    description: "传给 provider 的 model 字段。"
+    description: "传给 provider 的 model 字段。Egern 的 env_schema 选项是静态数组，没法在填完地址和密钥后动态拉 /models，所以这里只能手填。"
+    default_value: ""
+  EFFORT_PROTOCOL:
+    name: 思考强度写法
+    description: "必须和 provider 对齐：none 不发送（默认）；openai → reasoning_effort；openrouter → reasoning.effort；qwen → enable_thinking + thinking_budget；vllm → chat_template_kwargs.enable_thinking。"
+    options:
+      - "none"
+      - "openai"
+      - "openrouter"
+      - "qwen"
+      - "vllm"
+    default_value: "none"
+  EFFORT:
+    name: 思考强度
+    description: "default 表示不干预、交给模型默认；off 关闭思考；minimal/low/medium/high/max 逐档加强。写法为 none 时本项不生效。"
+    options:
+      - "default"
+      - "off"
+      - "minimal"
+      - "low"
+      - "medium"
+      - "high"
+      - "max"
+    default_value: "default"
+  EFFORT_BUDGET:
+    name: 思考预算
+    description: "只对写法 qwen 生效：thinking_budget 的 token 上限，留空用模型默认。"
+    default_value: ""
+  EXTRA_BODY:
+    name: 额外请求字段
+    description: "可选 JSON 对象，原样并入请求体（如 {\"top_k\":20}）。model / messages / stream 不会被覆盖。"
     default_value: ""
   SYSTEM_PROMPT:
     name: 系统提示词
-    description: "留空使用内置默认：简洁、准确、口语化，只输出最终答案。"
+    description: "留空使用内置默认：保持中立、准确、口语自然，只输出最终答案。"
     default_value: ""
   VISION_MODEL:
     name: 视觉模型
@@ -94,6 +124,10 @@ scriptings:
         PROVIDER_URL: ""
         API_KEY: ""
         MODEL: ""
+        EFFORT_PROTOCOL: "none"
+        EFFORT: "default"
+        EFFORT_BUDGET: ""
+        EXTRA_BODY: ""
         SYSTEM_PROMPT: ""
         VISION_MODEL: ""
         VISION_PROMPT: ""

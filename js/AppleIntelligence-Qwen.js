@@ -17,7 +17,7 @@ const STORE_PREFIX = "AIQ:hist:";
 const MAX_TURNS = 20;
 
 const DEFAULT_SYSTEM =
-  "你是用户的私人助理，回答要简洁、准确、口语化。只输出最终答案，不要解释推理过程。";
+  "Your answer must remain neutral, be accurate, and sound natural in spoken language. Output only the final answer.";
 
 // 视觉智能的原始请求里只有图片、没有文字，通用模型需要一句引导
 const DEFAULT_VISION_PROMPT =
@@ -71,6 +71,57 @@ function buildEndpoint(raw, leaf) {
 
 /* ---------------------------------------------------------------- 配置 */
 
+/**
+ * 思考强度：把统一的档位翻译成各家真实存在的请求字段。
+ *   openai     → reasoning_effort（OpenAI、Gemini 兼容层都认这套）
+ *   openrouter → reasoning.effort
+ *   qwen       → enable_thinking + thinking_budget（百炼 / DashScope OpenAI 兼容）
+ *   vllm       → chat_template_kwargs.enable_thinking（本地 vLLM / SGLang）
+ *   none       → 一个字段都不发（默认，避免严格 schema 的上游直接 400）
+ * off 只对 openai / openrouter 发 none，对其余两家发 enable_thinking=false。
+ */
+const EFFORT_LEVELS = ["default", "off", "minimal", "low", "medium", "high", "max"];
+const EFFORT_PROTOCOLS = ["none", "openai", "openrouter", "qwen", "vllm"];
+
+function buildReasoningParams(protocol, effort, budget) {
+  const p = str(protocol).toLowerCase();
+  const lv = str(effort).toLowerCase();
+  if (!p || p === "none" || !lv || lv === "default") return {};
+  if (!EFFORT_PROTOCOLS.includes(p)) {
+    throw new Error("EFFORT_PROTOCOL 只能是 " + EFFORT_PROTOCOLS.join(" / "));
+  }
+  if (!EFFORT_LEVELS.includes(lv)) throw new Error("EFFORT 只能是 " + EFFORT_LEVELS.join(" / "));
+
+  const thinking = lv !== "off";
+  if (p === "openai") return { reasoning_effort: thinking ? lv : "none" };
+  if (p === "openrouter") return { reasoning: { effort: thinking ? lv : "none", exclude: false } };
+
+  const tokens = Number(str(budget));
+  if (p === "qwen") {
+    const out = { enable_thinking: thinking };
+    // thinking_budget 是 Qwen 的真实参数；档位粗调交给 enable_thinking，细调留在这里
+    if (thinking && Number.isFinite(tokens) && tokens > 0) out.thinking_budget = Math.floor(tokens);
+    return out;
+  }
+  return { chat_template_kwargs: { enable_thinking: thinking } };
+}
+
+/** 兜底：允许用户塞任意 provider 私有参数，必须能解析成对象 */
+function parseExtraBody(raw) {
+  const s = str(raw);
+  if (!s) return {};
+  let obj;
+  try {
+    obj = JSON.parse(s);
+  } catch (_) {
+    throw new Error("EXTRA_BODY 必须是合法 JSON，例如 {\"top_k\":20}");
+  }
+  if (!obj || typeof obj !== "object" || Array.isArray(obj)) {
+    throw new Error("EXTRA_BODY 必须是 JSON 对象");
+  }
+  return obj;
+}
+
 function readConfig(env) {
   const e = env || {};
   const rawProvider = str(e.PROVIDER_URL);
@@ -95,6 +146,8 @@ function readConfig(env) {
     reportModel: str(e.REPORT_MODEL) || "qwenapp-apple-tqa",
     continueUrl: str(e.CONTINUE_URL),
     notifyOnError: bool(e.NOTIFY_ON_ERROR, false),
+    reasoning: buildReasoningParams(e.EFFORT_PROTOCOL, e.EFFORT, e.EFFORT_BUDGET),
+    extraBody: parseExtraBody(e.EXTRA_BODY),
   };
 }
 
@@ -296,10 +349,14 @@ function errorText(data, raw, status) {
 async function postChat(ctx, cfg, messages, model) {
   const headers = { "Content-Type": "application/json" };
   if (cfg.apiKey) headers.Authorization = "Bearer " + cfg.apiKey;
+  // 顺序：先铺 EXTRA_BODY 的私有参数，再压上协议核心字段，最后叠加思考强度，
+  // 避免用户手写的 JSON 覆盖 model / messages / stream 把请求拆坏。
   const body = {
+    ...(cfg.extraBody || {}),
     model: model || cfg.model,
     messages,
     stream: false,
+    ...(cfg.reasoning || {}),
   };
   const resp = await ctx.http.post(cfg.providerUrl, { headers, body, timeout: cfg.timeoutMs });
   const raw = await resp.text();

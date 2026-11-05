@@ -8,7 +8,7 @@ const source = fs.readFileSync(path.join(__dirname, '../js/AppleIntelligence-Qwe
 const context = vm.createContext({ console, Date, URL, JSON, Math });
 vm.runInContext(
   source.replace('export default async function (ctx)', 'async function main(ctx)') +
-    `\nglobalThis.api = { main, readConfig, buildEndpoint, parseRequestPath, extractInput, extractUserText, buildUserContent, pickAnnotations, buildTextSSE, makeSummary, pickAnswer, unwrapAnswer, chunkString, looksLikeImageRequest, isComposeRequest, parseComposeInput, composeUserMessage, parseComposeResult, buildComposeValue, isBaiduImageRequest, extractImageBase64, base64ToBytes, detectImage, toBaidu, pickGuessword, multipartImage, readLensConfig };`,
+    `\nglobalThis.api = { main, readConfig, buildEndpoint, parseRequestPath, extractInput, extractUserText, buildUserContent, pickAnnotations, buildTextSSE, makeSummary, pickAnswer, unwrapAnswer, chunkString, looksLikeImageRequest, isComposeRequest, parseComposeInput, composeUserMessage, parseComposeResult, buildComposeValue, isBaiduImageRequest, extractImageBase64, base64ToBytes, detectImage, toBaidu, pickGuessword, multipartImage, readLensConfig, buildReasoningParams, parseExtraBody };`,
   context,
 );
 const api = context.api;
@@ -218,6 +218,110 @@ test('未配置时给出可读错误，不抛异常', async () => {
   const done = events.find(e => e.name.endsWith('text.value.done')).payload;
   assert.match(JSON.parse(done.value).content, /配置错误/);
   assert.match(JSON.parse(done.value).content, /PROVIDER_URL/);
+});
+
+test('内置默认提示词换成中性口语版', async () => {
+  const ctx = makeCtx({ url: NEW_URL, body: BODY, env: ENV, route: () => chatText('ok') });
+  await api.main(ctx);
+  assert.equal(
+    ctx.calls[0].options.body.messages[0].content,
+    'Your answer must remain neutral, be accurate, and sound natural in spoken language. Output only the final answer.',
+  );
+});
+
+test('默认不发送任何思考字段，请求体与旧版一致', async () => {
+  const ctx = makeCtx({ url: NEW_URL, body: BODY, env: ENV, route: () => chatText('ok') });
+  await api.main(ctx);
+  const body = ctx.calls[0].options.body;
+  assert.deepEqual(Object.keys(body).sort(), ['messages', 'model', 'stream']);
+});
+
+test('openai 写法发 reasoning_effort，off 映射 none', async () => {
+  assert.deepEqual(plain(api.buildReasoningParams('openai', 'high', '')), { reasoning_effort: 'high' });
+  assert.deepEqual(plain(api.buildReasoningParams('openai', 'off', '')), { reasoning_effort: 'none' });
+  const ctx = makeCtx({
+    url: NEW_URL,
+    body: BODY,
+    env: { ...ENV, EFFORT_PROTOCOL: 'openai', EFFORT: 'medium' },
+    route: () => chatText('ok'),
+  });
+  await api.main(ctx);
+  assert.equal(ctx.calls[0].options.body.reasoning_effort, 'medium');
+});
+
+test('openrouter 写法发 reasoning.effort', () => {
+  assert.deepEqual(plain(api.buildReasoningParams('openrouter', 'max', '')), {
+    reasoning: { effort: 'max', exclude: false },
+  });
+  assert.deepEqual(plain(api.buildReasoningParams('openrouter', 'off', '')), {
+    reasoning: { effort: 'none', exclude: false },
+  });
+});
+
+test('qwen 写法发 enable_thinking 与 thinking_budget', async () => {
+  assert.deepEqual(plain(api.buildReasoningParams('qwen', 'medium', '8192')), {
+    enable_thinking: true,
+    thinking_budget: 8192,
+  });
+  assert.deepEqual(plain(api.buildReasoningParams('qwen', 'off', '8192')), { enable_thinking: false });
+  assert.deepEqual(plain(api.buildReasoningParams('qwen', 'medium', '')), { enable_thinking: true });
+
+  const ctx = makeCtx({
+    url: NEW_URL,
+    body: BODY,
+    env: { ...ENV, EFFORT_PROTOCOL: 'qwen', EFFORT: 'low', EFFORT_BUDGET: '4096' },
+    route: () => chatText('ok'),
+  });
+  await api.main(ctx);
+  const body = ctx.calls[0].options.body;
+  assert.equal(body.enable_thinking, true);
+  assert.equal(body.thinking_budget, 4096);
+});
+
+test('vllm 写法走 chat_template_kwargs', () => {
+  assert.deepEqual(plain(api.buildReasoningParams('vllm', 'high', '')), {
+    chat_template_kwargs: { enable_thinking: true },
+  });
+  assert.deepEqual(plain(api.buildReasoningParams('vllm', 'off', '')), {
+    chat_template_kwargs: { enable_thinking: false },
+  });
+});
+
+test('EXTRA_BODY 并入请求体但不能覆盖核心字段', async () => {
+  const ctx = makeCtx({
+    url: NEW_URL,
+    body: BODY,
+    env: { ...ENV, EXTRA_BODY: '{"top_k":20,"model":"hijack","messages":[],"stream":true}' },
+    route: () => chatText('ok'),
+  });
+  await api.main(ctx);
+  const body = ctx.calls[0].options.body;
+  assert.equal(body.top_k, 20);
+  assert.equal(body.model, 'test-model');
+  assert.equal(body.stream, false);
+  assert.equal(body.messages[0].role, 'system');
+});
+
+test('EXTRA_BODY 非法 JSON 给配置错误，不请求上游', async () => {
+  const ctx = makeCtx({
+    url: NEW_URL,
+    body: BODY,
+    env: { ...ENV, EXTRA_BODY: '{oops' },
+    route: () => chatText('ok'),
+  });
+  const out = await api.main(ctx);
+  const events = parseSSE(out.__responded.body);
+  const done = events.find(e => e.name.endsWith('text.value.done')).payload;
+  assert.match(JSON.parse(done.value).content, /EXTRA_BODY/);
+  assert.equal(ctx.calls.length, 0);
+});
+
+test('思考写法与档位做白名单校验', () => {
+  assert.throws(() => api.buildReasoningParams('nope', 'low', ''), /EFFORT_PROTOCOL/);
+  assert.throws(() => api.buildReasoningParams('openai', 'insane', ''), /EFFORT/);
+  assert.deepEqual(plain(api.buildReasoningParams('openai', 'default', '')), {});
+  assert.deepEqual(plain(api.buildReasoningParams('openai', '', '')), {});
+  assert.deepEqual(plain(api.buildReasoningParams('none', 'high', '')), {});
 });
 
 test('非目标 URL 透传（返回 undefined）', async () => {

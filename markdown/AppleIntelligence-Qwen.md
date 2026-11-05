@@ -242,7 +242,11 @@ SerpAPI 把这一层包掉了：给它图，它返回结构化 JSON。
 | `PROVIDER_URL` | 是 | Siri / 写作工具的接口，填到 `/v1` 即可 |
 | `API_KEY` | 否 | Bearer 密钥；本地网关无鉴权可留空 |
 | `MODEL` | 是 | 传给 provider 的 `model` 字段 |
-| `SYSTEM_PROMPT` | 否 | 留空用内置默认：简洁、准确、口语化 |
+| `EFFORT_PROTOCOL` | 否 | 思考强度的真实写法：`none` / `openai` / `openrouter` / `qwen` / `vllm`，默认 `none` 不发送 |
+| `EFFORT` | 否 | `default` 不干预 / `off` 关闭 / `minimal` `low` `medium` `high` `max` |
+| `EFFORT_BUDGET` | 否 | 仅 `qwen` 写法生效，`thinking_budget` 上限 |
+| `EXTRA_BODY` | 否 | JSON 对象，原样并入请求体，用于 provider 私有参数 |
+| `SYSTEM_PROMPT` | 否 | 留空用内置默认：保持中立、准确、口语自然，只输出最终答案 |
 | `VISION_MODEL` | 否 | 处理视觉智能图片的模型；留空复用 `MODEL` |
 | `VISION_PROMPT` | 否 | 视觉智能只发图片不发文字，用这句引导模型作答 |
 | `WRITING_MODEL` | 否 | 写作工具用的模型，留空复用 `MODEL` |
@@ -258,6 +262,37 @@ SerpAPI 把这一层包掉了：给它图，它返回结构化 JSON。
 
 上游对话接口同时兼容 `choices[0].message.content` 和 Responses 的 `output_text` / `output[].content[].text`。
 
+### 思考强度怎么传
+
+统一档位 → 各家真实字段，脚本按 `EFFORT_PROTOCOL` 决定发哪一个。`EFFORT_PROTOCOL=none` 或 `EFFORT=default` 时一个字段都不发，请求体与旧版完全一致：
+
+| 写法 | 实际请求字段 | 档位映射 |
+| --- | --- | --- |
+| `none` | 不发送 | — |
+| `openai` | `reasoning_effort` | `off` → `none`，其余原样 |
+| `openrouter` | `reasoning.effort` + `exclude:false` | `off` → `none`，其余原样 |
+| `qwen` | `enable_thinking` + `thinking_budget` | `off` → `false`，其余 `true`；`EFFORT_BUDGET` 有值才带 budget |
+| `vllm` | `chat_template_kwargs.enable_thinking` | 同上 |
+
+依据：
+
+- OpenAI Chat Completions 的 `reasoning_effort` 取值 `none` / `minimal` / `low` / `medium` / `high` / `xhigh` / `max`，不同模型支持不全；Gemini 的 OpenAI 兼容层把 `minimal` / `low` / `medium` / `high` 映射到 `thinking_level`。
+- OpenRouter 用 `reasoning: {effort, exclude}`，档位含 `max` / `xhigh`。
+- 百炼（DashScope）OpenAI 兼容接口用 `enable_thinking`（布尔）与 `thinking_budget`（整数）；qwen3.8 的 `reasoning_effort` 与 `thinking_budget` 互斥，所以 qwen 写法只走 `enable_thinking` + budget，避免撞报错。
+- vLLM / SGLang 服务 Qwen3 时用 `chat_template_kwargs.enable_thinking` 开关思考。
+
+`EXTRA_BODY` 是兜底：provider 私有字段都能塞进去，例如 Gemini 的 `{"google":{"thinking_config":{"thinking_level":"low"}}}`。合并顺序保证 `model` / `messages` / `stream` 不会被它覆盖。
+
+### 为什么模型不是下拉
+
+Egern 的 `env_schema.options` 只接受静态数组（官方文档：`options` 为可选值列表，`["true","false"]` 生成开关，其余生成 Picker，未设置生成输入框），没有从 URL 动态拉取的字段，Picker 也没有手输入口。所以「填完接口地址和密钥 → 自动列出 `/v1/models`」在模块设置页做不到，硬塞一个模型名清单反而是假下拉。
+
+三种替代，按真实程度排序：
+
+1. **手填 + 自查**（当前实现）：`curl -H "Authorization: Bearer $KEY" $BASE/v1/models` 拿到名字再填。
+2. **脚本内 `auto`**：请求前先 GET `/v1/models` 再挑一个，能真跑，但仍不是下拉，且多一次请求。
+3. **自建 Worker 生成模块**：模块 URL 指向自托管服务，服务用你的 key 拉 `/v1/models` 后现场吐出把模型名写进 `options` 的 YAML；Egern 按 `update_interval` 刷新，这才是随 provider 变化的真 Picker。代价是要托管服务，且 URL 里不能放明文 key。
+
 ---
 
 ## 已知限制
@@ -267,6 +302,8 @@ SerpAPI 把这一层包掉了：给它图，它返回结构化 JSON。
 - **写作工具只认 `compose_` 前缀的配置组**。抓到的是 `compose_selectedAndAllText`；如果后续系统换了 group id，请求会掉回 Siri 对话逻辑。
 - **写作工具是单轮的**。不读会话历史，连续点建议时若只发增量、不带原文，效果会退化。
 - **视觉图片只用于当轮**。会话历史里只存 `[图片]` 占位，后续追问看不到那张图。
+- **模型只能手填**。Egern 的 `env_schema` 不支持动态选项，设置页无法列出 provider 的模型清单，见上文「为什么模型不是下拉」。
+- **思考强度写错会 400**。`EFFORT_PROTOCOL` 必须和 provider 对齐：把 `openai` 写法发给只认 `enable_thinking` 的 Qwen 旧模型，或反过来，都可能被上游拒绝；不确定时保持 `none`。
 - **识图没有 AI 摘要**。百度原包里的 `mllm_abstract` 是一段商品总结，Google 不给等价物，脚本只填识别词，摘要留空。
 - **识图结果质量取决于 Google**。中文商品图的匹配度通常不如百度，尤其是国内电商和小众商品。
 - **识图没有缓存**：同一张图搜两次会计两次 SerpAPI 额度。
