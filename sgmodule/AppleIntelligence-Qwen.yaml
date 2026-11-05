@@ -38,7 +38,7 @@ env_schema:
     default_value: ""
   WEB_SEARCH:
     name: 搜索来源
-    description: "provider：模型按需联网；qwen：千问判断；tavily/serpapi：先判断再检索；off：关闭。"
+    description: "provider：模型按需联网；qwen/tavily/serpapi：先判断再搜；off：关闭。"
     options:
       - "provider"
       - "qwen"

@@ -721,11 +721,9 @@ function readSearchMode(value) {
 
 function searchInstruction(question) {
   return (
-    "先判断这个问题是否需要联网检索最新信息。\n" +
-    "需要：只输出 JSON 数组（最多 5 条），格式 " +
-    '[{"title":"标题","url":"https://..."}]，不要回答问题、不要代码块、不要解释。\n' +
-    "不需要：只输出 []。\n" +
-    "问题：" + question
+    "只做联网检索，不要回答问题，也不要总结。\n" +
+    "搜索：" + question + "\n" +
+    '只输出 JSON 数组（最多 5 条），格式 [{"title":"标题","url":"https://..."}]，不要代码块、不要解释。'
   );
 }
 
@@ -827,6 +825,23 @@ function buildSearchContext(sources) {
   return "以下是刚联网检索到的网页来源，请据此回答；能引用时在对应句子后附上链接。\n" + rows;
 }
 
+/** 不接管回答时，把检索结果并进原请求，直接交给千问 */
+function injectSources(body, sources) {
+  const block = buildSearchContext(sources);
+  const input = Array.isArray(body && body.input) ? body.input : [];
+  for (let i = input.length - 1; i >= 0; i -= 1) {
+    const content = input[i] && input[i].message && input[i].message.content;
+    if (!Array.isArray(content)) continue;
+    for (const part of content) {
+      if (part && part.type === "text" && typeof part.text === "string") {
+        part.text = part.text + "\n\n" + block;
+        return body;
+      }
+    }
+  }
+  return body;
+}
+
 function toSourceAnnotations(sources) {
   return sources.map((s, i) => ({
     type: "url_citation",
@@ -912,7 +927,54 @@ function looksTimeSensitive(question) {
  * Tavily / SerpAPI 只负责搜，不负责判断，所以先用 provider 做一次极小的分类调用。
  * 关掉推理（reasoning_effort: none）避免 20 秒的分类；判断不出发音时退回关键词。
  */
+function newSessionUrl(url) {
+  return String(url || "").replace(/\/v1\/sessions\/sess_[^/?#]+\/responses/, "/v1/sessions/responses");
+}
+
+function searchHeaders(ctx) {
+  const headers = { "Content-Type": "application/json", [SEARCH_HEADER]: "1" };
+  const auth = headerValue(ctx.request.headers, "authorization");
+  if (auth) headers.Authorization = auth;
+  const accept = headerValue(ctx.request.headers, "accept");
+  if (accept) headers.Accept = accept;
+  return headers;
+}
+
+/** 没接管回答时没有 provider 模型可用，判断交给千问本身 */
+async function qwenJudge(ctx, question) {
+  const resp = await ctx.http.post(newSessionUrl(ctx.request.url), {
+    headers: searchHeaders(ctx),
+    body: {
+      input: [
+        {
+          type: "message",
+          message: { role: "user", content: [{ text: SEARCH_JUDGE_PROMPT + "\n问题：" + question, type: "text" }] },
+        },
+      ],
+    },
+    timeout: SEARCH_TIMEOUT_MS,
+  });
+  if (resp.status >= 400) return "";
+  const stream = parseQwenStream(await resp.text());
+  try {
+    return str(JSON.parse(stream.value).content);
+  } catch (_) {
+    return str(stream.value);
+  }
+}
+
 async function judgeNeedsSearch(ctx, cfg, question) {
+  if (!cfg.model) {
+    try {
+      const text = await qwenJudge(ctx, question);
+      if (/^\s*(yes|是|需要)/i.test(text)) return true;
+      if (/^\s*(no|否|不需要)/i.test(text)) return false;
+    } catch (_) {
+      /* 落到关键词 */
+    }
+    return looksTimeSensitive(question);
+  }
+
   const headers = { "Content-Type": "application/json" };
   if (cfg.apiKey) headers.Authorization = "Bearer " + cfg.apiKey;
   const body = {
@@ -1388,11 +1450,10 @@ export default async function (ctx) {
       buildTextSSE(sessionId, "配置错误：" + error.message, { isNew: parsed.isNew })));
   }
 
-  // MODEL 留空表示不接管：把读过的 body 原样带回，整条请求继续走千问
-  if (!cfg.model) return raw ? { body: raw } : undefined;
-
   // 写作工具（compose）与 Siri 对话共用端点，但报文结构完全不同，先分流
   if (isComposeRequest(body)) {
+    // MODEL 留空 = 不接管，写作工具也原样交给千问
+    if (!cfg.model) return raw ? { body: raw } : undefined;
     return handleCompose(ctx, cfg, body, sessionId, parsed.isNew);
   }
 
@@ -1403,14 +1464,16 @@ export default async function (ctx) {
   }
 
   const history = loadHistory(ctx, sessionId);
-  // 搜索走千问时，先拿来源，再让 provider 依据来源作答
+  // qwen / tavily / serpapi 三种来源共用同一套判断：由模型决定要不要搜
   let sources = [];
   const engineMode = cfg.searchMode;
-  if (!hasImage && userText && (engineMode === "qwen" || engineMode === "tavily" || engineMode === "serpapi")) {
+  // 模型留空时 qwen 档直接走千问原生（不重复检索）；tavily/serpapi 仍然按所选执行
+  const useEngine =
+    engineMode === "tavily" || engineMode === "serpapi" || (Boolean(cfg.model) && engineMode === "qwen");
+  if (!hasImage && userText && useEngine) {
     const label = engineMode === "qwen" ? "千问" : engineMode === "tavily" ? "Tavily" : "SerpAPI";
     try {
-      const needSearch =
-        engineMode === "qwen" || !cfg.searchJudge ? true : await judgeNeedsSearch(ctx, cfg, userText);
+      const needSearch = cfg.searchJudge ? await judgeNeedsSearch(ctx, cfg, userText) : true;
       if (needSearch) {
         if (engineMode === "qwen") sources = await qwenSearch(ctx, userText, raw);
         else if (engineMode === "tavily") sources = await tavilySearch(ctx, cfg, userText);
@@ -1426,6 +1489,12 @@ export default async function (ctx) {
         /* 通知失败忽略 */
       }
     }
+  }
+
+  // MODEL 留空：回答仍由千问生成；只有 tavily/serpapi 的检索结果需要塞回去
+  if (!cfg.model) {
+    if (!sources.length) return raw ? { body: raw } : undefined;
+    return { body: JSON.stringify(injectSources(body, sources)) };
   }
 
   const systemText = sources.length ? cfg.system + "\n\n" + buildSearchContext(sources) : cfg.system;

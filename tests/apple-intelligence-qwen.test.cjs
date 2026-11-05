@@ -403,7 +403,7 @@ test('搜索走千问：先取来源，再交给 provider 作答', async () => {
   const ctx = makeCtx({
     url: NEW_URL,
     body: BODY,
-    env: { ...ENV, WEB_SEARCH: 'qwen' },
+    env: { ...ENV, WEB_SEARCH: 'qwen', SEARCH_JUDGE: 'false' },
     headers: { get: name => (name.toLowerCase() === 'authorization' ? 'Bearer jwt-abc' : null) },
     route: target => (target === NEW_URL ? { status: 200, text: async () => sse } : chatText('按来源作答')),
   });
@@ -413,7 +413,7 @@ test('搜索走千问：先取来源，再交给 provider 作答', async () => {
   assert.equal(ctx.calls[0].target, NEW_URL);
   assert.equal(ctx.calls[0].options.headers['x-aiq-search'], '1');
   assert.equal(ctx.calls[0].options.headers.Authorization, 'Bearer jwt-abc');
-  assert.match(ctx.calls[0].options.body.input[0].message.content[0].text, /是否需要联网检索/);
+  assert.match(ctx.calls[0].options.body.input[0].message.content[0].text, /只做联网检索/);
 
   const providerBody = ctx.calls[1].options.body;
   assert.match(providerBody.messages[0].content, /https:\/\/a\.example\/x/);
@@ -430,7 +430,7 @@ test('千问判断不需要联网时返回空数组，不注入来源', async ()
   const ctx = makeCtx({
     url: NEW_URL,
     body: BODY,
-    env: { ...ENV, WEB_SEARCH: 'qwen' },
+    env: { ...ENV, WEB_SEARCH: 'qwen', SEARCH_JUDGE: 'false' },
     route: target => (target === NEW_URL ? { status: 200, text: async () => qwenSSE('[]') } : chatText('普通回答')),
   });
   ctx.notify = msg => notes.push(msg);
@@ -450,7 +450,7 @@ test('千问搜索失败时降级为无来源，回答照常', async () => {
   const ctx = makeCtx({
     url: NEW_URL,
     body: BODY,
-    env: { ...ENV, WEB_SEARCH: 'qwen' },
+    env: { ...ENV, WEB_SEARCH: 'qwen', SEARCH_JUDGE: 'false' },
     route: () => ({ status: 500, text: async () => 'boom' }),
   });
   // 第一次（千问）500，第二次（provider）要成功
@@ -475,7 +475,7 @@ test('检索请求带标记时直接透传，避免递归', async () => {
   const ctx = makeCtx({
     url: NEW_URL,
     body: BODY,
-    env: { ...ENV, WEB_SEARCH: 'qwen' },
+    env: { ...ENV, WEB_SEARCH: 'qwen', SEARCH_JUDGE: 'false' },
     headers: { get: name => (name.toLowerCase() === 'x-aiq-search' ? '1' : null) },
     route: () => chatText('不该被调用'),
   });
@@ -488,7 +488,7 @@ test('检索走新会话，不污染当前会话', async () => {
   const ctx = makeCtx({
     url: CONT_URL,
     body: { ...BODY, session_id: 'sess_123' },
-    env: { ...ENV, WEB_SEARCH: 'qwen' },
+    env: { ...ENV, WEB_SEARCH: 'qwen', SEARCH_JUDGE: 'false' },
     route: target => (target === NEW_URL ? { status: 200, text: async () => sse } : chatText('ok')),
   });
   await api.main(ctx);
@@ -718,6 +718,80 @@ test('MODEL 留空时原样放行给千问', async () => {
   const out = await api.main(ctx);
   assert.deepEqual(plain(out), { body: JSON.stringify(body) });
   assert.equal(ctx.calls.length, 0);
+});
+
+test('qwen 档也走统一判断：模型说不搜就不搜', async () => {
+  const ctx = makeCtx({
+    url: NEW_URL,
+    body: BODY,
+    env: { ...ENV, WEB_SEARCH: 'qwen' },
+    route: (target, options) => {
+      if (options.body.reasoning_effort === 'none') return chatText('no');
+      return chatText('直接回答');
+    },
+  });
+  const out = await api.main(ctx);
+  assert.equal(ctx.calls.length, 2); // 判断 + 回答
+  const events = parseSSE(out.__responded.body);
+  assert.equal(events.some(e => e.name.endsWith('annotations[].added')), false);
+});
+
+test('模型留空 + tavily：判断不需要则不搜，原样放行', async () => {
+  const body = { input: [{ message: { role: 'user', content: [{ type: 'text', text: '你好' }] }, type: 'message' }] };
+  const calls = [];
+  const ctx = {
+    env: { MODEL: '', PROVIDER_URL: '', WEB_SEARCH: 'tavily', SEARCH_KEY: 'k' },
+    request: {
+      url: NEW_URL,
+      text: async () => JSON.stringify(body),
+      headers: { get: n => (n.toLowerCase() === 'authorization' ? 'Bearer jwt' : null) },
+    },
+    http: {
+      post: async (target, options) => {
+        calls.push({ target, options });
+        // 千问判断
+        const inner = JSON.stringify({ content: 'no' });
+        return { status: 200, text: async () => `event: x\ndata: ${JSON.stringify({ x: { value: inner }, type: 'x' })}\n\n` };
+      },
+    },
+    storage: { getJSON: () => null, setJSON: () => {} },
+    notify: () => {},
+    respond: p => ({ responded: p }),
+  };
+  const out = await api.main(ctx);
+  assert.equal(calls.length, 1); // 只有千问判断
+  assert.deepEqual(JSON.parse(JSON.stringify(out)), { body: JSON.stringify(body) });
+});
+
+test('模型留空 + tavily：需要搜时把来源注回千问请求', async () => {
+  const body = { input: [{ message: { role: 'user', content: [{ type: 'text', text: '今天 AI 新闻' }] }, type: 'message' }] };
+  const calls = [];
+  const ctx = {
+    env: { MODEL: '', PROVIDER_URL: '', WEB_SEARCH: 'tavily', SEARCH_KEY: 'tvly-x' },
+    request: {
+      url: NEW_URL,
+      text: async () => JSON.stringify(body),
+      headers: { get: n => (n.toLowerCase() === 'authorization' ? 'Bearer jwt' : null) },
+    },
+    http: {
+      post: async (target, options) => {
+        calls.push({ target, options });
+        if (target.includes('api.tavily.com')) {
+          return { status: 200, text: async () => JSON.stringify({ results: [{ title: 'T', url: 'https://t.example/1' }] }) };
+        }
+        const inner = JSON.stringify({ content: 'yes' });
+        return { status: 200, text: async () => `event: x\ndata: ${JSON.stringify({ x: { value: inner }, type: 'x' })}\n\n` };
+      },
+    },
+    storage: { getJSON: () => null, setJSON: () => {} },
+    notify: () => {},
+    respond: p => ({ responded: p }),
+  };
+  const out = await api.main(ctx);
+  assert.equal(calls.some(c => c.target.includes('api.tavily.com')), true);
+  const forwarded = JSON.parse(out.body);
+  assert.match(forwarded.input[0].message.content[0].text, /https:\/\/t\.example\/1/);
+  assert.match(forwarded.input[0].message.content[0].text, /今天 AI 新闻/);
 });
 
 test('EXTRA_BODY 并入请求体但不能覆盖核心字段', async () => {
