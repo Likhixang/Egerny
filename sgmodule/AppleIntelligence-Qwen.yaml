@@ -38,7 +38,7 @@ env_schema:
     default_value: ""
   SYSTEM_PROMPT:
     name: 系统提示词
-    description: "留空使用内置默认：保持中立、准确、口语自然，只输出最终答案。"
+    description: "留空使用内置默认。默认原文：Your answer must remain neutral, be accurate, and sound natural in spoken language. Output only the final answer."
     default_value: ""
   VISION_MODEL:
     name: 视觉模型

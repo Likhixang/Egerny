@@ -244,7 +244,7 @@ SerpAPI 把这一层包掉了：给它图，它返回结构化 JSON。
 | `MODEL` | 是 | 传给 provider 的 `model` 字段 |
 | `EFFORT` | 否 | 思考强度，按 OpenAI 兼容的 `reasoning_effort` 发送：`default` 不发送 / `off` 发 `none` / `low` `medium` `high` `xhigh` `max` |
 | `EXTRA_BODY` | 否 | JSON 对象，原样并入请求体，用于 provider 私有参数 |
-| `SYSTEM_PROMPT` | 否 | 留空用内置默认：保持中立、准确、口语自然，只输出最终答案 |
+| `SYSTEM_PROMPT` | 否 | 留空用内置默认，原文：`Your answer must remain neutral, be accurate, and sound natural in spoken language. Output only the final answer.` |
 | `VISION_MODEL` | 否 | 处理视觉智能图片的模型；留空复用 `MODEL` |
 | `VISION_PROMPT` | 否 | 视觉智能只发图片不发文字，用这句引导模型作答 |
 | `WRITING_MODEL` | 否 | 写作工具用的模型，留空复用 `MODEL` |
