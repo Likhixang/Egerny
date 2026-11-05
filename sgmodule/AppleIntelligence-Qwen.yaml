@@ -1,5 +1,5 @@
 name: "Apple 智能换模型（问千问 / 识图）"
-description: "把国行 Apple 智能的「问千问」、视觉智能、写作工具改接到自定义 provider，并把百度识图换成 Google Lens。画图不接管，仍走千问。全部按原协议回包，界面无感知。"
+description: "国行 Apple 智能改接自定义 provider；百度识图换 Google Lens；画图仍走千问。"
 author: "Li Khixang"
 homepage: "https://github.com/Likhixang"
 manual: "https://raw.githubusercontent.com/Likhixang/Egerny/main/markdown/AppleIntelligence-Qwen.md"
@@ -10,19 +10,19 @@ icon: "sparkles"
 env_schema:
   PROVIDER_URL:
     name: 接口地址
-    description: "Siri / 写作工具用的 OpenAI 兼容接口。填到 /v1 即可，会自动补 /chat/completions。"
+    description: "OpenAI 兼容接口，填到 /v1 即可。"
     default_value: "https://api.openai.com/v1"
   API_KEY:
     name: 密钥
-    description: "Bearer 密钥。本地网关无鉴权时留空。"
+    description: "Bearer 密钥；本地网关留空。"
     default_value: ""
   MODEL:
     name: 模型
-    description: "传给 provider 的 model 字段。Egern 的 env_schema 选项是静态数组，没法在填完地址和密钥后动态拉 /models，所以这里只能手填。"
+    description: "模型名，手填。"
     default_value: ""
   EFFORT:
     name: 思考强度
-    description: "按 OpenAI 兼容的 reasoning_effort 发送：default 不发送、交给模型默认；off 发 none；low/medium/high/xhigh/max 原样发送。provider 不认这个字段时会由上游决定是否报错。"
+    description: "reasoning_effort 档位；default 不发送。"
     options:
       - "default"
       - "off"
@@ -34,11 +34,11 @@ env_schema:
     default_value: "default"
   EXTRA_BODY:
     name: 额外请求字段
-    description: "可选 JSON 对象，原样并入请求体（如 {\"enable_thinking\":true}）。model / messages / stream 不会被覆盖。"
+    description: "并入请求体的 JSON，用于私有参数。"
     default_value: ""
   WEB_SEARCH:
     name: 搜索来源
-    description: "off 不联网；provider 用 provider 自己的 web_search（来源更省事）；qwen 先把同一个请求再打一次千问、只取来源，再交给 provider 作答（每题多一次调用，约 2-8 秒）。"
+    description: "provider：服务商联网；qwen：千问检索后作答；off：关闭。"
     options:
       - "provider"
       - "qwen"
@@ -46,27 +46,27 @@ env_schema:
     default_value: "provider"
   SYSTEM_PROMPT:
     name: 系统提示词
-    description: "留空使用内置默认。默认原文：Your answer must remain neutral, be accurate, and sound natural in spoken language. Output only the final answer."
+    description: "留空使用内置默认。"
     default_value: ""
   VISION_MODEL:
     name: 视觉模型
-    description: "处理视觉智能图片时用的模型；留空复用上面的模型。主模型不支持图片时填一个多模态模型。"
+    description: "识图模型；留空复用主模型。"
     default_value: ""
   VISION_PROMPT:
     name: 视觉提示词
-    description: "视觉智能只发图片、不发文字，用这句引导模型作答。留空用内置默认。"
+    description: "识图引导语；留空用默认。"
     default_value: ""
   WRITING_MODEL:
     name: 写作模型
-    description: "写作工具改写用的模型；留空复用上面的模型。改写质量要求高时单独指一个更强的。"
+    description: "改写模型；留空复用主模型。"
     default_value: ""
   WRITING_PROMPT:
     name: 写作提示词
-    description: "写作工具的系统提示词，必须让模型输出 {body, refinements}。留空用内置默认。"
+    description: "改写提示词，输出 {body, refinements}。"
     default_value: ""
   SERPAPI_KEY:
     name: SerpAPI 密钥
-    description: "识图用。到 serpapi.com 拿 key，免费 250 次/月。留空则识图继续走百度。"
+    description: "SerpAPI 密钥；留空走百度识图。"
     default_value: ""
   HL:
     name: 识图语言
@@ -78,7 +78,7 @@ env_schema:
     default_value: "us"
   LENS_TYPE:
     name: 识图类型
-    description: "all 综合 / visual_matches 相似图片 / exact_matches 完全相同。"
+    description: "all / visual_matches / exact_matches。"
     options:
       - "all"
       - "visual_matches"
@@ -86,19 +86,19 @@ env_schema:
     default_value: "all"
   TIMEOUT:
     name: 超时秒数
-    description: "等待上游或 SerpAPI 的时间，默认 120，最大 300。"
+    description: "超时秒数，最大 300。"
     default_value: "120"
   REPORT_MODEL:
     name: 上报模型名
-    description: "回给 Siri 的 model 字段，默认与真实后端一致。"
+    description: "回给 Siri 的 model 字段。"
     default_value: "qwenapp-apple-tqa"
   CONTINUE_URL:
     name: 跳转链接
-    description: "Siri 回答下方的「继续在 App 中查看」。留空则不显示。"
+    description: "回答下方的跳转链接。"
     default_value: ""
   NOTIFY_ON_ERROR:
     name: 出错时通知
-    description: "上游失败或识图失败时发系统通知，便于排查。"
+    description: "失败时发送系统通知。"
     options:
       - "true"
       - "false"
