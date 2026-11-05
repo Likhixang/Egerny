@@ -1,5 +1,5 @@
 name: "Apple 智能换模型（问千问）"
-description: "把国行 Apple 智能的「问千问」、视觉智能与写作工具改接到任意 OpenAI 兼容 provider。拦截 prod-yabuli.qianwen.com，支持文本、出图、图片识别、选中文本改写，按原 SSE 事件壳回包，Siri / 写作工具无感知。"
+description: "把国行 Apple 智能的「问千问」、视觉智能与写作工具改接到任意 OpenAI 兼容 provider。画图不接管，仍走千问。按原 SSE 事件壳回包，Siri / 写作工具无感知。"
 author: "Li Khixang"
 homepage: "https://github.com/Likhixang"
 manual: "https://raw.githubusercontent.com/Likhixang/Egerny/main/markdown/AppleIntelligence-Qwen.md"
@@ -59,45 +59,6 @@ env_schema:
       - "false"
     default_value: "false"
 
-  IMAGE_ENABLE:
-    name: 启用出图
-    description: "开启后会把 image_generator 工具交给模型，模型决定是否画图。"
-    options:
-      - "true"
-      - "false"
-    default_value: "true"
-  IMAGE_URL:
-    name: 图像接口地址
-    description: "同样填到 /v1 即可，会自动补 /images/generations。留空则不出图。"
-    default_value: "https://api.openai.com/v1"
-  IMAGE_MODEL:
-    name: 图像模型
-    description: "例如 dall-e-3、gpt-image-1、flux-schnell。"
-    default_value: ""
-  IMAGE_SIZE:
-    name: 图片尺寸
-    description: "宽x高，例如 1024x1024、1792x1024。"
-    default_value: "1024x1024"
-  IMAGE_KEY:
-    name: 图像接口密钥
-    description: "留空则复用上面的密钥。"
-    default_value: ""
-  IMAGE_TIMEOUT:
-    name: 出图超时秒数
-    description: "图片接口较慢，默认 180。"
-    default_value: "180"
-  IMAGE_UPLOAD_URL:
-    name: base64 转存地址
-    description: "gpt-image 系列只回 base64，需要一个接收 POST {image,mimeType} 并返回 {url} 的地址；留空则这类模型会降级为纯文本。"
-    default_value: ""
-  IMAGE_DESCRIBE:
-    name: 生成图片描述
-    description: "额外调用一次模型写一句图片描述，会多一次请求。"
-    options:
-      - "false"
-      - "true"
-    default_value: "false"
-
 scriptings:
   - http_request:
       name: "Apple-Intelligence-Qwen"
@@ -120,14 +81,7 @@ scriptings:
         REPORT_MODEL: "qwenapp-apple-tqa"
         CONTINUE_URL: ""
         NOTIFY_ON_ERROR: "false"
-        IMAGE_ENABLE: "true"
-        IMAGE_URL: ""
-        IMAGE_MODEL: ""
-        IMAGE_SIZE: "1024x1024"
-        IMAGE_KEY: ""
-        IMAGE_TIMEOUT: "180"
-        IMAGE_UPLOAD_URL: ""
-        IMAGE_DESCRIBE: "false"
+
 
 # 只解密这一个域名。苹果自己的 guzzoni / gateway.icloud.com.cn 有 pinning，加进来没意义还会拖慢连接。
 mitm:

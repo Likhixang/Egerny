@@ -1,6 +1,8 @@
 # Apple 智能换模型（问千问）
 
-把国行 Apple 智能里「问千问」那条链路，改接到你自己的 OpenAI 兼容 provider。文本、出图、视觉智能和写作工具都支持。
+把国行 Apple 智能里「问千问」那条链路，改接到你自己的 OpenAI 兼容 provider。
+
+覆盖 **纯文本回答、视觉智能识别、写作工具** 三条链路。**画图不接管**：识别到画图意图时原样放行，仍由千问出图。
 
 模块地址：
 
@@ -18,18 +20,19 @@ https://raw.githubusercontent.com/Likhixang/Egerny/main/sgmodule/AppleIntelligen
 | --- | --- |
 | 新会话 | `POST https://prod-yabuli.qianwen.com/v1/sessions/responses` |
 | 续轮 | `POST https://prod-yabuli.qianwen.com/v1/sessions/sess_<uuid>/responses` |
-| UA | `Siri (iPhone - Version 27.3.0)` |
+| UA（Siri） | `Siri (iPhone - Version 27.3.0)` |
+| UA（视觉智能） | `VisualIntelligence (iPhone - Version 27.3.0)` |
+| UA（写作工具） | `WritingTools (iPhone - Version 27.3.0)` |
 | 模型 | `qwenapp-apple-tqa` |
 | 响应 | `text/event-stream` + brotli，事件名 `session.response.*` |
+| 分流字段 | `configuration.response_configuration_group_id`：`siri.visualIntelligenceCamera` / `compose_*` |
 | 服务端工具 | `image_generator` / `file_generator` / `browser` |
-| 视觉智能 | 同一端点，UA 换成 `VisualIntelligence (iPhone - Version 27.3.0)`，`response_configuration_group_id` 为 `siri.visualIntelligenceCamera` |
-| 写作工具 | 同一端点，UA 换成 `WritingTools (iPhone - Version 27.3.0)`，`response_configuration_group_id` 为 `compose_selectedAndAllText` |
 
 所以可以在 Egern 的 `http_request` 脚本里直接吞掉请求，按原样 SSE 事件壳回包。
 
 两个容易踩的点：
 
-1. **`input` 里只有当前这一句**，多轮历史存在服务端 session。本模块自己用 `ctx.storage` 按 `sess_xxx` 存历史。
+1. **`input` 里只有当前这一句**，多轮历史存在服务端 session。本模块自己用 `ctx.storage` 按 `sess_xxx` 存历史（写作工具除外）。
 2. **正文是双重 JSON 编码**。`text.value.delta` 的 `delta` 是字符串片段，拼起来之后本身还要再 `JSON.parse` 一次，内层才是：
 
 ```json
@@ -38,7 +41,7 @@ https://raw.githubusercontent.com/Likhixang/Egerny/main/sgmodule/AppleIntelligen
 
 ---
 
-## 四条链路
+## 三条链路
 
 ### 纯文本：14 个事件
 
@@ -56,36 +59,6 @@ session.response.choices[].completed
 session.response.choices[].done
 session.response.done
 ```
-
-### 出图：20 个事件，两个 item
-
-```
-session.response.choices[].items[].added                                   ← item 0: image_generator_call
-session.response.choices[].items[].image_generator_call.in_progress
-session.response.choices[].items[].image_generator_call.prompt.done
-session.response.choices[].items[].image_generator_call.generating
-session.response.choices[].items[].image_generator_call.images[].added
-session.response.choices[].items[].image_generator_call.completed
-session.response.choices[].items[].done
-session.response.choices[].items[].added                                   ← item 1: message
-session.response.choices[].items[].message.content[].added                 ← content 0: image_generator_image
-session.response.choices[].items[].message.content[].done
-session.response.choices[].items[].message.content[].added                 ← content 1: text
-session.response.choices[].items[].message.content[].text.value.delta      ×N
-session.response.choices[].items[].message.content[].text.value.done
-session.response.choices[].items[].message.content[].done
-session.response.choices[].items[].done
-session.response.choices[].completed
-session.response.choices[].done
-session.response.done
-```
-
-关键结构：
-
-- `items[0]` 是 `image_generator_call`，`completed` 事件里带 `tool_name`、`images[].url`、`prompt`、`status`。
-- `items[1]` 是 `message`，`content[0]` 是 `image_generator_image`（`{width, height, url, prompt}`，这才是真正显示的图），`content[1]` 才是那段双重编码的文本。
-- `choices[].completed` 的 `output` 里两个 item 都要在。
-- 真实后端在 `items[].added` 里就给了 `status: "completed"` 和空 `prompt`，这不是笔误，照抄才能对齐。
 
 ### 视觉智能：图片进，文本出
 
@@ -123,7 +96,7 @@ message.content[].done          ← annotations 会写进这里
 
 ### 写作工具：原文进，改写稿出
 
-系统写作工具（WritingTools）打的是**同一个端点**，UA 换成 `WritingTools (iPhone - Version 27.3.0)`，`response_configuration_group_id` 为 `compose_selectedAndAllText`。
+系统写作工具（WritingTools）打的是**同一个端点**，`response_configuration_group_id` 为 `compose_selectedAndAllText`。
 
 `input` 里不是自然语言，而是一条被转义的 JSON 字符串：
 
@@ -146,25 +119,19 @@ message.content[].done          ← annotations 会写进这里
 
 ---
 
-## 出图是怎么触发的
+## 画图为什么放行
 
-1. 请求上游时带上 `image_generator` 的 function 定义，`tool_choice: "auto"`。
-2. 上游返回 `tool_calls` → 取出 `arguments.prompt` → 调 `IMAGE_URL` 生成图片。
-3. 拿到 URL 后按上面 20 个事件回包。
+画图请求从形态上和普通提问完全一样（`input` 只有一句话，`server_tools` 里带 `image_generator`），**没法在请求发出前判断这次会不会出图**。
 
-上游 400 且报错里带 `tool` 字样时，自动去掉 `tools` 重发一次，然后用句式兜底（`画只猫`、`生成图片：海边日落`、`draw me a cat image` 之类）。普通提问不会误触。
+所以脚本只做一件事：命中明确的画图句式就**返回 `undefined` 原样放行**，整条请求回到千问，出图、图片 URL、`image_generator_call` 事件全部由千问原生处理，本模块不参与。
 
-**图片 URL 必须设备能直接抓取。** `dall-e-3` 这类默认回 `url`，直接可用；`gpt-image-1` 只回 `b64_json`，需要配 `IMAGE_UPLOAD_URL`，否则降级成纯文本并提示。
+命中规则（`IMAGE_INTENT`）：
 
-转存接口约定：
+- `画/绘制/生成/做/来/设计` + `图片/图像/插画/海报/头像/壁纸/照片/表情包/logo/banner`
+- `画/绘制/生成` + 量词（`一只`、`两张`…）
+- 英文 `draw/paint/sketch/render/generate/create/make` + `image/picture/photo/...`
 
-```
-POST <IMAGE_UPLOAD_URL>
-Content-Type: application/json
-{"image": "<base64>", "mimeType": "image/png"}
-
-→ 200 {"url": "https://..."}   或   纯文本 URL
-```
+代价：说法太绕（例如「帮我弄一张海边日落的图」）可能不被识别，会被当成普通提问交给你的 provider。这种情况换个说法，或者直接说「画一张…」。
 
 ---
 
@@ -172,10 +139,11 @@ Content-Type: application/json
 
 1. Egern → 配置 → 模块 → 添加模块，填上面的地址。
 2. 进入模块设置，至少填 **接口地址**、**密钥**、**模型**。接口地址写到 `/v1` 就行，例如 `https://api.openai.com/v1`。
-3. 需要出图就再填 **图像接口地址**（同样写到 `/v1`）和 **图像模型**。
-4. 确认模块已启用，MITM 里包含 `prod-yabuli.qianwen.com`（模块会自动合并）。
-5. 手机上装好 Egern 的 CA 证书，并在「设置 → 通用 → 关于本机 → 证书信任设置」打开完全信任。
-6. 重开 Siri，选千问问一句。
+3. 确认模块已启用，MITM 里包含 `prod-yabuli.qianwen.com`（模块会自动合并）。
+4. 手机上装好 Egern 的 CA 证书，并在「设置 → 通用 → 关于本机 → 证书信任设置」打开完全信任。
+5. 重开 Siri，选千问问一句。
+
+不需要再配任何图片相关参数。
 
 ---
 
@@ -190,8 +158,6 @@ Content-Type: application/json
 | `https://gw.example.com/openai/v1` | `https://gw.example.com/openai/v1/chat/completions` |
 | `https://api.example.com/v1/chat/completions` | 原样使用 |
 | `https://x.example.com/v1/chat/completions?api-version=1` | 原样使用（带 query 视为完整地址） |
-
-图像接口同理，补的是 `/images/generations`。
 
 ---
 
@@ -211,14 +177,6 @@ Content-Type: application/json
 | `REPORT_MODEL` | 否 | 回给 Siri 的 `model` 字段，默认 `qwenapp-apple-tqa` |
 | `CONTINUE_URL` | 否 | 回答下方的跳转链接，留空不显示 |
 | `NOTIFY_ON_ERROR` | 否 | 上游失败时发系统通知 |
-| `IMAGE_ENABLE` | 否 | 出图总开关，默认 `true` |
-| `IMAGE_URL` | 出图必填 | 同样填到 `/v1` 即可，会自动补 `/images/generations` |
-| `IMAGE_MODEL` | 出图必填 | 例如 `dall-e-3`、`gpt-image-1`、`flux-schnell` |
-| `IMAGE_SIZE` | 否 | `宽x高`，默认 `1024x1024`，同时决定回包的 `width`/`height` |
-| `IMAGE_KEY` | 否 | 留空复用 `API_KEY` |
-| `IMAGE_TIMEOUT` | 否 | 默认 180 秒 |
-| `IMAGE_UPLOAD_URL` | 否 | base64 转存地址 |
-| `IMAGE_DESCRIBE` | 否 | 额外一次模型调用写图片描述，默认关闭 |
 
 上游对话接口同时兼容 `choices[0].message.content` 和 Responses 的 `output_text` / `output[].content[].text`。
 
@@ -227,10 +185,9 @@ Content-Type: application/json
 ## 已知限制
 
 - **只覆盖「问千问」、视觉智能的识别/询问和写作工具**。端侧模型和苹果自研云端模型不经过这个接口，拦截不到。
+- **画图只能靠句式判断**：命中画图句式才放行，说法太绕会被当成普通提问。
 - **写作工具只认 `compose_` 前缀的配置组**。抓到的是 `compose_selectedAndAllText`；如果后续系统换了 group id 或不带这个字段，请求会掉回 Siri 对话逻辑。
 - **写作工具是单轮的**。不读会话历史，每次只按客户端带上来的原文和改写要求处理；App 里连续点建议时若只发增量、不带原文，效果会退化。
-- **视觉搜索（以图搜物/以图搜图）还没接**。目前抓到的视觉智能只有 `siri.visualIntelligenceCamera` 这一条，没有独立的搜图请求；等抓到再补。
-- **只实现了 `image_generator` 一个工具**。抓包里的 `call_emergency_services` 不会转发给上游，所以「让 Siri 报警」不会触发；`file_generator` / `browser` 同样不支持。
 - **视觉图片只用于当轮**。会话历史里只存 `[图片]` 占位，后续追问看不到那张图。
 - **整段返回，不是逐字流式**。Egern 脚本返回的是完整 body，第一个字的延迟等于整段生成时间。
 - 需要 iOS 27.3 及以上、国行设备，且已开通 Apple 智能测试资格。
@@ -243,10 +200,9 @@ Content-Type: application/json
 | --- | --- |
 | Siri 回「配置错误」 | 接口地址或模型没填 |
 | Siri 回「后端不可用」 | 上游地址写错、密钥失效，或网关不通 |
-| 该出图却回了文字 | 上游不支持 tool calling，或提示词没被识别；看 `IMAGE_URL` / `IMAGE_MODEL` 是否填了 |
 | 视觉智能回「图片识别失败」 | `VISION_MODEL`（或 `MODEL`）不是多模态模型，换一个支持图片输入的 |
-| 写作工具没变化，或回的是原文 | 看 Egern 请求记录里 `compose_` 请求是否命中脚本；`WRITING_MODEL` 是否只会长篇解释、不按 JSON 输出（必要时换模型或改 `WRITING_PROMPT`） |
-| 「图片生成失败：… IMAGE_UPLOAD_URL」 | 图像模型只回 base64，配转存地址或换回 url 型的模型 |
+| 写作工具没变化，或回的是原文 | 看 Egern 请求记录里 `compose_` 请求是否命中脚本；`WRITING_MODEL` 是否只会长篇解释、不按 JSON 输出 |
+| 说「画只猫」却回了文字 | 放行判定没命中，换个更直接的说法；在 Egern 请求记录里确认这次请求是否被脚本接管 |
 | 完全没变化 | 模块没启用；MITM 没开；CA 证书没信任 |
 | 连接直接失败 | 不要把 `*.apple.com` / `gateway.icloud.com.cn` 加进 MITM，那些有 pinning |
 
@@ -260,6 +216,6 @@ Content-Type: application/json
 node --test tests/apple-intelligence-qwen.test.cjs
 ```
 
-34 条，覆盖：四条链路的事件序列与抓包逐项一致、deltas 还原、多轮历史、图片输入解析、工具调用、tools 被拒后的降级、base64 转存、引用卡片、写作工具入参/出参解析与降级、非目标 URL 透传。
+28 条，覆盖：三条链路的事件序列与抓包逐项一致、deltas 还原、多轮历史、图片输入解析、引用卡片、写作工具入参/出参解析与降级、画图意图放行、非目标 URL 透传。
 
-协议依据来自 2026-11-05 的三次真实抓包（iOS 27.3 开发者测试版，中国大陆）：文本/出图、视觉智能、写作工具。
+协议依据来自 2026-11-05 的三次真实抓包（iOS 27.3 开发者测试版，中国大陆）：文本、视觉智能、写作工具。

@@ -8,7 +8,7 @@ const source = fs.readFileSync(path.join(__dirname, '../js/AppleIntelligence-Qwe
 const context = vm.createContext({ console, Date, URL, JSON, Math });
 vm.runInContext(
   source.replace('export default async function (ctx)', 'async function main(ctx)') +
-    `\nglobalThis.api = { main, readConfig, buildEndpoint, parseRequestPath, extractInput, extractUserText, buildUserContent, pickAnnotations, buildTextSSE, buildImageSSE, makeSummary, pickAnswer, parseToolCall, unwrapAnswer, chunkString, looksLikeImageRequest, isComposeRequest, parseComposeInput, composeUserMessage, parseComposeResult, buildComposeValue };`,
+    `\nglobalThis.api = { main, readConfig, buildEndpoint, parseRequestPath, extractInput, extractUserText, buildUserContent, pickAnnotations, buildTextSSE, makeSummary, pickAnswer, unwrapAnswer, chunkString, looksLikeImageRequest, isComposeRequest, parseComposeInput, composeUserMessage, parseComposeResult, buildComposeValue };`,
   context,
 );
 const api = context.api;
@@ -19,30 +19,6 @@ const TEXT_CAPTURED = [
   'session.response.created',
   'session.response.choices[].added',
   'session.response.choices[].items[].added',
-  'session.response.choices[].items[].message.content[].added',
-  'session.response.choices[].items[].message.content[].text.value.delta',
-  'session.response.choices[].items[].message.content[].text.value.done',
-  'session.response.choices[].items[].message.content[].done',
-  'session.response.choices[].items[].done',
-  'session.response.choices[].completed',
-  'session.response.choices[].done',
-  'session.response.done',
-];
-
-// 抓包 entry 22（画只狸花猫）的 20 个事件
-const IMAGE_CAPTURED = [
-  'session.response.created',
-  'session.response.choices[].added',
-  'session.response.choices[].items[].added',
-  'session.response.choices[].items[].image_generator_call.in_progress',
-  'session.response.choices[].items[].image_generator_call.prompt.done',
-  'session.response.choices[].items[].image_generator_call.generating',
-  'session.response.choices[].items[].image_generator_call.images[].added',
-  'session.response.choices[].items[].image_generator_call.completed',
-  'session.response.choices[].items[].done',
-  'session.response.choices[].items[].added',
-  'session.response.choices[].items[].message.content[].added',
-  'session.response.choices[].items[].message.content[].done',
   'session.response.choices[].items[].message.content[].added',
   'session.response.choices[].items[].message.content[].text.value.delta',
   'session.response.choices[].items[].message.content[].text.value.done',
@@ -87,20 +63,6 @@ function chatText(content) {
   return ok({ choices: [{ message: { role: 'assistant', content } }] });
 }
 
-function chatToolCall(prompt) {
-  return ok({
-    choices: [
-      {
-        message: {
-          role: 'assistant',
-          content: null,
-          tool_calls: [{ id: 'call_1', type: 'function', function: { name: 'image_generator', arguments: JSON.stringify({ prompt }) } }],
-        },
-      },
-    ],
-  });
-}
-
 function makeCtx({ url, body, env, route, storage = new Map() }) {
   const calls = [];
   return {
@@ -132,15 +94,16 @@ function makeCtx({ url, body, env, route, storage = new Map() }) {
 }
 
 const PROVIDER_BASE = 'https://unit.invalid/v1';
-const IMAGE_BASE = 'https://unit.invalid/v1';
 const PROVIDER_URL = PROVIDER_BASE + '/chat/completions';
-const IMAGE_URL = IMAGE_BASE + '/images/generations';
 const ENV = {
   PROVIDER_URL: PROVIDER_BASE,
   API_KEY: 'sk-test',
   MODEL: 'test-model',
-  IMAGE_URL: IMAGE_BASE,
-  IMAGE_MODEL: 'test-image',
+};
+// 画图请求：只用于验证「放行给千问」的判定
+const DRAW_BODY = {
+  input: [{ message: { role: 'user', content: [{ text: '问千问，画只狸花猫', type: 'text' }] }, type: 'message' }],
+  stream: true,
 };
 const NEW_URL = 'https://prod-yabuli.qianwen.com/v1/sessions/responses';
 const CONT_URL = 'https://prod-yabuli.qianwen.com/v1/sessions/sess_616a864d-6c8b-4d94-914b-262f04a9c3d9/responses';
@@ -149,11 +112,6 @@ const BODY = {
   stream: true,
   input_hint: 'knowledge',
 };
-const DRAW_BODY = {
-  input: [{ message: { role: 'user', content: [{ text: '问千问，画只狸花猫', type: 'text' }] }, type: 'message' }],
-  stream: true,
-};
-
 // 视觉智能：只有图片，没有文字；configuration 里是 siri.visualIntelligenceCamera
 const IMG_URL = 'data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQ==';
 const VISION_BODY = {
@@ -206,54 +164,6 @@ test('文本 SSE：deltas 拼接等于 done.value，内层是合法 JSON', () =>
   assert.equal(completed.payload.choice.output[0].message.content[0].text.value, doneValue);
 });
 
-test('图片 SSE 事件序列与抓包一致', () => {
-  const names = parseSSE(api.buildImageSSE('sess_unit', {
-    prompt: '一只狸花猫', url: 'https://img.example/cat.png', answer: '图片已生成。',
-  }, { isNew: true })).map(e => e.name);
-  assert.equal(names[0], 'session.created');
-  assert.deepEqual(collapse(names.slice(1)), IMAGE_CAPTURED);
-});
-
-test('图片 SSE：call 项与 message 项结构正确', () => {
-  const url = 'https://img.example/cat.png';
-  const events = parseSSE(api.buildImageSSE('sess_unit', {
-    prompt: '一只狸花猫', url, width: 1024, height: 1024, answer: '图片已生成。',
-  }, { isNew: false }));
-
-  const completed = events.find(e => e.name === 'session.response.choices[].completed').payload.choice;
-  assert.equal(completed.output.length, 2);
-
-  const [call, message] = completed.output;
-  assert.equal(call.type, 'image_generator_call');
-  assert.equal(call.image_generator_call.tool_name, 'image_generator');
-  assert.equal(call.image_generator_call.status, 'completed');
-  assert.deepEqual(plain(call.image_generator_call.images), [{ url }]);
-
-  assert.equal(message.type, 'message');
-  assert.equal(message.message.content.length, 2);
-  assert.equal(message.message.content[0].type, 'image_generator_image');
-  assert.deepEqual(plain(message.message.content[0].image_generator_image), {
-    width: 1024, prompt: '一只狸花猫', url, height: 1024,
-  });
-  assert.equal(message.message.content[1].type, 'text');
-  assert.equal(JSON.parse(message.message.content[1].text.value).content, '图片已生成。');
-
-  const imagesAdded = events.find(e => e.name.endsWith('images[].added')).payload;
-  assert.deepEqual(plain(imagesAdded.image), { url });
-  assert.equal(imagesAdded.item_index, 0);
-});
-
-test('图片 SSE：文本 content 在 index 1，delta 可还原', () => {
-  const events = parseSSE(api.buildImageSSE('sess_unit', {
-    prompt: 'p', url: 'https://img.example/x.png', answer: '一段描述',
-  }, { isNew: false }));
-  const deltas = events.filter(e => e.name.endsWith('text.value.delta'));
-  assert.ok(deltas.every(d => d.payload.item_index === 1 && d.payload.content_index === 1));
-  const done = events.find(e => e.name.endsWith('text.value.done')).payload;
-  assert.equal(deltas.map(d => d.payload.delta).join(''), done.value);
-  assert.equal(JSON.parse(done.value).content, '一段描述');
-});
-
 test('多轮对话把历史带上，并写入存储', async () => {
   const storage = new Map();
   const first = makeCtx({ url: NEW_URL, body: BODY, env: ENV, storage, route: () => chatText('第一轮回答') });
@@ -278,93 +188,12 @@ test('多轮对话把历史带上，并写入存储', async () => {
   assert.equal(second.calls[0].options.headers.Authorization, 'Bearer sk-test');
 });
 
-test('模型调用 image_generator 时走图片链路', async () => {
-  const ctx = makeCtx({
-    url: NEW_URL,
-    body: DRAW_BODY,
-    env: ENV,
-    route: target => (target === IMAGE_URL
-      ? ok({ data: [{ url: 'https://img.example/cat.png' }] })
-      : chatToolCall('一只成年狸花猫，蹲坐在深色实木地板上')),
-  });
-  const out = await api.main(ctx);
-  const events = parseSSE(out.__responded.body);
-
-  // 第一次请求带 tools，第二次打图片接口
-  assert.equal(ctx.calls.length, 2);
-  assert.equal(ctx.calls[0].target, PROVIDER_URL);
-  assert.ok(Array.isArray(ctx.calls[0].options.body.tools));
-  assert.equal(ctx.calls[0].options.body.tools[0].function.name, 'image_generator');
-  assert.equal('temperature' in ctx.calls[0].options.body, false);
-  assert.equal(ctx.calls[1].target, IMAGE_URL);
-  assert.equal(ctx.calls[1].options.body.prompt, '一只成年狸花猫，蹲坐在深色实木地板上');
-  assert.equal(ctx.calls[1].options.body.size, '1024x1024');
-
-  assert.deepEqual(collapse(events.map(e => e.name).slice(1)), IMAGE_CAPTURED);
-});
-
-test('上游拒绝 tools 参数时自动重试，并用句式兜底出图', async () => {
-  let n = 0;
-  const ctx = makeCtx({
-    url: NEW_URL,
-    body: DRAW_BODY,
-    env: ENV,
-    route: target => {
-      if (target === IMAGE_URL) return ok({ data: [{ url: 'https://img.example/cat.png' }] });
-      n += 1;
-      if (n === 1) return err(400, { error: { message: 'tools is not supported by this model' } });
-      return chatText('我画不了');
-    },
-  });
-  const out = await api.main(ctx);
-  const events = parseSSE(out.__responded.body);
-  assert.equal(ctx.calls[0].options.body.tools.length, 1);
-  assert.equal(ctx.calls[1].options.body.tools, undefined);
-  assert.deepEqual(collapse(events.map(e => e.name).slice(1)), IMAGE_CAPTURED);
-});
-
 test('普通提问不会触发出图', async () => {
   const ctx = makeCtx({ url: NEW_URL, body: BODY, env: ENV, route: () => chatText('我是你的助理') });
   const out = await api.main(ctx);
   const events = parseSSE(out.__responded.body);
   assert.deepEqual(collapse(events.map(e => e.name).slice(1)), TEXT_CAPTURED);
   assert.equal(ctx.calls.length, 1);
-});
-
-test('图片接口只回 base64 且没配转存时降级为文本', async () => {
-  const ctx = makeCtx({
-    url: NEW_URL,
-    body: DRAW_BODY,
-    env: ENV,
-    route: target => (target === IMAGE_URL
-      ? ok({ data: [{ b64_json: 'AAAA' }] })
-      : chatToolCall('一只狸花猫')),
-  });
-  const out = await api.main(ctx);
-  const events = parseSSE(out.__responded.body);
-  assert.deepEqual(collapse(events.map(e => e.name).slice(1)), TEXT_CAPTURED);
-  const done = events.find(e => e.name.endsWith('text.value.done')).payload;
-  assert.match(JSON.parse(done.value).content, /图片生成失败/);
-  assert.match(JSON.parse(done.value).content, /IMAGE_UPLOAD_URL/);
-});
-
-test('配置了转存接口时 base64 也能出图', async () => {
-  const env = { ...ENV, IMAGE_UPLOAD_URL: 'https://unit.invalid/upload' };
-  const ctx = makeCtx({
-    url: NEW_URL,
-    body: DRAW_BODY,
-    env,
-    route: target => {
-      if (target === IMAGE_URL) return ok({ data: [{ b64_json: 'AAAA' }] });
-      if (target === env.IMAGE_UPLOAD_URL) return ok({ url: 'https://cdn.example/a.png' });
-      return chatToolCall('一只狸花猫');
-    },
-  });
-  const out = await api.main(ctx);
-  const events = parseSSE(out.__responded.body);
-  assert.deepEqual(collapse(events.map(e => e.name).slice(1)), IMAGE_CAPTURED);
-  const added = events.find(e => e.name.endsWith('images[].added')).payload;
-  assert.equal(added.image.url, 'https://cdn.example/a.png');
 });
 
 test('上游失败也返回合法 SSE，而不是挂起', async () => {
@@ -405,23 +234,7 @@ test('兼容 Responses 风格与包裹式返回', () => {
   assert.equal(api.unwrapAnswer('普通文本'), '普通文本');
 });
 
-test('tool_calls 解析：只认 image_generator 且要求 prompt', () => {
-  const data = {
-    choices: [{
-      message: {
-        tool_calls: [
-          { function: { name: 'other', arguments: '{}' } },
-          { function: { name: 'image_generator', arguments: '{"prompt":"猫"}' } },
-        ],
-      },
-    }],
-  };
-  assert.deepEqual(plain(api.parseToolCall(data)), { prompt: '猫' });
-  assert.equal(api.parseToolCall({ choices: [{ message: {} }] }), null);
-  assert.equal(api.parseToolCall({ choices: [{ message: { tool_calls: [{ function: { name: 'image_generator', arguments: '{}' } }] } }] }), null);
-});
-
-test('句式兜底只在明确要图时命中', () => {
+test('画图句式只在明确要图时命中（用于放行判定）', () => {
   for (const t of ['画只狸花猫', '帮我画一张海报', '生成图片：海边日落', 'draw me a cat image']) {
     assert.equal(api.looksLikeImageRequest(t), true, t);
   }
@@ -447,18 +260,12 @@ test('接口地址只写到 /v1 甚至只写域名都能补全', () => {
   assert.equal(api.buildEndpoint('', 'images/generations'), '');
 });
 
-test('配置默认值：图片开关打开、尺寸解析、不含温度', () => {
+test('配置默认值：不再包含出图字段', () => {
   const cfg = api.readConfig(ENV);
   assert.equal(cfg.providerUrl, PROVIDER_URL);
-  assert.equal(cfg.imageUrl, IMAGE_URL);
   assert.equal('temperature' in cfg, false);
-  assert.equal(cfg.imageEnable, true);
-  assert.equal(cfg.imageWidth, 1024);
-  assert.equal(cfg.imageHeight, 1024);
-  const wide = api.readConfig({ ...ENV, IMAGE_SIZE: '1792x1024', IMAGE_ENABLE: 'false' });
-  assert.equal(wide.imageWidth, 1792);
-  assert.equal(wide.imageHeight, 1024);
-  assert.equal(wide.imageEnable, false);
+  assert.equal('imageEnable' in cfg, false);
+  assert.equal('imageUploadUrl' in cfg, false);
 });
 
 // 抓包 entry 14（视觉智能识别抽纸）的事件序列，含引用卡片那一段
@@ -692,4 +499,18 @@ test('写作工具：上游失败也回合法 JSON，且不写 Siri 会话历史
   assert.match(value.body, /boom/);
   assert.deepEqual(value.refinements, []);
   assert.equal(storage.size, 0);
+});
+
+
+test('画图意图原样放行，不调用上游', async () => {
+  const ctx = makeCtx({ url: NEW_URL, body: DRAW_BODY, env: ENV, route: () => chatText('不该被调用') });
+  assert.equal(await api.main(ctx), undefined);
+  assert.equal(ctx.calls.length, 0);
+});
+
+test('普通提问不受放行逻辑影响', async () => {
+  const ctx = makeCtx({ url: NEW_URL, body: BODY, env: ENV, route: () => chatText('我是助理') });
+  const out = await api.main(ctx);
+  assert.ok(out && out.__responded);
+  assert.equal(ctx.calls.length, 1);
 });
