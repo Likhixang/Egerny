@@ -243,7 +243,7 @@ SerpAPI 把这一层包掉了：给它图，它返回结构化 JSON。
 | `API_KEY` | 否 | Bearer 密钥；本地网关无鉴权可留空 |
 | `MODEL` | 是 | 传给 provider 的 `model` 字段 |
 | `EFFORT_PROTOCOL` | 否 | 思考强度的真实写法：`none` / `openai` / `openrouter` / `qwen` / `vllm`，默认 `none` 不发送 |
-| `EFFORT` | 否 | `default` 不干预 / `off` 关闭 / `minimal` `low` `medium` `high` `max` |
+| `EFFORT` | 否 | `default` 不干预 / `off` 关闭 / `low` `medium` `high` `xhigh` `max` |
 | `EFFORT_BUDGET` | 否 | 仅 `qwen` 写法生效，`thinking_budget` 上限 |
 | `EXTRA_BODY` | 否 | JSON 对象，原样并入请求体，用于 provider 私有参数 |
 | `SYSTEM_PROMPT` | 否 | 留空用内置默认：保持中立、准确、口语自然，只输出最终答案 |
@@ -278,6 +278,8 @@ SerpAPI 把这一层包掉了：给它图，它返回结构化 JSON。
 
 - OpenAI Chat Completions 的 `reasoning_effort` 取值 `none` / `minimal` / `low` / `medium` / `high` / `xhigh` / `max`，不同模型支持不全；Gemini 的 OpenAI 兼容层把 `minimal` / `low` / `medium` / `high` 映射到 `thinking_level`。
 - OpenRouter 用 `reasoning: {effort, exclude}`，档位含 `max` / `xhigh`。
+- 档位只留 `low` → `max`，不再放 `minimal`：官方虽然还认，但实际模型基本不用这一档。确实要发时用 `EXTRA_BODY` 塞 `{"reasoning_effort":"minimal"}`。
+- `qwen` 写法的档位只切成开关（`off` 之外都为 `true`），要细调就填 `EFFORT_BUDGET`。
 - 百炼（DashScope）OpenAI 兼容接口用 `enable_thinking`（布尔）与 `thinking_budget`（整数）；qwen3.8 的 `reasoning_effort` 与 `thinking_budget` 互斥，所以 qwen 写法只走 `enable_thinking` + budget，避免撞报错。
 - vLLM / SGLang 服务 Qwen3 时用 `chat_template_kwargs.enable_thinking` 开关思考。
 

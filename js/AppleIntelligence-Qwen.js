@@ -80,7 +80,7 @@ function buildEndpoint(raw, leaf) {
  *   none       → 一个字段都不发（默认，避免严格 schema 的上游直接 400）
  * off 只对 openai / openrouter 发 none，对其余两家发 enable_thinking=false。
  */
-const EFFORT_LEVELS = ["default", "off", "minimal", "low", "medium", "high", "max"];
+const EFFORT_LEVELS = ["default", "off", "low", "medium", "high", "xhigh", "max"];
 const EFFORT_PROTOCOLS = ["none", "openai", "openrouter", "qwen", "vllm"];
 
 function buildReasoningParams(protocol, effort, budget) {

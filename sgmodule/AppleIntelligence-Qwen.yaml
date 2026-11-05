@@ -32,14 +32,14 @@ env_schema:
     default_value: "none"
   EFFORT:
     name: 思考强度
-    description: "default 表示不干预、交给模型默认；off 关闭思考；minimal/low/medium/high/max 逐档加强。写法为 none 时本项不生效。"
+    description: "default 表示不干预、交给模型默认；off 关闭思考；low/medium/high/xhigh/max 逐档加强。写法为 none 时本项不生效。"
     options:
       - "default"
       - "off"
-      - "minimal"
       - "low"
       - "medium"
       - "high"
+      - "xhigh"
       - "max"
     default_value: "default"
   EFFORT_BUDGET:

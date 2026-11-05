@@ -238,6 +238,8 @@ test('默认不发送任何思考字段，请求体与旧版一致', async () =>
 
 test('openai 写法发 reasoning_effort，off 映射 none', async () => {
   assert.deepEqual(plain(api.buildReasoningParams('openai', 'high', '')), { reasoning_effort: 'high' });
+  assert.deepEqual(plain(api.buildReasoningParams('openai', 'xhigh', '')), { reasoning_effort: 'xhigh' });
+  assert.deepEqual(plain(api.buildReasoningParams('openai', 'max', '')), { reasoning_effort: 'max' });
   assert.deepEqual(plain(api.buildReasoningParams('openai', 'off', '')), { reasoning_effort: 'none' });
   const ctx = makeCtx({
     url: NEW_URL,
@@ -250,6 +252,9 @@ test('openai 写法发 reasoning_effort，off 映射 none', async () => {
 });
 
 test('openrouter 写法发 reasoning.effort', () => {
+  assert.deepEqual(plain(api.buildReasoningParams('openrouter', 'xhigh', '')), {
+    reasoning: { effort: 'xhigh', exclude: false },
+  });
   assert.deepEqual(plain(api.buildReasoningParams('openrouter', 'max', '')), {
     reasoning: { effort: 'max', exclude: false },
   });
@@ -319,6 +324,8 @@ test('EXTRA_BODY 非法 JSON 给配置错误，不请求上游', async () => {
 test('思考写法与档位做白名单校验', () => {
   assert.throws(() => api.buildReasoningParams('nope', 'low', ''), /EFFORT_PROTOCOL/);
   assert.throws(() => api.buildReasoningParams('openai', 'insane', ''), /EFFORT/);
+  // minimal 已从档位里去掉，需要时走 EXTRA_BODY
+  assert.throws(() => api.buildReasoningParams('openai', 'minimal', ''), /EFFORT/);
   assert.deepEqual(plain(api.buildReasoningParams('openai', 'default', '')), {});
   assert.deepEqual(plain(api.buildReasoningParams('openai', '', '')), {});
   assert.deepEqual(plain(api.buildReasoningParams('none', 'high', '')), {});
