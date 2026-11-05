@@ -225,10 +225,14 @@ test('填了模型但缺接口地址时给出可读错误', async () => {
 test('内置默认提示词换成中性口语版', async () => {
   const ctx = makeCtx({ url: NEW_URL, body: BODY, env: ENV, route: () => chatText('ok') });
   await api.main(ctx);
-  assert.equal(
-    ctx.calls[0].options.body.messages[0].content,
-    'Your answer must remain neutral, be accurate, and sound natural in spoken language. Output only the final answer.',
+  const system = ctx.calls[0].options.body.messages[0].content;
+  assert.ok(
+    system.startsWith(
+      'Your answer must remain neutral, be accurate, and sound natural in spoken language. Output only the final answer.',
+    ),
+    system,
   );
+  assert.match(system, /当前日期：\d{4}-\d{2}-\d{2}/);
 });
 
 test('默认不发送任何思考字段，请求体与旧版一致', async () => {
@@ -440,7 +444,7 @@ test('千问判断不需要联网时返回空数组，不注入来源', async ()
   const done = events.find(e => e.name.endsWith('text.value.done')).payload;
   assert.match(JSON.parse(done.value).content, /普通回答/);
   const providerBody = ctx.calls[1].options.body;
-  assert.equal(providerBody.messages[0].content.includes('网页来源'), false);
+  assert.equal(providerBody.messages[0].content.includes('实时来源'), false);
   assert.equal(events.some(e => e.name.endsWith('annotations[].added')), false);
   assert.equal(notes.length, 0);
 });

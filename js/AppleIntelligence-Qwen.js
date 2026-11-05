@@ -814,6 +814,12 @@ function dedupeSources(list) {
   return out;
 }
 
+function todayText() {
+  const d = new Date();
+  const pad = (n) => (n < 10 ? "0" + n : String(n));
+  return d.getFullYear() + "-" + pad(d.getMonth() + 1) + "-" + pad(d.getDate());
+}
+
 function buildSearchContext(sources) {
   const rows = sources
     .map((s, i) => {
@@ -822,7 +828,12 @@ function buildSearchContext(sources) {
       return extra ? head + "\n   " + extra : head;
     })
     .join("\n");
-  return "以下是刚联网检索到的网页来源，请据此回答；能引用时在对应句子后附上链接。\n" + rows;
+  return (
+    "以下是刚刚联网检索到的实时来源（检索时间 " +
+    todayText() +
+    "）。时效性问题必须以此为准：与你的训练知识冲突时一律采用这些来源，不要凭记忆作答；引用时在对应句子后附上链接。\n" +
+    rows
+  );
 }
 
 /** 不接管回答时，把检索结果并进原请求，直接交给千问 */
@@ -1497,7 +1508,11 @@ export default async function (ctx) {
     return { body: JSON.stringify(injectSources(body, sources)) };
   }
 
-  const systemText = sources.length ? cfg.system + "\n\n" + buildSearchContext(sources) : cfg.system;
+  const systemText =
+    cfg.system +
+    "\n\n当前日期：" +
+    todayText() +
+    (sources.length ? "\n\n" + buildSearchContext(sources) : "");
   const messages = [{ role: "system", content: systemText }];
   for (const turn of history) {
     if (turn && turn.role && typeof turn.content === "string") messages.push(turn);
