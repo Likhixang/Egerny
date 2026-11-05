@@ -266,6 +266,82 @@ test('已下线的写法与预算选项被忽略', async () => {
   assert.equal('thinking_budget' in body, false);
 });
 
+test('上游 400 拒绝 reasoning_effort 时去掉字段重试', async () => {
+  const notes = [];
+  const ctx = makeCtx({
+    url: NEW_URL,
+    body: BODY,
+    env: { ...ENV, EFFORT: 'high' },
+    route: (target, options, n) => {
+      if (n === 1) throw new Error('HTTP error! status: 400, body: Error');
+      return chatText('重试成功');
+    },
+  });
+  ctx.notify = (msg) => notes.push(msg);
+
+  const out = await api.main(ctx);
+  const events = parseSSE(out.__responded.body);
+  const done = events.find((e) => e.name.endsWith('text.value.done')).payload;
+  assert.match(JSON.parse(done.value).content, /重试成功/);
+  assert.equal(ctx.calls.length, 2);
+  assert.equal('reasoning_effort' in ctx.calls[1].options.body, false);
+  assert.equal(notes.length, 1);
+  assert.match(notes[0].title, /思考强度未生效/);
+});
+
+test('被拒后一小时内不再发送 reasoning_effort', async () => {
+  const storage = new Map();
+  const env = { ...ENV, EFFORT: 'high' };
+  const first = makeCtx({
+    url: NEW_URL,
+    body: BODY,
+    env,
+    storage,
+    route: (target, options, n) => {
+      if (n === 1) throw new Error('HTTP error! status: 400, body: Error');
+      return chatText('ok');
+    },
+  });
+  first.notify = () => {};
+  await api.main(first);
+
+  const notes = [];
+  const second = makeCtx({ url: NEW_URL, body: BODY, env, storage, route: () => chatText('第二次') });
+  second.notify = (msg) => notes.push(msg);
+  await api.main(second);
+  assert.equal(second.calls.length, 1);
+  assert.equal('reasoning_effort' in second.calls[0].options.body, false);
+  assert.equal(notes.length, 0);
+});
+
+test('非 400/422 不重试', async () => {
+  const ctx = makeCtx({
+    url: NEW_URL,
+    body: BODY,
+    env: { ...ENV, EFFORT: 'low' },
+    route: () => err(500, { error: { message: 'boom' } }),
+  });
+  const out = await api.main(ctx);
+  const events = parseSSE(out.__responded.body);
+  const done = events.find((e) => e.name.endsWith('text.value.done')).payload;
+  assert.match(JSON.parse(done.value).content, /boom/);
+  assert.equal(ctx.calls.length, 1);
+});
+
+test('未选档位时 400 原样报错，不重试', async () => {
+  const ctx = makeCtx({
+    url: NEW_URL,
+    body: BODY,
+    env: ENV,
+    route: () => err(400, { error: { message: 'bad request' } }),
+  });
+  const out = await api.main(ctx);
+  const events = parseSSE(out.__responded.body);
+  const done = events.find((e) => e.name.endsWith('text.value.done')).payload;
+  assert.match(JSON.parse(done.value).content, /bad request/);
+  assert.equal(ctx.calls.length, 1);
+});
+
 test('EXTRA_BODY 并入请求体但不能覆盖核心字段', async () => {
   const ctx = makeCtx({
     url: NEW_URL,

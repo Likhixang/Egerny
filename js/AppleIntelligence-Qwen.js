@@ -326,32 +326,96 @@ function errorText(data, raw, status) {
   return "上游 HTTP " + status + "：" + String(detail).slice(0, 200);
 }
 
+const NO_EFFORT_PREFIX = "AIQ:noeffort:";
+const NO_EFFORT_TTL_MS = 60 * 60 * 1000;
+
+/** Egern 的 http 客户端在非 2xx 时可能直接抛错，状态码只能从消息里抠 */
+function statusFromError(error) {
+  const direct = Number(error && error.status);
+  if (Number.isFinite(direct) && direct >= 400) return direct;
+  const m = /status[^\d]{0,4}(\d{3})/i.exec(String((error && error.message) || error));
+  return m ? Number(m[1]) : 0;
+}
+
+function effortKey(cfg, model) {
+  return NO_EFFORT_PREFIX + cfg.providerUrl + "|" + (model || cfg.model);
+}
+
+function effortSuppressed(ctx, key) {
+  try {
+    const hit = ctx.storage.getJSON(key);
+    return Boolean(hit && hit.at && Date.now() - hit.at < NO_EFFORT_TTL_MS);
+  } catch (_) {
+    return false;
+  }
+}
+
+function suppressEffort(ctx, key) {
+  try {
+    ctx.storage.setJSON(key, { at: Date.now() });
+  } catch (_) {
+    /* 存储不可用就每次重试，不影响回答 */
+  }
+}
+
+/** 该 provider 不认 reasoning_effort：去掉字段重试一次，并明确告诉用户 */
+function notifyEffortDropped(ctx, model, status) {
+  try {
+    ctx.notify({
+      title: "思考强度未生效",
+      body: (model || "当前模型") + " 拒绝 reasoning_effort（HTTP " + status + "），已按默认重试",
+    });
+  } catch (_) {
+    /* 通知失败忽略 */
+  }
+}
+
 async function postChat(ctx, cfg, messages, model) {
   const headers = { "Content-Type": "application/json" };
   if (cfg.apiKey) headers.Authorization = "Bearer " + cfg.apiKey;
   // 顺序：先铺 EXTRA_BODY 的私有参数，再压上协议核心字段，最后叠加思考强度，
   // 避免用户手写的 JSON 覆盖 model / messages / stream 把请求拆坏。
-  const body = {
+  const core = {
     ...(cfg.extraBody || {}),
     model: model || cfg.model,
     messages,
     stream: false,
-    ...(cfg.reasoning || {}),
   };
-  const resp = await ctx.http.post(cfg.providerUrl, { headers, body, timeout: cfg.timeoutMs });
-  const raw = await resp.text();
-  let data = null;
+  const effort = cfg.reasoning || {};
+  const hasEffort = Object.keys(effort).length > 0;
+  const key = effortKey(cfg, core.model);
+
+  const send = async (extra) => {
+    const body = { ...core, ...extra };
+    const resp = await ctx.http.post(cfg.providerUrl, { headers, body, timeout: cfg.timeoutMs });
+    const raw = await resp.text();
+    let data = null;
+    try {
+      data = JSON.parse(raw);
+    } catch (_) {
+      const parseError = new Error("上游返回非 JSON（HTTP " + resp.status + "）：" + String(raw).slice(0, 120));
+      parseError.status = resp.status;
+      throw parseError;
+    }
+    if (resp.status >= 400) {
+      const error = new Error(errorText(data, raw, resp.status));
+      error.status = resp.status;
+      throw error;
+    }
+    return data;
+  };
+
+  const skip = hasEffort && effortSuppressed(ctx, key);
   try {
-    data = JSON.parse(raw);
-  } catch (_) {
-    throw new Error("上游返回非 JSON（HTTP " + resp.status + "）");
+    return await send(skip ? {} : effort);
+  } catch (error) {
+    if (!hasEffort || skip) throw error;
+    const status = statusFromError(error);
+    if (status !== 400 && status !== 422) throw error;
+    suppressEffort(ctx, key);
+    notifyEffortDropped(ctx, core.model, status);
+    return await send({});
   }
-  if (resp.status >= 400) {
-    const error = new Error(errorText(data, raw, resp.status));
-    error.status = resp.status;
-    throw error;
-  }
-  return data;
 }
 
 /** 调用对话接口，返回文本与引用 */

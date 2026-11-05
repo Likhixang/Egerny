@@ -272,6 +272,8 @@ SerpAPI 把这一层包掉了：给它图，它返回结构化 JSON。
 
 `reasoning_effort` 的可选值与模型支持范围由上游决定（OpenAI 文档给出 `none` / `minimal` / `low` / `medium` / `high` / `xhigh` / `max`，不同模型支持不全）；档位里没放 `minimal`，确实需要时用 `EXTRA_BODY` 传 `{"reasoning_effort":"minimal"}`。
 
+上游不认这个字段时（返回 400 或 422），脚本会自动去掉它重试一次，并弹一条「思考强度未生效」通知，不会把整条回答拖垮；同一 provider + 模型在 1 小时内不再重复尝试，避免每次多打一次请求。
+
 provider 用非标准字段时（百炼 `enable_thinking`/`thinking_budget`、OpenRouter `reasoning.effort`、Gemini `google.thinking_config` 等），同样走 `EXTRA_BODY`，例如：
 
 ```json
@@ -300,7 +302,7 @@ Egern 的 `env_schema.options` 只接受静态数组（官方文档：`options` 
 - **写作工具是单轮的**。不读会话历史，连续点建议时若只发增量、不带原文，效果会退化。
 - **视觉图片只用于当轮**。会话历史里只存 `[图片]` 占位，后续追问看不到那张图。
 - **模型只能手填**。Egern 的 `env_schema` 不支持动态选项，设置页无法列出 provider 的模型清单，见上文「为什么模型不是下拉」。
-- **思考强度只发标准字段**。统一按 `reasoning_effort` 发送，provider 若只认 `enable_thinking` 之类的私有参数，需要自己写进 `EXTRA_BODY`，否则可能被上游忽略或 400。
+- **思考强度只发标准字段**。统一按 `reasoning_effort` 发送；上游不认时脚本会去掉字段重试并通知，但这也意味着该 provider 上档位不会生效，需要私有参数就写进 `EXTRA_BODY`。
 - **识图没有 AI 摘要**。百度原包里的 `mllm_abstract` 是一段商品总结，Google 不给等价物，脚本只填识别词，摘要留空。
 - **识图结果质量取决于 Google**。中文商品图的匹配度通常不如百度，尤其是国内电商和小众商品。
 - **识图没有缓存**：同一张图搜两次会计两次 SerpAPI 额度。
