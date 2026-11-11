@@ -15,7 +15,7 @@
 | **作者** | [Li Khixang](https://github.com/Likhixang) |
 | **主页** | [GitHub / Likhixang](https://github.com/Likhixang) |
 | **图标** | ![X-search icon](https://raw.githubusercontent.com/Likhixang/Egerny/refs/heads/main/icons/X-search.png) |
-| **日期** | 2026-11-11 20:50:00 |
+| **日期** | 2026-11-11 20:55:00 |
 
 ---
 
@@ -53,6 +53,7 @@
 | **tf**, **testflight** | TestFlight 应用（Google 搜索） | [testflight.apple.com](https://testflight.apple.com/) |
 | **fanyi** | Google 翻译 | [translate.google.com](https://translate.google.com/) |
 | **yt**, **youtube** | YouTube | [youtube.com](https://www.youtube.com/) |
+| **dy** | 抖音搜索 | [so.douyin.com](https://so.douyin.com/) |
 | **pornhub** | Pornhub | [cn.pornhub.com](https://cn.pornhub.com/) |
 | **tmdb** | 电影数据库 | [themoviedb.org](https://www.themoviedb.org/) |
 | **ddg** | DuckDuckGo 自搜索 | [duckduckgo.com](https://duckduckgo.com/) |
@@ -75,6 +76,7 @@
 |:------|:--------------|
 | `bd AI研究` | [百度搜索 AI研究](https://www.baidu.com/s?wd=AI研究) |
 | `qq AI研究` | [元宝搜索 AI研究](https://so.qq.com/isearch?query=AI研究) |
+| `dy 美食教程` | [抖音搜索 美食教程](https://so.douyin.com/s?keyword=美食教程) |
 | `gimg cat` | [Google 图片 cat](https://www.google.com/search?tbm=isch&q=cat) |
 | `gh X-search` | [GitHub 搜索 X-search](https://github.com/search?q=X-search) |
 | `fanyi bonjour` | [Google 翻译 bonjour](https://translate.google.com/#view=home&op=translate&sl=auto&tl=zh-CN&text=bonjour) |
@@ -94,7 +96,7 @@ hostname = duckduckgo.com
 |:------|:--------|
 | **2025-10-13** | 初始发布，支持 17 个 Quickword，默认 Bing 兜底 |
 | **2025-12-19** | 由Loon Plugin适配Egern Module |
-| **2026-11-11** | 支持元宝搜索（`qq`、`so`） |
+| **2026-11-11** | 支持元宝搜索（`qq`、`so`）、抖音搜索（`dy`） |
 
 ---
 

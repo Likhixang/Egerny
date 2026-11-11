@@ -4,7 +4,7 @@
 #!author = Li Khixang
 #!homepage = https://github.com/Likhixang
 #!icon = https://raw.githubusercontent.com/Likhixang/Egerny/refs/heads/main/icons/X-search.png
-#!date = 2026-11-11 20:50:00
+#!date = 2026-11-11 20:55:00
 [URL Rewrite]
 ^(?i)https:\/\/duckduckgo\.com\/\?q=bd\+([^&]+).+ https://www.baidu.com/s?wd=$1 307
 ^(?i)https:\/\/duckduckgo\.com\/\?q=bdimg\+([^&]+).+ https://image.baidu.com/search/index?tn=baiduimage&word=$1 307
@@ -32,6 +32,8 @@
 ^(?i)https:\/\/duckduckgo\.com\/\?q=fanyi\+([^&]+).+ https://translate.google.com/#view=home&op=translate&sl=auto&tl=zh-CN&text=$1 307
 
 ^(?i)https:\/\/duckduckgo\.com\/\?q=(yt|youtube)\+([^&]+).+ https://www.youtube.com/results?search_query=$2 307
+
+^(?i)https:\/\/duckduckgo\.com\/\?q=dy\+([^&]+).+ https://so.douyin.com/s?keyword=$1 307
 
 ^(?i)https:\/\/duckduckgo\.com\/\?q=pornhub\+([^&]+).+ https://cn.pornhub.com/video/search?search=$1 307
 

@@ -15,7 +15,7 @@
 | **Author** | [Li Khixang](https://github.com/Likhixang) |
 | **Homepage** | [GitHub / Likhixang](https://github.com/Likhixang) |
 | **Icon** | ![X-search icon](https://raw.githubusercontent.com/Likhixang/Egerny/refs/heads/main/icons/X-search.png) |
-| **Date** | 2026-11-11 20:50:00 |
+| **Date** | 2026-11-11 20:55:00 |
 
 ---
 
@@ -53,6 +53,7 @@ Quickword + Space + Search content
 | **tf**, **testflight** | Google Search for TestFlight apps | [testflight.apple.com](https://testflight.apple.com/) |
 | **fanyi** | Google Translate | [translate.google.com](https://translate.google.com/) |
 | **yt**, **youtube** | YouTube | [youtube.com](https://www.youtube.com/) |
+| **dy** | Douyin Search | [so.douyin.com](https://so.douyin.com/) |
 | **pornhub** | Pornhub | [cn.pornhub.com](https://cn.pornhub.com/) |
 | **tmdb** | The Movie Database | [themoviedb.org](https://www.themoviedb.org/) |
 | **ddg** | DuckDuckGo self-search | [duckduckgo.com](https://duckduckgo.com/) |
@@ -75,6 +76,7 @@ Quickword + Space + Search content
 |:------|:--------------|
 | `bd AI研究` | [百度搜索 AI研究](https://www.baidu.com/s?wd=AI研究) |
 | `qq AI` | [Yuanbao Search AI](https://so.qq.com/isearch?query=AI) |
+| `dy cooking` | [Douyin Search cooking](https://so.douyin.com/s?keyword=cooking) |
 | `gimg cat` | [Google 图片 cat](https://www.google.com/search?tbm=isch&q=cat) |
 | `gh X-search` | [GitHub 搜索 X-search](https://github.com/search?q=X-search) |
 | `fanyi bonjour` | [Google 翻译 bonjour](https://translate.google.com/#view=home&op=translate&sl=auto&tl=zh-CN&text=bonjour) |
@@ -94,7 +96,7 @@ hostname = duckduckgo.com
 |:------|:--------|
 | **2025-10-13** | Initial release with 17 Quickwords and Bing fallback. |
 | **2025-12-19** | Loon2Egern. |
-| **2026-11-11** | Add Yuanbao Search (`qq`, `so`). |
+| **2026-11-11** | Add Yuanbao Search (`qq`, `so`) and Douyin Search (`dy`). |
 
 ---
 
