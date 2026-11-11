@@ -15,7 +15,7 @@
 | **作者** | [Li Khixang](https://github.com/Likhixang) |
 | **主页** | [GitHub / Likhixang](https://github.com/Likhixang) |
 | **图标** | ![X-search icon](https://raw.githubusercontent.com/Likhixang/Egerny/refs/heads/main/icons/X-search.png) |
-| **日期** | 2026-01-17 17:47:00 |
+| **日期** | 2026-11-11 20:50:00 |
 
 ---
 
@@ -44,6 +44,7 @@
 | **gai**, **gaimode**, **aimode** | Google 搜索 AI 模式 | [google.com](https://www.google.com/search?udm=50) |
 | **g**, **gg**, **google** | Google 搜索 | [google.com](https://www.google.com/) |
 | **gimg** | Google 图片 | [images.google.com](https://images.google.com/) |
+| **qq**, **so** | 元宝搜索（腾讯） | [so.qq.com](https://so.qq.com/) |
 | **gpt**, **chatgpt** | ChatGPT | [chatgpt.com](https://chatgpt.com/) |
 | **pp** | Perplexity AI | [perplexity.ai](https://www.perplexity.ai/) |
 | **wk**, **wiki** | 维基百科（中文） | [zh.wikipedia.org](https://zh.wikipedia.org/) |
@@ -73,6 +74,7 @@
 | 输入 | 跳转结果 |
 |:------|:--------------|
 | `bd AI研究` | [百度搜索 AI研究](https://www.baidu.com/s?wd=AI研究) |
+| `qq AI研究` | [元宝搜索 AI研究](https://so.qq.com/isearch?query=AI研究) |
 | `gimg cat` | [Google 图片 cat](https://www.google.com/search?tbm=isch&q=cat) |
 | `gh X-search` | [GitHub 搜索 X-search](https://github.com/search?q=X-search) |
 | `fanyi bonjour` | [Google 翻译 bonjour](https://translate.google.com/#view=home&op=translate&sl=auto&tl=zh-CN&text=bonjour) |
@@ -92,6 +94,7 @@ hostname = duckduckgo.com
 |:------|:--------|
 | **2025-10-13** | 初始发布，支持 17 个 Quickword，默认 Bing 兜底 |
 | **2025-12-19** | 由Loon Plugin适配Egern Module |
+| **2026-11-11** | 支持元宝搜索（`qq`、`so`） |
 
 ---
 
