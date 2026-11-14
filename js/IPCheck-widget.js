@@ -88,21 +88,28 @@ export default async function (ctx) {
   const asnNumber = iff?.network?.asn ? `AS${iff.network.asn}` : (nc?.asn ? `AS${nc.asn}` : "AS --");
   const asnOrg = (iff?.network?.asOrg || nc?.asOrganization || "").trim();
 
+  const ncOn = sel.nc && !!nc;
+  const iffOn = sel.iff && !!iff;
+  const missingList = [];
+  if (sel.nc && !nc) missingList.push("Net.Coffee");
+  if (sel.iff && !iff) missingList.push("IPFinal");
+  const usedLabel = [ncOn ? "Net.Coffee" : "", iffOn ? "IPFinal" : ""].filter(Boolean).join(" · ") || "无";
+  const sourceLabel = missingList.length ? `${usedLabel}（${missingList.join("、")} 不可用）` : usedLabel;
+
   // ── 交叉结论 ──
-  const crossText = sel.both
+  const crossText = ncOn && iffOn
     ? buildCrossVerdict({ nc, iff, ncScore, iffScore, overall })
-    : (sel.nc ? "仅 Net.Coffee 单源模式" : "仅 IPFinal 单源模式");
+    : (ncOn ? "仅 Net.Coffee 单源结论" : (iffOn ? "仅 IPFinal 单源结论" : "无可用数据源"));
   const dataState = sel.both
     ? (nc && iff ? "双源响应正常" : (nc ? "IPFinal 不可用" : "Net.Coffee 不可用"))
     : (sel.nc ? (nc ? "单源响应正常" : "Net.Coffee 不可用") : (iff ? "单源响应正常" : "IPFinal 不可用"));
-  const sourceLabel = sel.both ? "Net.Coffee · IPFinal" : (sel.nc ? "Net.Coffee" : "IPFinal");
 
   const family = ctx.widgetFamily || "systemMedium";
 
   const model = {
     displayIP, ipVer, locShort, locFull, countryCode, asnNumber, asnOrg,
     overall, overallText, level, crossText, dataState, sourceLabel,
-    useNC: sel.nc, useIF: sel.iff,
+    useNC: ncOn, useIF: iffOn,
     ncScore, ncTypeText, ncAbuseText, ncAi, ncRisky, ncDC, ncHome,
     iffScore, iffLevelText, iffLevelColor, iffConf, iffNative, botPct, proxyHit, vpnHit, iffReasons
   };
