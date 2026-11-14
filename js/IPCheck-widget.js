@@ -74,11 +74,15 @@ export default async function (ctx) {
   const overallText = overall === null ? "—" : String(overall);
 
   // ── 位置 / ASN：地名以 Net.Coffee 为准（IPFinal 的中文译名不自然） ──
-  const countryCode = (nc?.countryCode || iff?.geo?.countryCode || "").toUpperCase();
-  const country = nc?.country || iff?.geo?.country || "";
-  const city = nc?.city || nc?.region || iff?.geo?.city || "";
+  // 没有 coffee 数据时，用 Egern 本机 IP 库校验 IPFinal 的国家，冲突则不采信它的地名
+  const localCc = nc ? "" : localCountry(ctx, finalIp);
+  const iffCc = (iff?.geo?.countryCode || "").toUpperCase();
+  const geoConflict = !nc && !!localCc && !!iffCc && localCc !== iffCc;
+  const countryCode = (nc?.countryCode || localCc || iffCc || "").toUpperCase();
+  const country = nc?.country || (geoConflict ? "" : iff?.geo?.country) || "";
+  const city = nc?.city || nc?.region || (geoConflict ? "" : iff?.geo?.city) || "";
   const flag = flagEmoji(countryCode);
-  const locShort = [flag, city || country].filter(Boolean).join(" ") || "未知位置";
+  const locShort = [flag, city || country || (countryCode ? `(${countryCode})` : "")].filter(Boolean).join(" ") || "未知位置";
   const locFull = [flag, city, country, countryCode ? `(${countryCode})` : ""].filter(Boolean).join(" ") || "未知位置";
 
   const asnNumber = iff?.network?.asn ? `AS${iff.network.asn}` : (nc?.asn ? `AS${nc.asn}` : "AS --");
@@ -277,17 +281,30 @@ function leadingZeroBits(h) {
 
 // 数据源选项：双源(默认) / 仅 Net.Coffee / 仅 IPFinal
 function parseSource(raw) {
-  const v = String(raw == null ? "" : raw).toLowerCase().replace(/[\s._-]/g, "");
-  if (!v || v.includes("双源") || v === "both" || v === "all" || v === "auto") {
+  // 容忍全角空格、斜杠、下划线、大小写、中英混写（"仅 Net.Coffee" / "net-coffee" / "IPFinal"）
+  const v = String(raw == null ? "" : raw)
+    .replace(/[\u3000\s._\-\/|，,]/g, "")
+    .toLowerCase();
+  if (!v || v.includes("双源") || v.includes("both") || v.includes("all") || v.includes("auto") || v.includes("默认")) {
     return { nc: true, iff: true, both: true };
   }
-  if (v.includes("ipfinal") || v.includes("final") || v.includes("ifp")) {
-    return { nc: false, iff: true, both: false };
-  }
-  if (v.includes("netcoffee") || v.includes("coffee") || v === "nc" || v.includes("仅net")) {
-    return { nc: true, iff: false, both: false };
-  }
+  const hasIF = v.includes("ipfinal") || v.includes("final") || v.includes("ifp");
+  const hasNC = v.includes("netcoffee") || v.includes("coffee") || v.includes("net") || v === "nc" || v.includes("咖啡");
+  if (hasIF && !hasNC) return { nc: false, iff: true, both: false };
+  if (hasNC && !hasIF) return { nc: true, iff: false, both: false };
   return { nc: true, iff: true, both: true };
+}
+
+// 用 Egern 自带的离线 IP 库取国家代码（只用于校对，不参与评分）
+function localCountry(ctx, ip) {
+  if (!ip || ip === "N/A") return "";
+  try {
+    const info = ctx.lookupIP ? ctx.lookupIP(ip) : null;
+    const cc = info && info.country ? String(info.country).toUpperCase() : "";
+    return /^[A-Z]{2}$/.test(cc) ? cc : "";
+  } catch (e) {
+    return "";
+  }
 }
 
 function clamp100(n) {

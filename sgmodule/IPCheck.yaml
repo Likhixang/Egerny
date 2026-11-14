@@ -29,6 +29,7 @@ scriptings:
       name: IPCheck
       script_url: https://raw.githubusercontent.com/Likhixang/Egerny/main/js/IPCheck-widget.js
       timeout: 20
+      update_interval: 300
       env:
         Source: "双源"
         MarkIP: "false"
