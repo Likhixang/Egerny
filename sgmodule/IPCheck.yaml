@@ -1,0 +1,37 @@
+name: "IP 质检"
+description: "双源节点 IP 质检（Net.Coffee + IPFinal），Apple HIG 轻量现代设计，支持双源同屏并列对比"
+
+# 策略组路由参数（用于规则匹配）
+compat_arguments:
+  Proxy: "DIRECT"
+compat_arguments_desc: |
+  Proxy: 检测请求走的策略组，默认 DIRECT
+
+# 模块可视化配置控件 (Egern 2.16+)
+env_schema:
+  MarkIP:
+    name: IP 打码
+    description: "是否对 IP 地址打码显示"
+    options:
+      - "true"
+      - "false"
+
+scriptings:
+  - generic:
+      name: IPCheck
+      script_url: https://raw.githubusercontent.com/Likhixang/Egerny/main/js/IPCheck-widget.js
+      timeout: 20
+      env:
+        MarkIP: "false"
+
+widgets:
+  - name: IPCheck
+    script_name: IPCheck
+
+rules:
+  - domain_suffix:
+      match: ip.net.coffee
+      policy: "{{{Proxy}}}"
+  - domain_suffix:
+      match: ipfinal.com
+      policy: "{{{Proxy}}}"
