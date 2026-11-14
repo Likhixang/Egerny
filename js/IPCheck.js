@@ -31,14 +31,13 @@ async function main() {
       (iff && iff.geo && iff.geo.city) || (nc && nc.city) || "",
       (iff && iff.geo && iff.geo.country) || (nc && nc.country) || ""].filter(Boolean).join(" ");
 
-    var ncScore = nc && typeof nc.trust_score === "number" ? clamp100(nc.trust_score) : null;
-    var iffScore = iff && iff.score && typeof iff.score.total === "number" ? clamp100(iff.score.total) : null;
+    var ncScore = nc ? numScore(nc.trust_score) : null;
+    var iffScore = iff && iff.score ? numScore(iff.score.total) : null;
 
-    var parts = [];
-    if (ncScore !== null) parts.push(ncScore);
-    if (iffScore !== null) parts.push(iffScore);
-    var overall = parts.length ? Math.round(parts.reduce(function (a, b) { return a + b; }, 0) / parts.length) : 0;
-    var level = levelOf(overall);
+    // 只在真实读到评分时参与平均，缺分不按 0 计
+    var scores = [ncScore, iffScore].filter(function (v) { return v !== null; });
+    var overall = scores.length ? Math.round(scores.reduce(function (a, b) { return a + b; }, 0) / scores.length) : null;
+    var level = overall === null ? { text: "无评分", color: "#8E8E93" } : levelOf(overall);
 
     var lines = [];
     lines.push("出口：" + showIP + "  " + (loc || "未知位置"));
@@ -65,12 +64,12 @@ async function main() {
       lines.push("IPFinal：不可用");
     }
 
-    lines.push("综合：" + overall + "分 " + level.text);
+    lines.push(overall === null ? "综合：无评分（数据源未返回评分）" : "综合：" + overall + "分 " + level.text);
 
     $done({
       title: "IP 质检",
       content: lines.join("\n"),
-      icon: overall >= 70 ? "checkmark.seal.fill" : (overall >= 40 ? "exclamationmark.triangle.fill" : "xmark.seal.fill"),
+      icon: overall === null ? "questionmark.circle" : (overall >= 70 ? "checkmark.seal.fill" : (overall >= 40 ? "exclamationmark.triangle.fill" : "xmark.seal.fill")),
       "title-color": level.color
     });
   } catch (e) {
@@ -227,6 +226,12 @@ function toBytes(body) {
 }
 
 function clamp100(n) { return Math.max(0, Math.min(100, Math.round(n))); }
+
+// 只有真实数字才算分；0 是合法评分，缺失/非法一律 null
+function numScore(v) {
+  var n = typeof v === "string" ? Number(v) : v;
+  return typeof n === "number" && isFinite(n) ? clamp100(n) : null;
+}
 
 function abuserZh(level) {
   var k = String(level).toLowerCase();

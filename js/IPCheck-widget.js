@@ -41,7 +41,7 @@ export default async function (ctx) {
 
   // ── Net.Coffee 归一化 ──
   // trust_score：0-100，越大越干净；is_datacenter / isResidential；abuser_score "0.0144 (Elevated)"
-  const ncScore = typeof nc?.trust_score === "number" ? clamp100(nc.trust_score) : null;
+  const ncScore = numScore(nc?.trust_score);
   const ncDC = nc?.is_datacenter === true;
   const ncHome = nc?.isResidential === true;
   const ncTypeText = nc ? (ncHome ? "住宅 IP" : (ncDC ? "机房 IP" : "普通网络")) : "N/A";
@@ -53,9 +53,9 @@ export default async function (ctx) {
 
   // ── IPFinal 归一化 ──
   // score.total：0-100，越大越干净；score.level 低/中/高风险；isNative；humanRatio
-  const iffScore = typeof iff?.score?.total === "number" ? clamp100(iff.score.total) : null;
+  const iffScore = numScore(iff?.score?.total);
   const iffLevelText = iff?.score?.level || "N/A";
-  const iffLevelColor = iffLevelTone(iff?.score?.band);
+  const iffLevelColor = iffScore !== null ? iffLevelTone(iff?.score?.band) : C.textSecondary;
   const iffConf = ({ high: "高", medium: "中", low: "低" })[iff?.score?.confidence] || "—";
   const iffNative = iff ? (iff.isNative === true ? "原生 IP" : (iff.isNative === false ? "广播 IP" : "原生未知")) : "N/A";
   const humanRatio = typeof iff?.humanRatio === "number" ? iff.humanRatio : null;
@@ -64,12 +64,11 @@ export default async function (ctx) {
   const vpnHit = iff?.factors?.vpn ? `${iff.factors.vpn.hit}/${iff.factors.vpn.total}` : "—";
   const iffReasons = Array.isArray(iff?.score?.reasons) ? iff.score.reasons.filter(r => r.type === "bad").slice(0, 3).map(r => r.text) : [];
 
-  // ── 综合分（两源等权） ──
-  const parts = [];
-  if (ncScore !== null) parts.push(ncScore);
-  if (iffScore !== null) parts.push(iffScore);
-  const overall = parts.length ? Math.round(parts.reduce((a, b) => a + b, 0) / parts.length) : 0;
-  const level = getPurityLevel(overall);
+  // ── 综合分：仅在真实读到评分时参与平均，缺分不按 0 计 ──
+  const scores = [ncScore, iffScore].filter(v => v !== null);
+  const overall = scores.length ? Math.round(scores.reduce((a, b) => a + b, 0) / scores.length) : null;
+  const level = overall === null ? NO_SCORE_LEVEL : getPurityLevel(overall);
+  const overallText = overall === null ? "—" : String(overall);
 
   // ── 位置 / ASN ──
   const countryCode = (iff?.geo?.countryCode || nc?.countryCode || "").toUpperCase();
@@ -90,7 +89,7 @@ export default async function (ctx) {
 
   const model = {
     displayIP, ipVer, locShort, locFull, countryCode, asnNumber, asnOrg,
-    overall, level, crossText, dataState,
+    overall, overallText, level, crossText, dataState,
     ncScore, ncTypeText, ncAbuseText, ncAi, ncRisky, ncDC, ncHome,
     iffScore, iffLevelText, iffLevelColor, iffConf, iffNative, botPct, proxyHit, vpnHit, iffReasons
   };
@@ -271,6 +270,12 @@ function clamp100(n) {
   return Math.max(0, Math.min(100, Math.round(n)));
 }
 
+// 只有真实数字才算分；0 是合法评分，缺失/非法一律 null（不参与平均、不按 0 计）
+function numScore(v) {
+  const n = typeof v === "string" ? Number(v) : v;
+  return Number.isFinite(n) ? clamp100(n) : null;
+}
+
 function abuserZh(level) {
   const k = String(level).toLowerCase();
   if (k.includes("very low")) return "极低";
@@ -283,7 +288,8 @@ function abuserZh(level) {
 function iffLevelTone(band) {
   if (band === "low") return "rgb(52,199,89)";
   if (band === "medium") return "rgb(255,149,0)";
-  return "rgb(255,59,48)";
+  if (band === "high") return "rgb(255,59,48)";
+  return C.textSecondary;
 }
 
 function buildCrossVerdict({ nc, iff, ncScore, iffScore, overall }) {
@@ -327,7 +333,7 @@ function renderSystemSmall(d) {
           { type: "spacer", length: 5 },
           { type: "text", text: "IP质检", font: { size: "caption1", weight: "heavy" }, textColor: C.textPrimary },
           { type: "spacer" },
-          createPillBadge(`${d.overall}分`, d.level.color, d.level.badgeBg, d.level.icon)
+          createPillBadge(d.overall === null ? "无评分" : `${d.overallText}分`, d.level.color, d.level.badgeBg, d.level.icon)
         ]
       },
       { type: "spacer", length: 5 },
@@ -426,7 +432,7 @@ function renderSystemMedium(d) {
           { type: "spacer", length: 6 },
           { type: "text", text: "IP质检", font: { size: "subheadline", weight: "heavy" }, textColor: C.textPrimary },
           { type: "spacer" },
-          createPillBadge(`综合 ${d.overall}分`, d.level.color, d.level.badgeBg, d.level.icon)
+          createPillBadge(d.overall === null ? "综合 无评分" : `综合 ${d.overallText}分`, d.level.color, d.level.badgeBg, d.level.icon)
         ]
       },
       { type: "spacer", length: 4 },
@@ -538,7 +544,7 @@ function renderSystemLarge(d) {
             children: [{ type: "text", text: d.ipVer, font: { size: 10, weight: "bold" }, textColor: C.textSecondary }]
           },
           { type: "spacer" },
-          createPillBadge(`综合指数: ${d.overall}`, d.level.color, d.level.badgeBg, d.level.icon)
+          createPillBadge(d.overall === null ? "综合指数: 无评分" : `综合指数: ${d.overallText}`, d.level.color, d.level.badgeBg, d.level.icon)
         ]
       },
       {
@@ -552,7 +558,7 @@ function renderSystemLarge(d) {
         borderWidth: 0.5,
         borderColor: C.cardBorder,
         children: [
-          { type: "image", src: createGaugeRingSvg(d.overall, 72, 6.5, d.level.color, "综合质检"), width: 72, height: 72 },
+          { type: "image", src: createGaugeRingSvg(d.overall === null ? 0 : d.overall, 72, 6.5, d.level.color, "综合质检", d.overallText), width: 72, height: 72 },
           {
             type: "stack",
             direction: "column",
@@ -625,7 +631,7 @@ function renderAccessoryCircular(d) {
     type: "widget",
     backgroundColor: C.widgetBg,
     children: [
-      { type: "image", src: createGaugeRingSvg(d.overall, 60, 5, d.level.color, "质检"), width: 60, height: 60 }
+      { type: "image", src: createGaugeRingSvg(d.overall === null ? 0 : d.overall, 60, 5, d.level.color, "质检", d.overallText), width: 60, height: 60 }
     ]
   };
 }
@@ -705,7 +711,7 @@ function renderErrorWidget(errorMsg) {
 
 // ── SVG 绘图 ──
 
-function createGaugeRingSvg(purity, size, strokeWidth, strokeColor, labelText = "纯净度") {
+function createGaugeRingSvg(purity, size, strokeWidth, strokeColor, labelText = "纯净度", valueText = null) {
   const half = size / 2;
   const r = half - strokeWidth / 2;
   const circ = 2 * Math.PI * r;
@@ -724,7 +730,7 @@ function createGaugeRingSvg(purity, size, strokeWidth, strokeColor, labelText = 
   return `data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 ${size} ${size}'>` +
     `<circle cx='${half}' cy='${half}' r='${r}' fill='none' stroke='${trackColor}' stroke-width='${strokeWidth}'/>` +
     `<circle cx='${half}' cy='${half}' r='${r}' fill='none' stroke='${strokeColor}' stroke-width='${strokeWidth}' stroke-linecap='round' stroke-dasharray='${dash} ${gap}' transform='rotate(-90 ${half} ${half})'/>` +
-    `<text x='${half}' y='${numY}' text-anchor='middle' font-size='${numFontSize}' font-weight='800' font-family='-apple-system, BlinkMacSystemFont, sans-serif' fill='${strokeColor}'>${purity}</text>` +
+    `<text x='${half}' y='${numY}' text-anchor='middle' font-size='${numFontSize}' font-weight='800' font-family='-apple-system, BlinkMacSystemFont, sans-serif' fill='${strokeColor}'>${valueText === null ? purity : valueText}</text>` +
     (labelText ? `<text x='${half}' y='${labelY}' text-anchor='middle' font-size='${labelFontSize}' font-weight='600' font-family='-apple-system, BlinkMacSystemFont, sans-serif' fill='${subColor}'>${labelText}</text>` : '') +
     `</svg>`;
 }
@@ -738,6 +744,13 @@ function getPurityColor(purity) {
   if (purity >= 40) return "rgb(255,149,0)";
   return "rgb(255,59,48)";
 }
+
+const NO_SCORE_LEVEL = {
+  text: "无评分",
+  color: { light: "#8E8E93", dark: "#98989D" },
+  badgeBg: { light: "rgba(142,142,147,0.12)", dark: "rgba(142,142,147,0.20)" },
+  icon: "questionmark.circle"
+};
 
 function getPurityLevel(purity) {
   if (purity >= 80) {
