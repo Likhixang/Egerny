@@ -31,8 +31,8 @@ async function main() {
       });
     }
 
-    var finalIp = ip || (nc && nc.ip) || (iff && iff.ip) || "N/A";
-    var showIP = MarkIP ? maskIP(finalIp) : finalIp;
+    var finalIp = ip || (nc && nc.ip) || (iff && iff.ip) || "";
+    var showIP = MarkIP ? (maskIP(finalIp) || "未知 IP") : (finalIp || "未知 IP");
     // 地名以 Net.Coffee 为准，IPFinal 中文译名仅作兜底
     var loc = [flag((nc && nc.countryCode) || (iff && iff.geo && iff.geo.countryCode) || ""),
       (nc && (nc.city || nc.region)) || (iff && iff.geo && iff.geo.city) || "",
