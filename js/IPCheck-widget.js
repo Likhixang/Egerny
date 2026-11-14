@@ -37,34 +37,34 @@ export default async function (ctx) {
     return renderErrorWidget(sel.both ? "所有数据源请求失败" : (sel.nc ? "Net.Coffee 请求失败" : "IPFinal 请求失败"));
   }
 
-  const finalIp = ip || nc?.ip || iff?.ip || "N/A";
+  const finalIp = ip || nc?.ip || iff?.ip || "";
   const isIPv6 = finalIp.includes(":");
-  const ipVer = finalIp === "N/A" ? "IP" : (isIPv6 ? "IPv6" : "IPv4");
-  const displayIP = markIP ? maskIP(finalIp) : finalIp;
+  const ipVer = finalIp ? (isIPv6 ? "IPv6" : "IPv4") : "IP";
+  const displayIP = markIP ? (maskIP(finalIp) || "未知 IP") : (finalIp || "未知 IP");
 
   // ── Net.Coffee 归一化 ──
   // trust_score：0-100，越大越干净；is_datacenter / isResidential；abuser_score "0.0144 (Elevated)"
   const ncScore = numScore(nc?.trust_score);
   const ncDC = nc?.is_datacenter === true;
   const ncHome = nc?.isResidential === true;
-  const ncTypeText = nc ? (ncHome ? "住宅 IP" : (ncDC ? "机房 IP" : "普通网络")) : "N/A";
+  const ncTypeText = nc ? (ncHome ? "住宅 IP" : (ncDC ? "机房 IP" : "普通网络")) : "";
   const ncAbuse = nc?.abuser_score || "";
   const ncAbuseLevel = (ncAbuse.match(/\(([^)]+)\)/) || [, ""])[1];
-  const ncAbuseText = nc ? (ncAbuseLevel ? abuserZh(ncAbuseLevel) : "无记录") : "N/A";
+  const ncAbuseText = nc ? (ncAbuseLevel ? abuserZh(ncAbuseLevel) : "无记录") : "";
   const ncAi = nc?.ai_verdict?.label || "";
   const ncRisky = nc ? (nc.is_vpn || nc.is_proxy || nc.is_tor || nc.is_abuser || nc.is_crawler) : false;
 
   // ── IPFinal 归一化 ──
   // score.total：0-100，越大越干净；score.level 低/中/高风险；isNative；humanRatio
   const iffScore = numScore(iff?.score?.total);
-  const iffLevelText = iff?.score?.level || "N/A";
+  const iffLevelText = iff?.score?.level || (iff ? "无评级" : "");
   const iffLevelColor = iffScore !== null ? iffLevelTone(iff?.score?.band) : C.textSecondary;
-  const iffConf = ({ high: "高", medium: "中", low: "低" })[iff?.score?.confidence] || "—";
-  const iffNative = iff ? (iff.isNative === true ? "原生 IP" : (iff.isNative === false ? "广播 IP" : "原生未知")) : "N/A";
+  const iffConf = ({ high: "高", medium: "中", low: "低" })[iff?.score?.confidence] || "未知";
+  const iffNative = iff ? (iff.isNative === true ? "原生 IP" : (iff.isNative === false ? "广播 IP" : "原生未知")) : "";
   const humanRatio = typeof iff?.humanRatio === "number" ? iff.humanRatio : null;
   const botPct = humanRatio !== null ? Math.round(100 - humanRatio) : null;
-  const proxyHit = iff?.factors?.proxy ? `${iff.factors.proxy.hit}/${iff.factors.proxy.total}` : "—";
-  const vpnHit = iff?.factors?.vpn ? `${iff.factors.vpn.hit}/${iff.factors.vpn.total}` : "—";
+  const proxyHit = iff?.factors?.proxy ? `${iff.factors.proxy.hit}/${iff.factors.proxy.total}` : (iff ? "未检测" : "");
+  const vpnHit = iff?.factors?.vpn ? `${iff.factors.vpn.hit}/${iff.factors.vpn.total}` : (iff ? "未检测" : "");
   const iffReasons = Array.isArray(iff?.score?.reasons) ? iff.score.reasons.filter(r => r.type === "bad").slice(0, 3).map(r => r.text) : [];
 
   // ── 综合分：仅在真实读到评分时参与平均，缺分不按 0 计 ──
@@ -304,7 +304,7 @@ function parseSource(raw) {
 
 // 用 Egern 自带的离线 IP 库取国家代码（只用于校对，不参与评分）
 function localCountry(ctx, ip) {
-  if (!ip || ip === "N/A") return "";
+  if (!ip) return "";
   try {
     const info = ctx.lookupIP ? ctx.lookupIP(ip) : null;
     const cc = info && info.country ? String(info.country).toUpperCase() : "";
@@ -442,8 +442,8 @@ function renderSystemSmall(d) {
         borderWidth: 0.5,
         borderColor: C.cardBorder,
         children: [
-          ...(d.useNC ? [createSmallSourceRow("Net.Coffee", d.ncScore !== null ? `${d.ncScore}分` : "N/A", d.ncTypeText, getPurityColor(d.ncScore))] : []),
-          ...(d.useIF ? [createSmallSourceRow("IPFinal", d.iffScore !== null ? `${d.iffScore}分` : "N/A", d.iffLevelText, d.iffScore !== null ? d.iffLevelColor : C.textSecondary)] : [])
+          ...(d.useNC ? [createSmallSourceRow("Net.Coffee", d.ncScore !== null ? `${d.ncScore}分` : "无评分", d.ncTypeText, getPurityColor(d.ncScore))] : []),
+          ...(d.useIF ? [createSmallSourceRow("IPFinal", d.iffScore !== null ? `${d.iffScore}分` : "无评分", d.iffLevelText, d.iffScore !== null ? d.iffLevelColor : C.textSecondary)] : [])
         ]
       }
     ]
@@ -513,7 +513,7 @@ function renderSystemMedium(d) {
         children: [
           ...(d.useNC ? [createCleanColumn({
             sourceName: "Net.Coffee",
-            scoreVal: d.ncScore !== null ? `${d.ncScore}分` : "N/A",
+            scoreVal: d.ncScore !== null ? `${d.ncScore}分` : "无评分",
             scoreColor: getPurityColor(d.ncScore),
             tagPrimary: d.ncTypeText,
             tagSecondary: `滥用 ${d.ncAbuseText}`,
@@ -521,7 +521,7 @@ function renderSystemMedium(d) {
           })] : []),
           ...(d.useIF ? [createCleanColumn({
             sourceName: "IPFinal",
-            scoreVal: d.iffScore !== null ? `${d.iffScore}分` : "N/A",
+            scoreVal: d.iffScore !== null ? `${d.iffScore}分` : "无评分",
             scoreColor: d.iffScore !== null ? d.iffLevelColor : C.textSecondary,
             tagPrimary: d.iffLevelText,
             tagSecondary: d.iffNative,
@@ -633,12 +633,12 @@ function renderSystemLarge(d) {
             flex: 1,
             children: [
               ...(d.useNC ? [createMatrixCard("sf-symbol:shield.checkerboard", "Net.Coffee 属性维度", [
-                { label: "纯净得分", val: d.ncScore !== null ? `${d.ncScore}分` : "N/A", color: getPurityColor(d.ncScore) },
+                { label: "纯净得分", val: d.ncScore !== null ? `${d.ncScore}分` : "无评分", color: getPurityColor(d.ncScore) },
                 { label: "网络类型", val: d.ncTypeText, color: d.ncHome ? "rgb(52,199,89)" : "rgb(255,149,0)" },
                 { label: "滥用等级", val: d.ncAbuseText, color: d.ncAbuseText === "低" || d.ncAbuseText === "极低" ? "rgb(52,199,89)" : "rgb(255,149,0)" }
               ], true)] : []),
               ...(d.useIF ? [createMatrixCard("sf-symbol:chart.bar.xaxis", "IPFinal 评分维度", [
-                { label: "纯净评分", val: d.iffScore !== null ? `${d.iffScore}分` : "N/A", color: d.iffScore !== null ? d.iffLevelColor : C.textSecondary },
+                { label: "纯净评分", val: d.iffScore !== null ? `${d.iffScore}分` : "无评分", color: d.iffScore !== null ? d.iffLevelColor : C.textSecondary },
                 { label: "风险等级", val: d.iffLevelText, color: d.iffLevelColor },
                 { label: "置信度", val: d.iffConf, color: C.textSecondary }
               ], true)] : [])
@@ -832,7 +832,7 @@ function createPillBadge(text, textColor, bgColor, icon) {
 }
 
 function maskIP(ip) {
-  if (!ip || ip === "N/A") return "";
+  if (!ip) return "";
   if (ip.includes(".")) {
     const p = ip.split(".");
     return `${p[0]}.${p[1]}.*.*`;

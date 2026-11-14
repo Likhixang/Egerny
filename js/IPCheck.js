@@ -56,7 +56,7 @@ async function main() {
       var ncType = nc.isResidential ? "住宅 IP" : (nc.is_datacenter ? "机房 IP" : "普通网络");
       var abuseRaw = (String(nc.abuser_score || "").match(/\(([^)]+)\)/) || [, ""])[1];
       var abuse = abuserZh(abuseRaw);
-      lines.push("Net.Coffee：" + (ncScore !== null ? ncScore + "分" : "N/A") + " · " + ncType +
+      lines.push("Net.Coffee：" + (ncScore !== null ? ncScore + "分" : "无评分") + " · " + ncType +
         (abuse ? " · 滥用 " + abuse : ""));
     } else if (SRC.nc) {
       lines.push("Net.Coffee：不可用");
@@ -65,8 +65,8 @@ async function main() {
     if (SRC.iff && iff) {
       var native = iff.isNative === true ? "原生 IP" : (iff.isNative === false ? "广播 IP" : "原生未知");
       var bot = typeof iff.humanRatio === "number" ? " · 机器流量 " + Math.round(100 - iff.humanRatio) + "%" : "";
-      lines.push("IPFinal：" + (iffScore !== null ? iffScore + "分" : "N/A") + " · " +
-        ((iff.score && iff.score.level) || "N/A") + " · " + native + bot);
+      lines.push("IPFinal：" + (iffScore !== null ? iffScore + "分" : "无评分") + " · " +
+        ((iff.score && iff.score.level) || "无评级") + " · " + native + bot);
     } else if (SRC.iff) {
       lines.push("IPFinal：不可用");
     }
