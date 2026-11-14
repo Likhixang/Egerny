@@ -27,9 +27,10 @@ async function main() {
 
     var finalIp = ip || (nc && nc.ip) || (iff && iff.ip) || "N/A";
     var showIP = MarkIP ? maskIP(finalIp) : finalIp;
-    var loc = [flag((iff && iff.geo && iff.geo.countryCode) || (nc && nc.countryCode) || ""),
-      (iff && iff.geo && iff.geo.city) || (nc && nc.city) || "",
-      (iff && iff.geo && iff.geo.country) || (nc && nc.country) || ""].filter(Boolean).join(" ");
+    // 地名以 Net.Coffee 为准，IPFinal 中文译名仅作兜底
+    var loc = [flag((nc && nc.countryCode) || (iff && iff.geo && iff.geo.countryCode) || ""),
+      (nc && (nc.city || nc.region)) || (iff && iff.geo && iff.geo.city) || "",
+      (nc && nc.country) || (iff && iff.geo && iff.geo.country) || ""].filter(Boolean).join(" ");
 
     var ncScore = nc ? numScore(nc.trust_score) : null;
     var iffScore = iff && iff.score ? numScore(iff.score.total) : null;

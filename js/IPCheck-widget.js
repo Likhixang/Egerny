@@ -70,10 +70,10 @@ export default async function (ctx) {
   const level = overall === null ? NO_SCORE_LEVEL : getPurityLevel(overall);
   const overallText = overall === null ? "—" : String(overall);
 
-  // ── 位置 / ASN ──
-  const countryCode = (iff?.geo?.countryCode || nc?.countryCode || "").toUpperCase();
-  const country = iff?.geo?.country || nc?.country || "";
-  const city = iff?.geo?.city || nc?.city || "";
+  // ── 位置 / ASN：地名以 Net.Coffee 为准（IPFinal 的中文译名不自然） ──
+  const countryCode = (nc?.countryCode || iff?.geo?.countryCode || "").toUpperCase();
+  const country = nc?.country || iff?.geo?.country || "";
+  const city = nc?.city || nc?.region || iff?.geo?.city || "";
   const flag = flagEmoji(countryCode);
   const locShort = [flag, city || country].filter(Boolean).join(" ") || "未知位置";
   const locFull = [flag, city, country, countryCode ? `(${countryCode})` : ""].filter(Boolean).join(" ") || "未知位置";
