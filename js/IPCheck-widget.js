@@ -18,20 +18,23 @@ const UA = "Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) AppleWebKit/6
 export default async function (ctx) {
   const markIP = String(ctx.env?.MarkIP || ctx.env?.mark_ip || "false").toLowerCase() === "true";
 
-  // 1. 出口 IP（走 Net.Coffee 自己的 Cloudflare trace，无需第三方）
-  const ip = await fetchSelfIP(ctx);
+  // 0. 数据源选择：默认双源，可只查其中一个
+  const sel = parseSource(ctx.env?.Source ?? ctx.env?.source);
 
-  // 2. 双源并发
+  // 1. 出口 IP（Net.Coffee 的 Cloudflare trace；只查 IPFinal 时交给它自己的 self 报告）
+  const ip = sel.nc ? await fetchSelfIP(ctx) : "";
+
+  // 2. 按选择并发
   const [ncRes, ifRes] = await Promise.allSettled([
-    fetchNetCoffee(ctx, ip),
-    fetchIPFinal(ctx, ip)
+    sel.nc ? fetchNetCoffee(ctx, ip) : Promise.resolve(null),
+    sel.iff ? fetchIPFinal(ctx, ip) : Promise.resolve(null)
   ]);
 
   const nc = ncRes.status === "fulfilled" ? ncRes.value : null;
   const iff = ifRes.status === "fulfilled" ? ifRes.value : null;
 
   if (!nc && !iff) {
-    return renderErrorWidget("所有数据源请求失败");
+    return renderErrorWidget(sel.both ? "所有数据源请求失败" : (sel.nc ? "Net.Coffee 请求失败" : "IPFinal 请求失败"));
   }
 
   const finalIp = ip || nc?.ip || iff?.ip || "N/A";
@@ -82,14 +85,20 @@ export default async function (ctx) {
   const asnOrg = (iff?.network?.asOrg || nc?.asOrganization || "").trim();
 
   // ── 交叉结论 ──
-  const crossText = buildCrossVerdict({ nc, iff, ncScore, iffScore, overall });
-  const dataState = nc && iff ? "双源响应正常" : (nc ? "IPFinal 不可用" : "Net.Coffee 不可用");
+  const crossText = sel.both
+    ? buildCrossVerdict({ nc, iff, ncScore, iffScore, overall })
+    : (sel.nc ? "仅 Net.Coffee 单源模式" : "仅 IPFinal 单源模式");
+  const dataState = sel.both
+    ? (nc && iff ? "双源响应正常" : (nc ? "IPFinal 不可用" : "Net.Coffee 不可用"))
+    : (sel.nc ? (nc ? "单源响应正常" : "Net.Coffee 不可用") : (iff ? "单源响应正常" : "IPFinal 不可用"));
+  const sourceLabel = sel.both ? "Net.Coffee · IPFinal" : (sel.nc ? "Net.Coffee" : "IPFinal");
 
   const family = ctx.widgetFamily || "systemMedium";
 
   const model = {
     displayIP, ipVer, locShort, locFull, countryCode, asnNumber, asnOrg,
-    overall, overallText, level, crossText, dataState,
+    overall, overallText, level, crossText, dataState, sourceLabel,
+    useNC: sel.nc, useIF: sel.iff,
     ncScore, ncTypeText, ncAbuseText, ncAi, ncRisky, ncDC, ncHome,
     iffScore, iffLevelText, iffLevelColor, iffConf, iffNative, botPct, proxyHit, vpnHit, iffReasons
   };
@@ -131,10 +140,10 @@ async function fetchNetCoffee(ctx, ip) {
 }
 
 async function fetchIPFinal(ctx, ip) {
-  if (!ip) return null;
   const sess = ipfSession(ctx);
   const pow = await ipfPow(ctx, sess);
-  const url = `${IF_BASE}/report/${encodeURIComponent(ip)}`;
+  // 无 IP 时不带路径段，服务端返回自身出口的报告
+  const url = ip ? `${IF_BASE}/report/${encodeURIComponent(ip)}` : `${IF_BASE}/report`;
 
   let resp = await ipfGet(ctx, url, sess, pow);
   if (resp.status === 428) {
@@ -266,6 +275,21 @@ function leadingZeroBits(h) {
 
 // ─────────────────────────── 归一化辅助 ───────────────────────────
 
+// 数据源选项：双源(默认) / 仅 Net.Coffee / 仅 IPFinal
+function parseSource(raw) {
+  const v = String(raw == null ? "" : raw).toLowerCase().replace(/[\s._-]/g, "");
+  if (!v || v.includes("双源") || v === "both" || v === "all" || v === "auto") {
+    return { nc: true, iff: true, both: true };
+  }
+  if (v.includes("ipfinal") || v.includes("final") || v.includes("ifp")) {
+    return { nc: false, iff: true, both: false };
+  }
+  if (v.includes("netcoffee") || v.includes("coffee") || v === "nc" || v.includes("仅net")) {
+    return { nc: true, iff: false, both: false };
+  }
+  return { nc: true, iff: true, both: true };
+}
+
 function clamp100(n) {
   return Math.max(0, Math.min(100, Math.round(n)));
 }
@@ -394,8 +418,8 @@ function renderSystemSmall(d) {
         borderWidth: 0.5,
         borderColor: C.cardBorder,
         children: [
-          createSmallSourceRow("Net.Coffee", d.ncScore !== null ? `${d.ncScore}分` : "N/A", d.ncTypeText, getPurityColor(d.ncScore)),
-          createSmallSourceRow("IPFinal", d.iffScore !== null ? `${d.iffScore}分` : "N/A", d.iffLevelText, d.iffScore !== null ? d.iffLevelColor : C.textSecondary)
+          ...(d.useNC ? [createSmallSourceRow("Net.Coffee", d.ncScore !== null ? `${d.ncScore}分` : "N/A", d.ncTypeText, getPurityColor(d.ncScore))] : []),
+          ...(d.useIF ? [createSmallSourceRow("IPFinal", d.iffScore !== null ? `${d.iffScore}分` : "N/A", d.iffLevelText, d.iffScore !== null ? d.iffLevelColor : C.textSecondary)] : [])
         ]
       }
     ]
@@ -463,22 +487,22 @@ function renderSystemMedium(d) {
         gap: 6,
         flex: 1,
         children: [
-          createCleanColumn({
+          ...(d.useNC ? [createCleanColumn({
             sourceName: "Net.Coffee",
             scoreVal: d.ncScore !== null ? `${d.ncScore}分` : "N/A",
             scoreColor: getPurityColor(d.ncScore),
             tagPrimary: d.ncTypeText,
             tagSecondary: `滥用 ${d.ncAbuseText}`,
             subline: d.ncAi ? `AI 判定 ${d.ncAi}` : d.asnNumber
-          }),
-          createCleanColumn({
+          })] : []),
+          ...(d.useIF ? [createCleanColumn({
             sourceName: "IPFinal",
             scoreVal: d.iffScore !== null ? `${d.iffScore}分` : "N/A",
             scoreColor: d.iffScore !== null ? d.iffLevelColor : C.textSecondary,
             tagPrimary: d.iffLevelText,
             tagSecondary: d.iffNative,
             subline: d.botPct !== null ? `机器流量 ${d.botPct}%` : `置信 ${d.iffConf}`
-          })
+          })] : [])
         ]
       },
       { type: "spacer", length: 5 },
@@ -491,7 +515,7 @@ function renderSystemMedium(d) {
           { type: "image", src: "sf-symbol:network", color: C.textTertiary, width: 9, height: 9 },
           { type: "text", text: d.asnOrg || "未知组织", font: { size: 10 }, textColor: C.textTertiary, maxLines: 1 },
           { type: "spacer" },
-          { type: "text", text: "数据源: Net.Coffee · IPFinal", font: { size: 10 }, textColor: C.textTertiary }
+          { type: "text", text: `数据源: ${d.sourceLabel}`, font: { size: 10 }, textColor: C.textTertiary }
         ]
       }
     ]
@@ -584,16 +608,16 @@ function renderSystemLarge(d) {
             gap: 8,
             flex: 1,
             children: [
-              createMatrixCard("sf-symbol:shield.checkerboard", "Net.Coffee 属性维度", [
+              ...(d.useNC ? [createMatrixCard("sf-symbol:shield.checkerboard", "Net.Coffee 属性维度", [
                 { label: "纯净得分", val: d.ncScore !== null ? `${d.ncScore}分` : "N/A", color: getPurityColor(d.ncScore) },
                 { label: "网络类型", val: d.ncTypeText, color: d.ncHome ? "rgb(52,199,89)" : "rgb(255,149,0)" },
                 { label: "滥用等级", val: d.ncAbuseText, color: d.ncAbuseText === "低" || d.ncAbuseText === "极低" ? "rgb(52,199,89)" : "rgb(255,149,0)" }
-              ], true),
-              createMatrixCard("sf-symbol:chart.bar.xaxis", "IPFinal 评分维度", [
+              ], true)] : []),
+              ...(d.useIF ? [createMatrixCard("sf-symbol:chart.bar.xaxis", "IPFinal 评分维度", [
                 { label: "纯净评分", val: d.iffScore !== null ? `${d.iffScore}分` : "N/A", color: d.iffScore !== null ? d.iffLevelColor : C.textSecondary },
                 { label: "风险等级", val: d.iffLevelText, color: d.iffLevelColor },
                 { label: "置信度", val: d.iffConf, color: C.textSecondary }
-              ], true)
+              ], true)] : [])
             ]
           },
           {
@@ -602,15 +626,15 @@ function renderSystemLarge(d) {
             gap: 8,
             flex: 1,
             children: [
-              createMatrixCard("sf-symbol:server.rack", "IPFinal 风险因子", [
+              ...(d.useIF ? [createMatrixCard("sf-symbol:server.rack", "IPFinal 风险因子", [
                 { label: "原生状态", val: d.iffNative, color: d.iffNative === "原生 IP" ? "rgb(52,199,89)" : "rgb(255,149,0)" },
                 { label: "代理命中", val: d.proxyHit, color: C.textSecondary },
                 { label: "VPN 命中", val: d.vpnHit, color: C.textSecondary }
-              ], true),
-              createMatrixCard("sf-symbol:checkmark.seal.fill", "多源交叉结论", [
+              ], true)] : []),
+              createMatrixCard("sf-symbol:checkmark.seal.fill", "质检结论", [
                 { label: "风险定级", val: d.level.text, color: d.level.color },
                 { label: "仲裁结论", val: d.crossText, color: C.textSecondary },
-                { label: "服务状态", val: d.dataState, color: d.dataState === "双源响应正常" ? "rgb(52,199,89)" : "rgb(255,149,0)" }
+                { label: "服务状态", val: d.dataState, color: d.dataState.indexOf("正常") !== -1 ? "rgb(52,199,89)" : "rgb(255,149,0)" }
               ], true)
             ]
           }
@@ -620,7 +644,7 @@ function renderSystemLarge(d) {
         type: "stack",
         direction: "row",
         alignItems: "center",
-        children: [{ type: "text", text: "数据源: Net.Coffee · IPFinal", font: { size: 10 }, textColor: C.textTertiary }]
+        children: [{ type: "text", text: `数据源: ${d.sourceLabel}`, font: { size: 10 }, textColor: C.textTertiary }]
       }
     ]
   };

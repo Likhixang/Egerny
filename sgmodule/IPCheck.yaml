@@ -1,5 +1,5 @@
 name: "IP 质检"
-description: "双源节点 IP 质检（Net.Coffee + IPFinal），Apple HIG 轻量现代设计，支持双源同屏并列对比"
+description: "双源节点 IP 质检（Net.Coffee + IPFinal），Apple HIG 轻量现代设计，支持双源并列或单源查询"
 
 # 策略组路由参数（用于规则匹配）
 compat_arguments:
@@ -9,6 +9,14 @@ compat_arguments_desc: |
 
 # 模块可视化配置控件 (Egern 2.16+)
 env_schema:
+  Source:
+    name: 数据源
+    description: "默认双源并列对比；也可只查 Net.Coffee 或只查 IPFinal"
+    default_value: "双源"
+    options:
+      - "双源"
+      - "Net.Coffee"
+      - "IPFinal"
   MarkIP:
     name: IP 打码
     description: "是否对 IP 地址打码显示"
@@ -22,6 +30,7 @@ scriptings:
       script_url: https://raw.githubusercontent.com/Likhixang/Egerny/main/js/IPCheck-widget.js
       timeout: 20
       env:
+        Source: "双源"
         MarkIP: "false"
 
 widgets:

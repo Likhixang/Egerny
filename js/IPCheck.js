@@ -7,22 +7,28 @@
 var NC = "https://ip.net.coffee";
 var IF = "https://api.ipfinal.com/api";
 var IF_ORIGIN = "https://ipfinal.com";
-var MarkIP = String($argument || "false").toLowerCase() === "true";
+var ARG = parseArg($argument);
+var MarkIP = ARG.markIP;
+var SRC = ARG.source;
 var UA = "Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.0 Mobile/15E148 Safari/604.1";
 
 main();
 
 async function main() {
   try {
-    var ip = await selfIP();
+    var ip = SRC.nc ? await selfIP() : "";
     var results = await Promise.all([
-      netCoffee(ip).catch(function () { return null; }),
-      ipFinal(ip).catch(function () { return null; })
+      SRC.nc ? netCoffee(ip).catch(function () { return null; }) : Promise.resolve(null),
+      SRC.iff ? ipFinal(ip).catch(function () { return null; }) : Promise.resolve(null)
     ]);
     var nc = results[0], iff = results[1];
 
     if (!nc && !iff) {
-      return $done({ title: "IP 质检", content: "请求失败", icon: "network.slash" });
+      return $done({
+        title: "IP 质检",
+        content: SRC.both ? "所有数据源请求失败" : (SRC.nc ? "Net.Coffee 请求失败" : "IPFinal 请求失败"),
+        icon: "network.slash"
+      });
     }
 
     var finalIp = ip || (nc && nc.ip) || (iff && iff.ip) || "N/A";
@@ -46,26 +52,27 @@ async function main() {
     var org = (iff && iff.network && (iff.network.asOrg || iff.network.isp)) || (nc && nc.asOrganization) || "";
     if (asn || org) lines.push("网络：" + [asn, org].filter(Boolean).join(" "));
 
-    if (nc) {
+    if (SRC.nc && nc) {
       var ncType = nc.isResidential ? "住宅 IP" : (nc.is_datacenter ? "机房 IP" : "普通网络");
       var abuseRaw = (String(nc.abuser_score || "").match(/\(([^)]+)\)/) || [, ""])[1];
       var abuse = abuserZh(abuseRaw);
       lines.push("Net.Coffee：" + (ncScore !== null ? ncScore + "分" : "N/A") + " · " + ncType +
         (abuse ? " · 滥用 " + abuse : ""));
-    } else {
+    } else if (SRC.nc) {
       lines.push("Net.Coffee：不可用");
     }
 
-    if (iff) {
+    if (SRC.iff && iff) {
       var native = iff.isNative === true ? "原生 IP" : (iff.isNative === false ? "广播 IP" : "原生未知");
       var bot = typeof iff.humanRatio === "number" ? " · 机器流量 " + Math.round(100 - iff.humanRatio) + "%" : "";
       lines.push("IPFinal：" + (iffScore !== null ? iffScore + "分" : "N/A") + " · " +
         ((iff.score && iff.score.level) || "N/A") + " · " + native + bot);
-    } else {
+    } else if (SRC.iff) {
       lines.push("IPFinal：不可用");
     }
 
     lines.push(overall === null ? "综合：无评分（数据源未返回评分）" : "综合：" + overall + "分 " + level.text);
+    if (!SRC.both) lines.push("数据源：仅 " + (SRC.nc ? "Net.Coffee" : "IPFinal") + "（单源模式）");
 
     $done({
       title: "IP 质检",
@@ -76,6 +83,37 @@ async function main() {
   } catch (e) {
     $done({ title: "IP 质检", content: "检测失败：" + (e && e.message ? e.message : e), icon: "network.slash" });
   }
+}
+
+// ── 参数解析：$argument 支持 "false" / "false;双源" / "MarkIP=true,Source=ipfinal" ──
+function parseArg(raw) {
+  var text = String(raw == null ? "" : raw);
+  var tokens = text.split(/[;,|]/).map(function (t) { return t.trim(); }).filter(Boolean);
+  var markIP = false;
+  var source = { nc: true, iff: true, both: true };
+
+  tokens.forEach(function (t) {
+    var v = t.toLowerCase();
+    var eq = v.indexOf("=");
+    if (eq > 0) v = v.slice(eq + 1).trim();
+    if (v === "true" || v === "false") {
+      markIP = v === "true";
+      return;
+    }
+    if (v.indexOf("双源") !== -1 || v === "both" || v === "all") {
+      source = { nc: true, iff: true, both: true };
+      return;
+    }
+    if (v.indexOf("ipfinal") !== -1 || v.indexOf("final") !== -1) {
+      source = { nc: false, iff: true, both: false };
+      return;
+    }
+    if (v.indexOf("coffee") !== -1 || v.indexOf("net") !== -1 || v === "nc") {
+      source = { nc: true, iff: false, both: false };
+    }
+  });
+
+  return { markIP: markIP, source: source };
 }
 
 // ── HTTP（兼容 $httpClient 回调风格） ──
@@ -114,10 +152,10 @@ async function netCoffee(ip) {
 }
 
 async function ipFinal(ip) {
-  if (!ip) return null;
   var sess = session();
   var pow = await getPow(sess);
-  var url = IF + "/report/" + encodeURIComponent(ip);
+  // 无 IP 时不带路径段，服务端返回自身出口的报告
+  var url = ip ? IF + "/report/" + encodeURIComponent(ip) : IF + "/report";
 
   var r = await request(url, ifHeaders(sess, pow));
   if (r.status === 428) {
