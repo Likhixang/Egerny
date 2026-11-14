@@ -66,6 +66,13 @@ export default async function (ctx) {
   const proxyHit = iff?.factors?.proxy ? `${iff.factors.proxy.hit}/${iff.factors.proxy.total}` : (iff ? "未检测" : "");
   const vpnHit = iff?.factors?.vpn ? `${iff.factors.vpn.hit}/${iff.factors.vpn.total}` : (iff ? "未检测" : "");
   const iffReasons = Array.isArray(iff?.score?.reasons) ? iff.score.reasons.filter(r => r.type === "bad").slice(0, 3).map(r => r.text) : [];
+  const rpkiZh = ({ valid: "有效", invalid: "无效", unknown: "未知" })[String(nc?.rpki_status || "").toLowerCase()] || "";
+  const ncRange = nc?.range && nc.range.first ? `${nc.range.first}/${nc.range.prefix}` : "";
+  const ncKind = nc?.asn_kind || "";
+  const iffRank = iff?.rank && typeof iff.rank.beats === "number" ? `超 ${iff.rank.beats}%` : "";
+  const torHit = iff?.factors?.tor ? `${iff.factors.tor.hit}/${iff.factors.tor.total}` : "";
+  const blHits = Array.isArray(iff?.blacklists) ? iff.blacklists.filter(b => b.listed).length : null;
+  const scenes = Array.isArray(iff?.score?.scenarios) ? iff.score.scenarios : [];
 
   // ── 综合分：仅在真实读到评分时参与平均，缺分不按 0 计 ──
   const scores = [ncScore, iffScore].filter(v => v !== null);
@@ -111,7 +118,12 @@ export default async function (ctx) {
     overall, overallText, level, crossText, dataState, sourceLabel,
     useNC: ncOn, useIF: iffOn,
     ncScore, ncTypeText, ncAbuseText, ncAi, ncRisky, ncDC, ncHome,
-    iffScore, iffLevelText, iffLevelColor, iffConf, iffNative, botPct, proxyHit, vpnHit, iffReasons
+    iffScore, iffLevelText, iffLevelColor, iffConf, iffNative, botPct, proxyHit, vpnHit, iffReasons,
+    rpkiZh, ncRange, ncKind, iffRank, torHit, blHits, scenes,
+    ncProxy: nc ? nc.is_proxy === true : null,
+    ncVpn: nc ? nc.is_vpn === true : null,
+    ncTor: nc ? nc.is_tor === true : null,
+    ncCrawler: nc ? nc.is_crawler === true : null
   };
 
   if (family === "systemSmall" || family === "accessoryRectangular" || family === "accessoryInline") {
@@ -443,7 +455,25 @@ function renderSystemSmall(d) {
         borderColor: C.cardBorder,
         children: [
           ...(d.useNC ? [createSmallSourceRow("Net.Coffee", d.ncScore !== null ? `${d.ncScore}分` : "无评分", d.ncTypeText, getPurityColor(d.ncScore))] : []),
-          ...(d.useIF ? [createSmallSourceRow("IPFinal", d.iffScore !== null ? `${d.iffScore}分` : "无评分", d.iffLevelText, d.iffScore !== null ? d.iffLevelColor : C.textSecondary)] : [])
+          ...(d.useIF ? [createSmallSourceRow("IPFinal", d.iffScore !== null ? `${d.iffScore}分` : "无评分", d.iffLevelText, d.iffScore !== null ? d.iffLevelColor : C.textSecondary)] : []),
+          ...(d.useNC && !d.useIF ? [{
+            type: "stack",
+            direction: "row",
+            alignItems: "center",
+            children: [
+              { type: "text", text: ["RPKI " + (d.rpkiZh || "未知"), d.ncAi ? "AI " + d.ncAi : "", d.ncRange].filter(Boolean).join(" · "), font: { size: 9, weight: "medium" }, textColor: C.textTertiary, maxLines: 1, minScale: 0.7 },
+              { type: "spacer" }
+            ]
+          }] : []),
+          ...(!d.useNC && d.useIF ? [{
+            type: "stack",
+            direction: "row",
+            alignItems: "center",
+            children: [
+              { type: "text", text: [d.iffNative, d.botPct !== null ? "机器 " + d.botPct + "%" : "", d.iffConf ? "置信 " + d.iffConf : ""].filter(Boolean).join(" · "), font: { size: 9, weight: "medium" }, textColor: C.textTertiary, maxLines: 1, minScale: 0.7 },
+              { type: "spacer" }
+            ]
+          }] : [])
         ]
       }
     ]
@@ -510,24 +540,11 @@ function renderSystemMedium(d) {
         alignItems: "center",
         gap: 6,
         flex: 1,
-        children: [
-          ...(d.useNC ? [createCleanColumn({
-            sourceName: "Net.Coffee",
-            scoreVal: d.ncScore !== null ? `${d.ncScore}分` : "无评分",
-            scoreColor: getPurityColor(d.ncScore),
-            tagPrimary: d.ncTypeText,
-            tagSecondary: `滥用 ${d.ncAbuseText}`,
-            subline: d.ncAi ? `AI 判定 ${d.ncAi}` : d.asnNumber
-          })] : []),
-          ...(d.useIF ? [createCleanColumn({
-            sourceName: "IPFinal",
-            scoreVal: d.iffScore !== null ? `${d.iffScore}分` : "无评分",
-            scoreColor: d.iffScore !== null ? d.iffLevelColor : C.textSecondary,
-            tagPrimary: d.iffLevelText,
-            tagSecondary: d.iffNative,
-            subline: d.botPct !== null ? `机器流量 ${d.botPct}%` : `置信 ${d.iffConf}`
-          })] : [])
-        ]
+        children: d.useNC && d.useIF
+          ? [ncColumn(d), iffColumn(d)]
+          : (d.useNC
+            ? [ncColumn(d), metricCard("Net.Coffee 指标", ncRows(d))]
+            : [iffColumn(d), metricCard("IPFinal 指标", iffRows(d))])
       },
       { type: "spacer", length: 5 },
       {
@@ -542,6 +559,75 @@ function renderSystemMedium(d) {
           { type: "text", text: `数据源: ${d.sourceLabel}`, font: { size: 10 }, textColor: C.textTertiary }
         ]
       }
+    ]
+  };
+}
+
+function ncColumn(d) {
+  return createCleanColumn({
+    sourceName: "Net.Coffee",
+    scoreVal: d.ncScore !== null ? `${d.ncScore}分` : "无评分",
+    scoreColor: getPurityColor(d.ncScore),
+    tagPrimary: d.ncTypeText,
+    tagSecondary: `滥用 ${d.ncAbuseText}`,
+    subline: d.ncAi ? `AI 判定 ${d.ncAi}` : d.asnNumber
+  });
+}
+
+function iffColumn(d) {
+  return createCleanColumn({
+    sourceName: "IPFinal",
+    scoreVal: d.iffScore !== null ? `${d.iffScore}分` : "无评分",
+    scoreColor: d.iffScore !== null ? d.iffLevelColor : C.textSecondary,
+    tagPrimary: d.iffLevelText,
+    tagSecondary: d.iffNative,
+    subline: d.botPct !== null ? `机器流量 ${d.botPct}%` : `置信 ${d.iffConf}`
+  });
+}
+
+// 单源时右侧补充该源独有的指标，避免一列被拉宽充数
+function ncRows(d) {
+  const rows = [];
+  if (d.ncRange) rows.push({ k: "IP 段", v: d.ncRange });
+  if (d.rpkiZh) rows.push({ k: "RPKI", v: d.rpkiZh });
+  if (d.ncKind) rows.push({ k: "ASN 类型", v: d.ncKind });
+  if (rows.length < 3 && d.ncAbuseText) rows.push({ k: "滥用记录", v: d.ncAbuseText });
+  return rows.slice(0, 3);
+}
+
+function iffRows(d) {
+  const rows = [];
+  if (d.botPct !== null) rows.push({ k: "机器流量", v: `${d.botPct}%` });
+  if (d.proxyHit || d.vpnHit) rows.push({ k: "代理 / VPN", v: [d.proxyHit, d.vpnHit].filter(Boolean).join(" · ") });
+  if (d.blHits !== null) rows.push({ k: "黑名单", v: d.blHits ? `${d.blHits} 个` : "未命中" });
+  if (rows.length < 3 && d.iffRank) rows.push({ k: "身位", v: d.iffRank });
+  return rows.slice(0, 3);
+}
+
+function metricCard(title, rows) {
+  return {
+    type: "stack",
+    direction: "column",
+    flex: 1,
+    gap: 4,
+    padding: [7, 8, 7, 8],
+    backgroundColor: C.cardBg,
+    borderRadius: 9,
+    borderWidth: 0.5,
+    borderColor: C.cardBorder,
+    children: [
+      { type: "text", text: title, font: { size: 10, weight: "bold" }, textColor: C.textSecondary, maxLines: 1 },
+      { type: "spacer", length: 1 },
+      ...rows.map(r => ({
+        type: "stack",
+        direction: "row",
+        alignItems: "center",
+        children: [
+          { type: "text", text: r.k, font: { size: 9 }, textColor: C.textTertiary, maxLines: 1 },
+          { type: "spacer" },
+          { type: "text", text: r.v, font: { size: 9, weight: "bold" }, textColor: C.textPrimary, maxLines: 1, minScale: 0.75 }
+        ]
+      }))
     ]
   };
 }
@@ -620,50 +706,7 @@ function renderSystemLarge(d) {
           }
         ]
       },
-      {
-        type: "stack",
-        direction: "column",
-        flex: 1,
-        gap: 8,
-        children: [
-          {
-            type: "stack",
-            direction: "row",
-            gap: 8,
-            flex: 1,
-            children: [
-              ...(d.useNC ? [createMatrixCard("sf-symbol:shield.checkerboard", "Net.Coffee 属性维度", [
-                { label: "纯净得分", val: d.ncScore !== null ? `${d.ncScore}分` : "无评分", color: getPurityColor(d.ncScore) },
-                { label: "网络类型", val: d.ncTypeText, color: d.ncHome ? "rgb(52,199,89)" : "rgb(255,149,0)" },
-                { label: "滥用等级", val: d.ncAbuseText, color: d.ncAbuseText === "低" || d.ncAbuseText === "极低" ? "rgb(52,199,89)" : "rgb(255,149,0)" }
-              ], true)] : []),
-              ...(d.useIF ? [createMatrixCard("sf-symbol:chart.bar.xaxis", "IPFinal 评分维度", [
-                { label: "纯净评分", val: d.iffScore !== null ? `${d.iffScore}分` : "无评分", color: d.iffScore !== null ? d.iffLevelColor : C.textSecondary },
-                { label: "风险等级", val: d.iffLevelText, color: d.iffLevelColor },
-                { label: "置信度", val: d.iffConf, color: C.textSecondary }
-              ], true)] : [])
-            ]
-          },
-          {
-            type: "stack",
-            direction: "row",
-            gap: 8,
-            flex: 1,
-            children: [
-              ...(d.useIF ? [createMatrixCard("sf-symbol:server.rack", "IPFinal 风险因子", [
-                { label: "原生状态", val: d.iffNative, color: d.iffNative === "原生 IP" ? "rgb(52,199,89)" : "rgb(255,149,0)" },
-                { label: "代理命中", val: d.proxyHit, color: C.textSecondary },
-                { label: "VPN 命中", val: d.vpnHit, color: C.textSecondary }
-              ], true)] : []),
-              createMatrixCard("sf-symbol:checkmark.seal.fill", "质检结论", [
-                { label: "风险定级", val: d.level.text, color: d.level.color },
-                { label: "仲裁结论", val: d.crossText, color: C.textSecondary },
-                { label: "服务状态", val: d.dataState, color: d.dataState.indexOf("正常") !== -1 ? "rgb(52,199,89)" : "rgb(255,149,0)" }
-              ], true)
-            ]
-          }
-        ]
-      },
+      ...largeGrid(d),
       {
         type: "stack",
         direction: "row",
@@ -682,6 +725,110 @@ function renderAccessoryCircular(d) {
       { type: "image", src: createGaugeRingSvg(d.overall === null ? 0 : d.overall, 60, 5, d.level.color, "质检", d.overallText), width: 60, height: 60 }
     ]
   };
+}
+
+function largeGrid(d) {
+  const verdict = createMatrixCard("sf-symbol:checkmark.seal.fill", "质检结论", [
+    { label: "风险定级", val: d.level.text, color: d.level.color },
+    { label: "仲裁结论", val: d.crossText, color: C.textSecondary },
+    { label: "服务状态", val: d.dataState, color: d.dataState.indexOf("正常") !== -1 ? "rgb(52,199,89)" : "rgb(255,149,0)" }
+  ], true);
+
+  if (d.useNC && d.useIF) {
+    return [
+      rowBox([
+        createMatrixCard("sf-symbol:shield.checkerboard", "Net.Coffee 属性维度", [
+          { label: "纯净得分", val: d.ncScore !== null ? `${d.ncScore}分` : "无评分", color: getPurityColor(d.ncScore) },
+          { label: "网络类型", val: d.ncTypeText, color: d.ncHome ? "rgb(52,199,89)" : "rgb(255,149,0)" },
+          { label: "滥用等级", val: d.ncAbuseText, color: d.ncAbuseText === "低" || d.ncAbuseText === "极低" ? "rgb(52,199,89)" : "rgb(255,149,0)" }
+        ], true),
+        createMatrixCard("sf-symbol:chart.bar.xaxis", "IPFinal 评分维度", [
+          { label: "纯净评分", val: d.iffScore !== null ? `${d.iffScore}分` : "无评分", color: d.iffScore !== null ? d.iffLevelColor : C.textSecondary },
+          { label: "风险等级", val: d.iffLevelText, color: d.iffLevelColor },
+          { label: "置信度", val: d.iffConf, color: C.textSecondary }
+        ], true)
+      ]),
+      rowBox([iffFactorCard(d), verdict])
+    ];
+  }
+
+  if (d.useNC) {
+    return [
+      rowBox([ncScoreCard(d), ncNetworkCard(d)]),
+      rowBox([ncRiskCard(d), verdict])
+    ];
+  }
+
+  return [
+    rowBox([iffScoreCard(d), iffNativeCard(d)]),
+    rowBox([iffFactorCard(d), d.scenes.length ? sceneCard(d.scenes) : verdict])
+  ];
+}
+
+function rowBox(children) {
+  return { type: "stack", direction: "row", gap: 8, flex: 1, children };
+}
+
+function ncScoreCard(d) {
+  return createMatrixCard("sf-symbol:shield.checkerboard", "Net.Coffee 评分", [
+    { label: "纯净得分", val: d.ncScore !== null ? `${d.ncScore}分` : "无评分", color: getPurityColor(d.ncScore) },
+    { label: "网络类型", val: d.ncTypeText, color: d.ncHome ? "rgb(52,199,89)" : "rgb(255,149,0)" },
+    { label: "滥用等级", val: d.ncAbuseText, color: d.ncAbuseText === "低" || d.ncAbuseText === "极低" ? "rgb(52,199,89)" : "rgb(255,149,0)" }
+  ], true);
+}
+
+function ncNetworkCard(d) {
+  const items = [];
+  if (d.asnNumber && d.asnNumber !== "AS --") items.push({ label: "ASN", val: d.asnNumber, color: C.textSecondary });
+  if (d.ncRange) items.push({ label: "IP 段", val: d.ncRange, color: C.textSecondary });
+  if (d.rpkiZh) items.push({ label: "RPKI", val: d.rpkiZh, color: d.rpkiZh === "有效" ? "rgb(52,199,89)" : "rgb(255,149,0)" });
+  if (!items.length) items.push({ label: "组织", val: d.asnOrg || "未知", color: C.textSecondary });
+  return createMatrixCard("sf-symbol:network", "网络与归属", items, true);
+}
+
+function ncRiskCard(d) {
+  const yn = v => (v === null ? "未检测" : (v ? "是" : "否"));
+  const items = [
+    { label: "代理", val: yn(d.ncProxy), color: d.ncProxy ? "rgb(255,59,48)" : C.textSecondary },
+    { label: "VPN", val: yn(d.ncVpn), color: d.ncVpn ? "rgb(255,59,48)" : C.textSecondary },
+    { label: "Tor", val: yn(d.ncTor), color: d.ncTor ? "rgb(255,59,48)" : C.textSecondary }
+  ];
+  return createMatrixCard("sf-symbol:exclamationmark.shield", "风险信号", items, true);
+}
+
+function iffScoreCard(d) {
+  return createMatrixCard("sf-symbol:chart.bar.xaxis", "IPFinal 评分", [
+    { label: "纯净评分", val: d.iffScore !== null ? `${d.iffScore}分` : "无评分", color: d.iffScore !== null ? d.iffLevelColor : C.textSecondary },
+    { label: "风险等级", val: d.iffLevelText, color: d.iffLevelColor },
+    { label: "置信度", val: d.iffConf, color: C.textSecondary }
+  ], true);
+}
+
+function iffNativeCard(d) {
+  const items = [{ label: "原生性", val: d.iffNative || "未检测", color: d.iffNative === "原生 IP" ? "rgb(52,199,89)" : "rgb(255,149,0)" }];
+  if (d.botPct !== null) items.push({ label: "机器流量", val: `${d.botPct}%`, color: d.botPct >= 80 ? "rgb(255,59,48)" : C.textSecondary });
+  if (d.iffRank) items.push({ label: "身位", val: d.iffRank, color: C.textSecondary });
+  return createMatrixCard("sf-symbol:person.text.rectangle", "原生与流量", items, true);
+}
+
+function iffFactorCard(d) {
+  const items = [];
+  if (d.proxyHit) items.push({ label: "代理命中", val: d.proxyHit, color: C.textSecondary });
+  if (d.vpnHit) items.push({ label: "VPN 命中", val: d.vpnHit, color: C.textSecondary });
+  if (d.blHits !== null) items.push({ label: "黑名单", val: d.blHits ? `${d.blHits} 个` : "未命中", color: d.blHits ? "rgb(255,59,48)" : "rgb(52,199,89)" });
+  if (!items.length) items.push({ label: "因子", val: "未检测", color: C.textSecondary });
+  return createMatrixCard("sf-symbol:server.rack", "IPFinal 风险因子", items.slice(0, 3), true);
+}
+
+function sceneCard(scenes) {
+  const pick = ["ai", "streaming", "tiktok"];
+  const chosen = pick.map(k => scenes.find(s => s.key === k)).filter(Boolean);
+  const rows = (chosen.length ? chosen : scenes).slice(0, 3).map(s => ({
+    label: s.name,
+    val: String(s.score),
+    color: s.score >= 70 ? "rgb(52,199,89)" : (s.score >= 40 ? "rgb(255,149,0)" : "rgb(255,59,48)")
+  }));
+  return createMatrixCard("sf-symbol:target", "场景适配", rows, true);
 }
 
 function createMatrixCard(icon, title, items, flexVal) {
