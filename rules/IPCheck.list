@@ -1,11 +1,12 @@
 # IPCheck — IP 检测 / 质检站点统一走同一策略组
-# 覆盖: 74 个域名，按用途分组
+# 覆盖: 75 个域名，按用途分组
 
 # 脚本自身数据源（必需）
 DOMAIN-SUFFIX,ip.net.coffee
 DOMAIN-SUFFIX,ipfinal.com
 # 多源聚合 / IP 纯净度检测
 DOMAIN-SUFFIX,ippure.com
+DOMAIN-SUFFIX,iptoushi.com
 DOMAIN-SUFFIX,ipcheck.ing
 DOMAIN-SUFFIX,ping0.cc
 DOMAIN-SUFFIX,ip111.cn
