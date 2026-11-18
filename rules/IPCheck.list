@@ -1,10 +1,10 @@
 # IPCheck — IP 检测 / 质检站点统一走同一策略组
-# 覆盖: 75 个域名，按用途分组
+# 覆盖: 122 个域名，按用途分组
 
 # 脚本自身数据源（必需）
 DOMAIN-SUFFIX,ip.net.coffee
 DOMAIN-SUFFIX,ipfinal.com
-# 多源聚合 / IP 纯净度检测
+# 多源聚合 / IP 纯净度 / 风险评分
 DOMAIN-SUFFIX,ippure.com
 DOMAIN-SUFFIX,iptoushi.com
 DOMAIN-SUFFIX,ipcheck.ing
@@ -16,6 +16,31 @@ DOMAIN-SUFFIX,iplark.com
 DOMAIN-SUFFIX,ip.skk.moe
 DOMAIN-SUFFIX,ip.check.place
 DOMAIN-SUFFIX,ip.fm
+DOMAIN-SUFFIX,ipcece.com
+DOMAIN-SUFFIX,ipok.io
+DOMAIN-SUFFIX,cleanip.io
+DOMAIN-SUFFIX,pingip.cn
+DOMAIN-SUFFIX,ipure.dev
+DOMAIN-SUFFIX,ckip.net
+DOMAIN-SUFFIX,ipip.la
+DOMAIN-SUFFIX,ipx.al
+DOMAIN-SUFFIX,iprisk.top
+DOMAIN-SUFFIX,ipdidi.com
+DOMAIN-SUFFIX,ip99.com
+DOMAIN-SUFFIX,ip234.in
+DOMAIN-SUFFIX,ip123.in
+DOMAIN-SUFFIX,ipchacha.cc
+DOMAIN-SUFFIX,ip-db.com
+DOMAIN-SUFFIX,ipk.me
+DOMAIN-SUFFIX,ipsuper.com
+DOMAIN-SUFFIX,ipstatus.net
+DOMAIN-SUFFIX,ipjiance.com
+DOMAIN-SUFFIX,ipipseek.com
+DOMAIN-SUFFIX,zo18.com
+DOMAIN-SUFFIX,12ce.com
+DOMAIN-SUFFIX,ipkk.com
+DOMAIN-SUFFIX,ipgoo.com
+DOMAIN-SUFFIX,instantipcheck.com
 # 中文 IP 查询
 DOMAIN-SUFFIX,ip.cn
 DOMAIN-SUFFIX,ip138.com
@@ -27,6 +52,8 @@ DOMAIN-SUFFIX,ip.gs
 DOMAIN-SUFFIX,ip.me
 DOMAIN-SUFFIX,ip.wtf
 DOMAIN-SUFFIX,myip.la
+DOMAIN-SUFFIX,ip.cx
+DOMAIN-SUFFIX,008ip.com
 # 国际 echo / What is my IP
 DOMAIN-SUFFIX,ipify.org
 DOMAIN-SUFFIX,ifconfig.me
@@ -43,6 +70,11 @@ DOMAIN-SUFFIX,ipaddress.com
 DOMAIN-SUFFIX,whatleaks.com
 DOMAIN-SUFFIX,ip-check.info
 DOMAIN-SUFFIX,ip-tracker.org
+DOMAIN-SUFFIX,checkmyip.com
+DOMAIN-SUFFIX,myiphelp.com
+DOMAIN-SUFFIX,myipshow.com
+DOMAIN-SUFFIX,ip-trackers.com
+DOMAIN-SUFFIX,ipin.io
 # 地理 / ASN / 风控查询 API
 DOMAIN-SUFFIX,ipinfo.io
 DOMAIN-SUFFIX,ip-api.com
@@ -70,12 +102,25 @@ DOMAIN-SUFFIX,scamalytics.com
 DOMAIN-SUFFIX,abuseipdb.com
 DOMAIN-SUFFIX,ipfingerprints.com
 DOMAIN-SUFFIX,iplocation.net
-# 泄漏 / 匿名度检测
+DOMAIN-SUFFIX,ipctl.io
+# 泄漏 / 匿名度 / 指纹检测
 DOMAIN-SUFFIX,whoer.net
 DOMAIN-SUFFIX,browserleaks.com
 DOMAIN-SUFFIX,ipleak.net
 DOMAIN-SUFFIX,dnsleaktest.com
 DOMAIN-SUFFIX,mullvad.net
+DOMAIN-SUFFIX,iplogs.com
+DOMAIN-SUFFIX,pixelscan.net
+DOMAIN-SUFFIX,darkip.com
+DOMAIN-SUFFIX,todetect.cn
+DOMAIN-SUFFIX,todetect.net
+DOMAIN-SUFFIX,1ms.dog
+# 流媒体 / AI 解锁检测
+DOMAIN-SUFFIX,af3.com
+DOMAIN-SUFFIX,vps-craft.com
+# 黑名单 / 滥用查询
+DOMAIN-SUFFIX,multirbl.valli.org
+DOMAIN-SUFFIX,xiaoyu.net
 # IPv6 / 网络工具
 DOMAIN-SUFFIX,test-ipv6.com
 DOMAIN-SUFFIX,ipv6-test.com
@@ -83,3 +128,8 @@ DOMAIN-SUFFIX,ping.pe
 DOMAIN-SUFFIX,itdog.cn
 DOMAIN-SUFFIX,17ce.com
 DOMAIN-SUFFIX,boce.com
+DOMAIN-SUFFIX,ipvoid.com
+DOMAIN-SUFFIX,digtrace.net
+DOMAIN-SUFFIX,netchecks.org
+# 精确匹配（父域为通用工具站）
+DOMAIN,ip.crafzo.com
