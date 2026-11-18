@@ -1,5 +1,5 @@
 name: "IP 质检"
-description: "双源节点 IP 质检（Net.Coffee + IPFinal），Apple HIG 轻量现代设计，支持双源并列或单源查询"
+description: "双源节点 IP 质检（Net.Coffee + IPFinal），Apple HIG 轻量现代设计，支持双源并列或单源查询；分流覆盖 70+ IP 检测站点"
 
 # 策略组路由参数（用于规则匹配）
 compat_arguments:
@@ -39,9 +39,15 @@ widgets:
     script_name: IPCheck
 
 rules:
+  # 脚本自身数据源：内联，规则集未就绪或拉取失败时脚本仍然可用
   - domain_suffix:
       match: ip.net.coffee
       policy: "{{{Proxy}}}"
   - domain_suffix:
       match: ipfinal.com
       policy: "{{{Proxy}}}"
+  # 其余 IP 检测 / 质检站点，清单见 rules/IPCheck.egern.yaml
+  - rule_set:
+      match: https://raw.githubusercontent.com/Likhixang/Egerny/main/rules/IPCheck.egern.yaml
+      policy: "{{{Proxy}}}"
+      update_interval: 86400
