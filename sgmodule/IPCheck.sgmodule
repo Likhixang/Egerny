@@ -5,11 +5,86 @@
 #!arguments-desc=Proxy: 选择策略组,默认DIRECT | MarkIP: IP 打码(true/false),默认 false | Source: 数据源(双源/Net.Coffee/IPFinal),默认双源
 
 [Rule]
-# 脚本自身数据源：内联，规则集未就绪时脚本仍然可用
+# 脚本自身数据源（必需）
 DOMAIN-SUFFIX,ip.net.coffee,{{{Proxy}}}
 DOMAIN-SUFFIX,ipfinal.com,{{{Proxy}}}
-# 其余 IP 检测 / 质检站点，清单见 rules/IPCheck.list
-RULE-SET,https://raw.githubusercontent.com/Likhixang/Egerny/main/rules/IPCheck.list,{{{Proxy}}}
+# 多源聚合 / IP 纯净度检测
+DOMAIN-SUFFIX,ipcheck.ing,{{{Proxy}}}
+DOMAIN-SUFFIX,ping0.cc,{{{Proxy}}}
+DOMAIN-SUFFIX,ip111.cn,{{{Proxy}}}
+DOMAIN-SUFFIX,ip125.com,{{{Proxy}}}
+DOMAIN-SUFFIX,ipuu.net,{{{Proxy}}}
+DOMAIN-SUFFIX,iplark.com,{{{Proxy}}}
+DOMAIN-SUFFIX,ip.skk.moe,{{{Proxy}}}
+DOMAIN-SUFFIX,ip.check.place,{{{Proxy}}}
+DOMAIN-SUFFIX,ip.fm,{{{Proxy}}}
+# 中文 IP 查询
+DOMAIN-SUFFIX,ip.cn,{{{Proxy}}}
+DOMAIN-SUFFIX,ip138.com,{{{Proxy}}}
+DOMAIN-SUFFIX,ipip.net,{{{Proxy}}}
+DOMAIN-SUFFIX,cip.cc,{{{Proxy}}}
+DOMAIN-SUFFIX,chinaz.com,{{{Proxy}}}
+DOMAIN-SUFFIX,ip.sb,{{{Proxy}}}
+DOMAIN-SUFFIX,ip.gs,{{{Proxy}}}
+DOMAIN-SUFFIX,ip.me,{{{Proxy}}}
+DOMAIN-SUFFIX,ip.wtf,{{{Proxy}}}
+DOMAIN-SUFFIX,myip.la,{{{Proxy}}}
+# 国际 echo / What is my IP
+DOMAIN-SUFFIX,ipify.org,{{{Proxy}}}
+DOMAIN-SUFFIX,ifconfig.me,{{{Proxy}}}
+DOMAIN-SUFFIX,ifconfig.co,{{{Proxy}}}
+DOMAIN-SUFFIX,icanhazip.com,{{{Proxy}}}
+DOMAIN-SUFFIX,major.io,{{{Proxy}}}
+DOMAIN-SUFFIX,ident.me,{{{Proxy}}}
+DOMAIN-SUFFIX,seeip.org,{{{Proxy}}}
+DOMAIN-SUFFIX,myip.com,{{{Proxy}}}
+DOMAIN-SUFFIX,ipchicken.com,{{{Proxy}}}
+DOMAIN-SUFFIX,whatismyip.com,{{{Proxy}}}
+DOMAIN-SUFFIX,whatismyipaddress.com,{{{Proxy}}}
+DOMAIN-SUFFIX,ipaddress.com,{{{Proxy}}}
+DOMAIN-SUFFIX,whatleaks.com,{{{Proxy}}}
+DOMAIN-SUFFIX,ip-check.info,{{{Proxy}}}
+DOMAIN-SUFFIX,ip-tracker.org,{{{Proxy}}}
+# 地理 / ASN / 风控查询 API
+DOMAIN-SUFFIX,ipinfo.io,{{{Proxy}}}
+DOMAIN-SUFFIX,ip-api.com,{{{Proxy}}}
+DOMAIN-SUFFIX,ip-api.io,{{{Proxy}}}
+DOMAIN-SUFFIX,ipapi.co,{{{Proxy}}}
+DOMAIN-SUFFIX,ipapi.com,{{{Proxy}}}
+DOMAIN-SUFFIX,ipapi.is,{{{Proxy}}}
+DOMAIN-SUFFIX,ipwho.is,{{{Proxy}}}
+DOMAIN-SUFFIX,ipwhois.app,{{{Proxy}}}
+DOMAIN-SUFFIX,ipwhois.io,{{{Proxy}}}
+DOMAIN-SUFFIX,ipdata.co,{{{Proxy}}}
+DOMAIN-SUFFIX,ipstack.com,{{{Proxy}}}
+DOMAIN-SUFFIX,ipregistry.co,{{{Proxy}}}
+DOMAIN-SUFFIX,ipbase.com,{{{Proxy}}}
+DOMAIN-SUFFIX,freeipapi.com,{{{Proxy}}}
+DOMAIN-SUFFIX,geojs.io,{{{Proxy}}}
+DOMAIN-SUFFIX,ipquery.io,{{{Proxy}}}
+DOMAIN-SUFFIX,ipfind.co,{{{Proxy}}}
+DOMAIN-SUFFIX,ip2location.com,{{{Proxy}}}
+DOMAIN-SUFFIX,ipgeolocation.io,{{{Proxy}}}
+DOMAIN-SUFFIX,db-ip.com,{{{Proxy}}}
+DOMAIN-SUFFIX,maxmind.com,{{{Proxy}}}
+DOMAIN-SUFFIX,ipqualityscore.com,{{{Proxy}}}
+DOMAIN-SUFFIX,scamalytics.com,{{{Proxy}}}
+DOMAIN-SUFFIX,abuseipdb.com,{{{Proxy}}}
+DOMAIN-SUFFIX,ipfingerprints.com,{{{Proxy}}}
+DOMAIN-SUFFIX,iplocation.net,{{{Proxy}}}
+# 泄漏 / 匿名度检测
+DOMAIN-SUFFIX,whoer.net,{{{Proxy}}}
+DOMAIN-SUFFIX,browserleaks.com,{{{Proxy}}}
+DOMAIN-SUFFIX,ipleak.net,{{{Proxy}}}
+DOMAIN-SUFFIX,dnsleaktest.com,{{{Proxy}}}
+DOMAIN-SUFFIX,mullvad.net,{{{Proxy}}}
+# IPv6 / 网络工具
+DOMAIN-SUFFIX,test-ipv6.com,{{{Proxy}}}
+DOMAIN-SUFFIX,ipv6-test.com,{{{Proxy}}}
+DOMAIN-SUFFIX,ping.pe,{{{Proxy}}}
+DOMAIN-SUFFIX,itdog.cn,{{{Proxy}}}
+DOMAIN-SUFFIX,17ce.com,{{{Proxy}}}
+DOMAIN-SUFFIX,boce.com,{{{Proxy}}}
 
 [Panel]
 IPCheck = script-name=IPCheck, title=IP 质检, content=刷新中…, style=info, update-interval=300
