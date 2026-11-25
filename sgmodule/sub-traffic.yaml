@@ -178,7 +178,7 @@ env_schema:
 scriptings:
   - generic:
       name: "sub-traffic"
-      script_url: "https://raw.githubusercontent.com/Likhixang/Egerny/main/js/sub-traffic.js?v=20261125"
+      script_url: "https://raw.githubusercontent.com/Likhixang/Egerny/main/js/sub-traffic.js"
       timeout: 45
       env:
         SUB1_URL: ""
