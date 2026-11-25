@@ -1,0 +1,230 @@
+name: "订阅流量"
+description: "最多显示 10 个机场 / 代理订阅的剩余流量、今日已用、近 7 天用量柱状图、用完预测与到期 / 重置倒计时（iOS 液态玻璃风格，支持主屏小 / 中 / 大与锁屏三种尺寸）"
+
+env_schema:
+  SUB1_URL:
+    name: 订阅1 链接
+    description: 第 1 个订阅地址（必填）
+    default_value: ""
+  SUB1_NAME:
+    name: 订阅1 名称
+    description: 显示在组件上的名称
+    default_value: ""
+  SUB1_TOTAL_GB:
+    name: 订阅1 套餐总量 (GB)
+    description: 订阅只返回剩余流量时用来估算总量，留空默认 100
+    default_value: ""
+  SUB1_RESET_DAY:
+    name: 订阅1 流量重置日
+    description: 每月几号重置（1~31），留空不显示
+    default_value: ""
+  SUB2_URL:
+    name: 订阅2 链接
+    description: 第 2 个订阅地址（可选）
+    default_value: ""
+  SUB2_NAME:
+    name: 订阅2 名称
+    description: 显示在组件上的名称
+    default_value: ""
+  SUB2_TOTAL_GB:
+    name: 订阅2 套餐总量 (GB)
+    description: 订阅只返回剩余流量时用来估算总量，留空默认 100
+    default_value: ""
+  SUB2_RESET_DAY:
+    name: 订阅2 流量重置日
+    description: 每月几号重置（1~31），留空不显示
+    default_value: ""
+  SUB3_URL:
+    name: 订阅3 链接
+    description: 第 3 个订阅地址（可选）
+    default_value: ""
+  SUB3_NAME:
+    name: 订阅3 名称
+    description: 显示在组件上的名称
+    default_value: ""
+  SUB3_TOTAL_GB:
+    name: 订阅3 套餐总量 (GB)
+    description: 订阅只返回剩余流量时用来估算总量，留空默认 100
+    default_value: ""
+  SUB3_RESET_DAY:
+    name: 订阅3 流量重置日
+    description: 每月几号重置（1~31），留空不显示
+    default_value: ""
+  SUB4_URL:
+    name: 订阅4 链接
+    description: 第 4 个订阅地址（可选）
+    default_value: ""
+  SUB4_NAME:
+    name: 订阅4 名称
+    description: 显示在组件上的名称
+    default_value: ""
+  SUB4_TOTAL_GB:
+    name: 订阅4 套餐总量 (GB)
+    description: 订阅只返回剩余流量时用来估算总量，留空默认 100
+    default_value: ""
+  SUB4_RESET_DAY:
+    name: 订阅4 流量重置日
+    description: 每月几号重置（1~31），留空不显示
+    default_value: ""
+  SUB5_URL:
+    name: 订阅5 链接
+    description: 第 5 个订阅地址（可选）
+    default_value: ""
+  SUB5_NAME:
+    name: 订阅5 名称
+    description: 显示在组件上的名称
+    default_value: ""
+  SUB5_TOTAL_GB:
+    name: 订阅5 套餐总量 (GB)
+    description: 订阅只返回剩余流量时用来估算总量，留空默认 100
+    default_value: ""
+  SUB5_RESET_DAY:
+    name: 订阅5 流量重置日
+    description: 每月几号重置（1~31），留空不显示
+    default_value: ""
+  SUB6_URL:
+    name: 订阅6 链接
+    description: 第 6 个订阅地址（可选）
+    default_value: ""
+  SUB6_NAME:
+    name: 订阅6 名称
+    description: 显示在组件上的名称
+    default_value: ""
+  SUB6_TOTAL_GB:
+    name: 订阅6 套餐总量 (GB)
+    description: 订阅只返回剩余流量时用来估算总量，留空默认 100
+    default_value: ""
+  SUB6_RESET_DAY:
+    name: 订阅6 流量重置日
+    description: 每月几号重置（1~31），留空不显示
+    default_value: ""
+  SUB7_URL:
+    name: 订阅7 链接
+    description: 第 7 个订阅地址（可选）
+    default_value: ""
+  SUB7_NAME:
+    name: 订阅7 名称
+    description: 显示在组件上的名称
+    default_value: ""
+  SUB7_TOTAL_GB:
+    name: 订阅7 套餐总量 (GB)
+    description: 订阅只返回剩余流量时用来估算总量，留空默认 100
+    default_value: ""
+  SUB7_RESET_DAY:
+    name: 订阅7 流量重置日
+    description: 每月几号重置（1~31），留空不显示
+    default_value: ""
+  SUB8_URL:
+    name: 订阅8 链接
+    description: 第 8 个订阅地址（可选）
+    default_value: ""
+  SUB8_NAME:
+    name: 订阅8 名称
+    description: 显示在组件上的名称
+    default_value: ""
+  SUB8_TOTAL_GB:
+    name: 订阅8 套餐总量 (GB)
+    description: 订阅只返回剩余流量时用来估算总量，留空默认 100
+    default_value: ""
+  SUB8_RESET_DAY:
+    name: 订阅8 流量重置日
+    description: 每月几号重置（1~31），留空不显示
+    default_value: ""
+  SUB9_URL:
+    name: 订阅9 链接
+    description: 第 9 个订阅地址（可选）
+    default_value: ""
+  SUB9_NAME:
+    name: 订阅9 名称
+    description: 显示在组件上的名称
+    default_value: ""
+  SUB9_TOTAL_GB:
+    name: 订阅9 套餐总量 (GB)
+    description: 订阅只返回剩余流量时用来估算总量，留空默认 100
+    default_value: ""
+  SUB9_RESET_DAY:
+    name: 订阅9 流量重置日
+    description: 每月几号重置（1~31），留空不显示
+    default_value: ""
+  SUB10_URL:
+    name: 订阅10 链接
+    description: 第 10 个订阅地址（可选）
+    default_value: ""
+  SUB10_NAME:
+    name: 订阅10 名称
+    description: 显示在组件上的名称
+    default_value: ""
+  SUB10_TOTAL_GB:
+    name: 订阅10 套餐总量 (GB)
+    description: 订阅只返回剩余流量时用来估算总量，留空默认 100
+    default_value: ""
+  SUB10_RESET_DAY:
+    name: 订阅10 流量重置日
+    description: 每月几号重置（1~31），留空不显示
+    default_value: ""
+  WIDGET_TITLE:
+    name: 组件标题
+    description: 多个订阅时显示的标题，默认「订阅流量」
+    default_value: ""
+  REFRESH_HOURS:
+    name: 刷新间隔（小时）
+    description: 范围 0.5 ~ 24，留空默认 2
+    default_value: "2"
+  SUBSCRIPTION_USER_AGENT:
+    name: 自定义 User-Agent
+    description: 可选，留空自动尝试 clash.meta / Surge 等常见标识
+    default_value: ""
+
+scriptings:
+  - generic:
+      name: "sub-traffic"
+      script_url: "https://raw.githubusercontent.com/Likhixang/Egerny/main/js/sub-traffic.js?v=20261125"
+      timeout: 45
+      env:
+        SUB1_URL: ""
+        SUB1_NAME: ""
+        SUB1_TOTAL_GB: ""
+        SUB1_RESET_DAY: ""
+        SUB2_URL: ""
+        SUB2_NAME: ""
+        SUB2_TOTAL_GB: ""
+        SUB2_RESET_DAY: ""
+        SUB3_URL: ""
+        SUB3_NAME: ""
+        SUB3_TOTAL_GB: ""
+        SUB3_RESET_DAY: ""
+        SUB4_URL: ""
+        SUB4_NAME: ""
+        SUB4_TOTAL_GB: ""
+        SUB4_RESET_DAY: ""
+        SUB5_URL: ""
+        SUB5_NAME: ""
+        SUB5_TOTAL_GB: ""
+        SUB5_RESET_DAY: ""
+        SUB6_URL: ""
+        SUB6_NAME: ""
+        SUB6_TOTAL_GB: ""
+        SUB6_RESET_DAY: ""
+        SUB7_URL: ""
+        SUB7_NAME: ""
+        SUB7_TOTAL_GB: ""
+        SUB7_RESET_DAY: ""
+        SUB8_URL: ""
+        SUB8_NAME: ""
+        SUB8_TOTAL_GB: ""
+        SUB8_RESET_DAY: ""
+        SUB9_URL: ""
+        SUB9_NAME: ""
+        SUB9_TOTAL_GB: ""
+        SUB9_RESET_DAY: ""
+        SUB10_URL: ""
+        SUB10_NAME: ""
+        SUB10_TOTAL_GB: ""
+        SUB10_RESET_DAY: ""
+        WIDGET_TITLE: ""
+        REFRESH_HOURS: "2"
+        SUBSCRIPTION_USER_AGENT: ""
+
+widgets:
+  - name: "订阅流量"
+    script_name: "sub-traffic"
