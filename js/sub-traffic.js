@@ -5,13 +5,15 @@
  *   - 同时读取最多 10 个机场 / 代理订阅（并行请求，各自独立缓存）
  *   - 本地生成 SVG 圆环 / 半圆仪表 / 柱状图，不依赖外部图片服务，离线可用
  *   - 剩余流量、已用 / 总量、今日已用、近 7 天用量、日均可用、用完预测、到期与重置倒计时
- *   - 订阅只返回剩余流量时，用套餐总量（SUBn_TOTAL_GB）估算总量
+ *   - 总量优先级：SUBn_TOTAL_GB → 订阅返回的 total → 都没有显示 ∞
+ *   - 重置日默认 UTC+8 每月 1 号 0 点，可用 SUBn_RESET_DAY 改成 N 号（填 0/off 表示永久）
  *   - 1 个订阅：小 / 中 / 大三套布局；2~4 个：卡片网格；5~10 个：紧凑双列网格
  *   - 支持锁屏圆形 / 矩形 / 内联
  *
  * Env：
- *   SUB1_URL / SUB1_NAME / SUB1_RESET_DAY … SUB10_*（机场正常会返回套餐总量，无需填写）
- *   SUBn_TOTAL_GB：仅当机场不返回 total 时才需要，模块 UI 未列出，可在 Env 里手动添加
+ *   SUB1_URL / SUB1_NAME / SUB1_TOTAL_GB / SUB1_RESET_DAY … SUB10_*
+ *   SUBn_TOTAL_GB：套餐总量（GB），填了就优先用它，留空用订阅返回的 total
+ *   SUBn_RESET_DAY：每月几号 0 点（UTC+8）重置，留空默认 1 号
  *   WIDGET_TITLE（多订阅标题）、REFRESH_HOURS、SUBSCRIPTION_USER_AGENT
  *   兼容按 | 或换行分隔的 SUBSCRIPTION_URL / SUBSCRIPTION_NAME / RESET_DAY / PLAN_TOTAL_GB
  */
@@ -52,12 +54,12 @@ function parseUserInfo(raw) {
 
   const upload = Math.max(0, values.upload);
   const download = Math.max(0, values.download);
-  // 机场一般都会返回 total；缺失时如实标成未知，不编造套餐总量
+  // total 缺失 == 上游没说总量 == 无穷；total=0 是机场明确标的不限量，两者都按 ∞ 展示
   const hasTotal = Number.isFinite(values.total);
-  const total = hasTotal ? Math.max(0, values.total) : null;
+  const total = hasTotal ? Math.max(0, values.total) : Infinity;
   const used = upload + download;
-  const unlimited = hasTotal && total === 0;
-  const remaining = !hasTotal ? null : unlimited ? Infinity : Math.max(0, total - used);
+  const unlimited = !hasTotal || total === 0;
+  const remaining = unlimited ? Infinity : Math.max(0, total - used);
   const expireValue = Number(values.expire) || 0;
   const expireAt = expireValue > 1000000000000 ? expireValue : expireValue * 1000;
 
@@ -301,7 +303,7 @@ function readSubs(ctx) {
       url,
       name: String(env[`SUB${i}_NAME`] || '').trim() || `订阅 ${i}`,
       planGB: String(env[`SUB${i}_TOTAL_GB`] || '').trim(),
-      resetDay: String(env[`SUB${i}_RESET_DAY`] || '').trim(),
+      resetDay: String(env[`SUB${i}_RESET_DAY`] ?? '').trim() || '1',
     });
   }
   // 方式二：SUBSCRIPTION_URL 用 | 或换行分隔多个地址，名称 / 重置日 / 总量同样用 | 对应
@@ -315,20 +317,39 @@ function readSubs(ctx) {
       url,
       name: names[i] || (urls.length === 1 && names[0]) || `订阅 ${subs.length + 1}`,
       planGB: totals[i] || totals[0] || '',
-      resetDay: resets[i] || (urls.length === 1 ? resets[0] : '') || '',
+      resetDay: resets[i] || resets[0] || '1',
     });
   });
   return subs.slice(0, MAX_SUBS);
 }
 
-// 仅在「机场没返回套餐总量 + 用户显式填了 SUBn_TOTAL_GB」时估算，绝不默认一个假的 100GB
+// 总量优先级：Env 里填了 SUBn_TOTAL_GB 就用它 → 否则用上游 total → 两边都没有就写 ∞
 function applyPlanTotal(sub, traffic) {
+  if (!traffic) return traffic;
   const planGB = sub.planGB ? Number(sub.planGB) : NaN;
-  if (!traffic || traffic.unlimited) return traffic;
-  if (Number.isFinite(traffic.total) || !Number.isFinite(traffic.remaining)) return traffic;
-  if (!Number.isFinite(planGB) || planGB <= 0) return traffic;
-  const total = planGB * (1024 ** 3);
-  return { ...traffic, total, used: Math.max(0, total - traffic.remaining), totalUnknown: false, partial: false, totalEstimated: true };
+  const hasPlan = Number.isFinite(planGB) && planGB > 0;
+  const hasUpstreamTotal = Number.isFinite(traffic.total) && traffic.total > 0;
+
+  if (hasPlan) {
+    const total = planGB * (1024 ** 3);
+    const usedKnown = Number.isFinite(traffic.used);
+    const remKnown = Number.isFinite(traffic.remaining);
+    const used = usedKnown ? traffic.used : remKnown ? Math.max(0, total - traffic.remaining) : null;
+    const remaining = usedKnown ? Math.max(0, total - used) : remKnown ? traffic.remaining : total;
+    return { ...traffic, total, used, remaining, unlimited: false, totalUnknown: false, partial: false, totalEstimated: !hasUpstreamTotal };
+  }
+
+  if (hasUpstreamTotal || traffic.unlimited) return traffic;
+
+  // 上游没给 total、Env 也没填：不编造总量，直接 ∞
+  return {
+    ...traffic,
+    total: Infinity,
+    remaining: Number.isFinite(traffic.remaining) ? traffic.remaining : Infinity,
+    unlimited: !Number.isFinite(traffic.remaining),
+    totalUnknown: true,
+    partial: false
+  };
 }
 
 function dayKey(d) {
@@ -415,17 +436,34 @@ function daysUntil(ts) {
   return Math.ceil((ts - Date.now()) / 86400000);
 }
 
+// 流量重置统一按 UTC+8 每月 N 号 0 点算；留空或非法值默认 1 号，填 0/off/不重置 表示不重置
+const RESET_TZ_OFFSET = 8 * 3600000;
+
+function resetDayOf(resetDayStr) {
+  const raw = String(resetDayStr == null ? '' : resetDayStr).trim();
+  if (/^(0|off|no|none|不重置|永久|不限)$/i.test(raw)) return 0;
+  const day = Math.floor(Number(raw));
+  if (!Number.isFinite(day) || day < 1 || day > 31) return 1;
+  return day;
+}
+
 function nextReset(resetDayStr) {
-  const resetDay = Number(resetDayStr);
-  if (!resetDayStr || !Number.isFinite(resetDay) || resetDay < 1 || resetDay > 31) return null;
-  const now = new Date();
-  const last = (y, m) => new Date(y, m + 1, 0).getDate();
-  let y = now.getFullYear(), m = now.getMonth();
-  let d = Math.min(resetDay, last(y, m));
-  if (now.getDate() > d) { m += 1; if (m > 11) { m = 0; y += 1; } d = Math.min(resetDay, last(y, m)); }
-  const target = new Date(y, m, d);
-  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-  return { days: Math.max(0, Math.round((target - today) / 86400000)), date: target.getTime() };
+  const resetDay = resetDayOf(resetDayStr);
+  if (resetDay === 0) return null;
+  const nowUtc8 = new Date(Date.now() + RESET_TZ_OFFSET);
+  const year = nowUtc8.getUTCFullYear();
+  const month = nowUtc8.getUTCMonth();
+  const todayIndex = Date.UTC(year, month, nowUtc8.getUTCDate());
+  const lastDay = (y, m) => new Date(Date.UTC(y, m + 1, 0)).getUTCDate();
+  let ty = year;
+  let tm = month;
+  let target = Date.UTC(ty, tm, Math.min(resetDay, lastDay(ty, tm)));
+  if (target < todayIndex) {
+    tm += 1;
+    if (tm > 11) { tm = 0; ty += 1; }
+    target = Date.UTC(ty, tm, Math.min(resetDay, lastDay(ty, tm)));
+  }
+  return { days: Math.round((target - todayIndex) / 86400000), date: target - RESET_TZ_OFFSET };
 }
 
 function pctLeft(t) {
@@ -434,15 +472,16 @@ function pctLeft(t) {
   return Math.max(0, Math.min(1, t.remaining / t.total));
 }
 
-// 剩余量是否已知（不限量、总量未知都不算「已知剩余」）
+// 剩余量是否已知（∞ 不限量也算已知，只有纯未知总量且无剩余才算未知）
 function remainKnown(t) {
   return !!t && (t.unlimited === true || Number.isFinite(t.remaining));
 }
 
-// 圆环 / 进度条比例：不限量画满，未知画空，不用假的 100% 冒充
+// 圆环 / 进度条比例：不限量 / 无穷画满，未知画空
 function ringPct(t) {
   if (!t) return 0;
   if (t.unlimited) return 1;
+  if (!Number.isFinite(t.total)) return 1;
   const p = pctLeft(t);
   return p == null ? 0 : p;
 }
@@ -451,7 +490,7 @@ function pctLabel(t) {
   if (!t) return '--';
   if (t.unlimited) return '∞';
   const p = pctLeft(t);
-  return p == null ? '未知' : `${Math.round(p * 100)}%`;
+  return p == null ? '∞' : `${Math.round(p * 100)}%`;
 }
 
 // 主数值标题：剩余量已知显示「剩余流量」，只有已用量时退回「已用流量」
@@ -461,16 +500,16 @@ function valueTitle(t) {
 
 function totalLabel(t) {
   if (!t) return '--';
-  if (t.unlimited) return '不限量';
-  if (!Number.isFinite(t.total)) return '未知';
+  if (t.unlimited) return '∞';
+  if (!Number.isFinite(t.total)) return '∞';
   return `${t.totalEstimated ? '≈' : ''}${fmtBytes(t.total)}`;
 }
 
 function fmtBytes(bytes, decimals = 1) {
-  if (!Number.isFinite(bytes)) return '--';
+  if (!Number.isFinite(bytes)) return '∞';
   if (bytes <= 0) return '0 B';
   const units = ['B', 'KB', 'MB', 'GB', 'TB', 'PB'];
-  const i = Math.min(units.length - 1, Math.floor(Math.log(bytes) / Math.log(1024)));
+  const i = Math.max(0, Math.min(units.length - 1, Math.floor(Math.log(bytes) / Math.log(1024))));
   const v = bytes / (1024 ** i);
   return `${v.toFixed(v >= 100 ? 0 : v >= 10 ? Math.min(1, decimals) : decimals)} ${units[i]}`;
 }
@@ -509,8 +548,8 @@ function dailyBudget(s) {
 function forecast(s) {
   const t = s.traffic;
   if (!t) return { text: '--', color: C.dim };
-  if (t.unlimited) return { text: '不限量', color: C.ok };
-  if (!Number.isFinite(t.remaining)) return { text: '剩余未知', color: C.dim };
+  if (t.unlimited) return { text: '∞ 不限量', color: C.ok };
+  if (!Number.isFinite(t.remaining)) return { text: '∞', color: C.dim };
   const past = (s.hist || []).slice(0, 6).filter(v => v != null && v > 0);
   const vals = past.length ? past : (s.today > 0 ? [s.today] : []);
   if (!vals.length) return { text: '用量统计中…', color: C.dim };
@@ -691,7 +730,7 @@ function subLine(s) {
   const e = daysUntil(t.expireAt);
   parts.push(e == null ? '长期有效' : `到期 ${Math.max(0, e)} 天`);
   const r = nextReset(s.resetDay);
-  if (r) parts.push(r.days === 0 ? '今日重置' : `重置 ${r.days} 天`);
+  parts.push(r ? (r.days === 0 ? '今日重置' : `重置 ${r.days} 天`) : '永久');
   if (s.nodeCount > 0) parts.push(`${s.nodeCount} 节点`);
   return parts.join(' · ');
 }
@@ -797,7 +836,7 @@ function singleMedium(ctx, s) {
             type: 'stack', direction: 'column', alignItems: 'center', gap: 2, width: 96,
             children: [
               { type: 'image', src: ringsSvg([{ pct: ringPct(t), color: C.accent }], 120, 14, 0), width: 78, height: 78 },
-              T(t.unlimited ? '不限量' : (p == null ? '总量未知' : `剩 ${Math.round(p * 100)}%`), 11, C.accent, 'semibold'),
+              T(t.unlimited ? '∞ 不限量' : (p == null ? '总量 ∞' : `剩 ${Math.round(p * 100)}%`), 11, C.accent, 'semibold'),
             ],
           },
           glass([
@@ -833,7 +872,7 @@ function singleLarge(ctx, s) {
       { type: 'image', src: barSvg(ringPct(t), C.accent, 300, 6), width: 300, height: 6 },
       { type: 'stack', direction: 'row', gap: 8, children: [cell('下载', Number.isFinite(t.download) ? fmtBytes(t.download) : '--'), cell('上传', Number.isFinite(t.upload) ? fmtBytes(t.upload) : '--'), cell('今日已用', s.today == null ? '--' : fmtBytes(s.today))] },
       { type: 'stack', direction: 'row', gap: 8, children: [cell('套餐总量', totalLabel(t)), cell('日均可用', daily == null ? '--' : fmtBytes(daily), C.ok), cell('节点', s.nodeCount > 0 ? `${s.nodeCount} 个` : '--')] },
-      { type: 'stack', direction: 'row', gap: 8, children: [cell('套餐到期', fmtDate(t.expireAt)), cell('流量重置', r ? (r.days === 0 ? '今日' : `${r.days} 天后`) : '--', C.accent)] },
+      { type: 'stack', direction: 'row', gap: 8, children: [cell('套餐到期', fmtDate(t.expireAt)), cell('流量重置', r ? (r.days === 0 ? '今日' : `${r.days} 天后`) : '永久', C.accent)] },
       { type: 'spacer' },
     ],
   };
@@ -889,7 +928,7 @@ function detailCard(s, i, o = {}) {
           type: 'stack', direction: 'column', alignItems: 'start', gap: 0,
           children: [
             { type: 'stack', direction: 'row', alignItems: 'end', gap: 2, children: [T(b.n, F.big, C.text, 'bold', { minScale: 1 }), T(b.u, F.small, C.dim, 'semibold', { minScale: 1 })] },
-            T(remainKnown(t) ? `已用 ${fmtBytes(t.used)} / ${totalLabel(t)}` : `已用 ${fmtBytes(t.used)} · 总量未知`, F.small, C.dim, 'medium', { minScale: 0.7 }),
+            T(remainKnown(t) ? `已用 ${fmtBytes(t.used)} / ${totalLabel(t)}` : `已用 ${fmtBytes(t.used)} · 总量 ∞`, F.small, C.dim, 'medium', { minScale: 0.7 }),
           ],
         },
         { type: 'spacer' },
@@ -911,7 +950,7 @@ function detailCard(s, i, o = {}) {
     },
     t9(`日均可用 ${daily == null ? '--' : fmtBytes(daily)}`),
     t9(fc.text, fc.color, 'semibold'),
-    t9(`${e == null ? '长期有效' : `到期 ${Math.max(0, e)} 天`} · ${r ? (r.days === 0 ? '今日重置' : `重置 ${r.days} 天`) : '不重置'}`),
+    t9(`${e == null ? '长期有效' : `到期 ${Math.max(0, e)} 天`} · ${r ? (r.days === 0 ? '今日重置' : `重置 ${r.days} 天`) : '永久'}`),
   ], CARD);
 }
 
@@ -1003,7 +1042,7 @@ function miniCell(s, i, h) {
     if (h >= 80) {
       const e = daysUntil(t.expireAt);
       const r = nextReset(s.resetDay);
-      children.push(T(remainKnown(t) ? `已用 ${fmtBytes(t.used)} / ${totalLabel(t)}` : `已用 ${fmtBytes(t.used)} · 总量未知`, 8, C.dim, 'medium', { minScale: 0.5 }));
+      children.push(T(remainKnown(t) ? `已用 ${fmtBytes(t.used)} / ${totalLabel(t)}` : `已用 ${fmtBytes(t.used)} · 总量 ∞`, 8, C.dim, 'medium', { minScale: 0.5 }));
       children.push(T(`${e == null ? '长期有效' : `到期 ${Math.max(0, e)} 天`}${r ? (r.days === 0 ? ' · 今日重置' : ` · 重置 ${r.days} 天`) : ''}`, 8, C.dim, 'medium', { minScale: 0.5 }));
     }
   } else {
@@ -1173,7 +1212,7 @@ function lockWidget(list, family) {
       type: 'widget', padding: 8, backgroundImage: ringsSvg([{ pct: ringPct(s.traffic), color: 'white' }], 60, 6, 0),
       children: [
         { type: 'spacer' },
-        { type: 'text', text: p == null ? (s.traffic.unlimited ? '∞' : '--') : `${Math.round(p * 100)}%`, font: { size: 14, weight: 'bold' }, textAlign: 'center' },
+        { type: 'text', text: p == null ? '∞' : `${Math.round(p * 100)}%`, font: { size: 14, weight: 'bold' }, textAlign: 'center' },
         { type: 'text', text: splitBytes(remainKnown(s.traffic) ? s.traffic.remaining : s.traffic.used).n, font: { size: 9 }, textAlign: 'center', opacity: 0.7, maxLines: 1, minScale: 0.5 },
         { type: 'spacer' },
       ],
