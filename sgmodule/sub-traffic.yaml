@@ -10,10 +10,6 @@ env_schema:
     name: 订阅1 名称
     description: 显示在组件上的名称
     default_value: ""
-  SUB1_TOTAL_GB:
-    name: 订阅1 套餐总量 (GB)
-    description: 订阅只返回剩余流量时用来估算总量，留空默认 100
-    default_value: ""
   SUB1_RESET_DAY:
     name: 订阅1 流量重置日
     description: 每月几号重置（1~31），留空不显示
@@ -25,10 +21,6 @@ env_schema:
   SUB2_NAME:
     name: 订阅2 名称
     description: 显示在组件上的名称
-    default_value: ""
-  SUB2_TOTAL_GB:
-    name: 订阅2 套餐总量 (GB)
-    description: 订阅只返回剩余流量时用来估算总量，留空默认 100
     default_value: ""
   SUB2_RESET_DAY:
     name: 订阅2 流量重置日
@@ -42,10 +34,6 @@ env_schema:
     name: 订阅3 名称
     description: 显示在组件上的名称
     default_value: ""
-  SUB3_TOTAL_GB:
-    name: 订阅3 套餐总量 (GB)
-    description: 订阅只返回剩余流量时用来估算总量，留空默认 100
-    default_value: ""
   SUB3_RESET_DAY:
     name: 订阅3 流量重置日
     description: 每月几号重置（1~31），留空不显示
@@ -57,10 +45,6 @@ env_schema:
   SUB4_NAME:
     name: 订阅4 名称
     description: 显示在组件上的名称
-    default_value: ""
-  SUB4_TOTAL_GB:
-    name: 订阅4 套餐总量 (GB)
-    description: 订阅只返回剩余流量时用来估算总量，留空默认 100
     default_value: ""
   SUB4_RESET_DAY:
     name: 订阅4 流量重置日
@@ -74,10 +58,6 @@ env_schema:
     name: 订阅5 名称
     description: 显示在组件上的名称
     default_value: ""
-  SUB5_TOTAL_GB:
-    name: 订阅5 套餐总量 (GB)
-    description: 订阅只返回剩余流量时用来估算总量，留空默认 100
-    default_value: ""
   SUB5_RESET_DAY:
     name: 订阅5 流量重置日
     description: 每月几号重置（1~31），留空不显示
@@ -89,10 +69,6 @@ env_schema:
   SUB6_NAME:
     name: 订阅6 名称
     description: 显示在组件上的名称
-    default_value: ""
-  SUB6_TOTAL_GB:
-    name: 订阅6 套餐总量 (GB)
-    description: 订阅只返回剩余流量时用来估算总量，留空默认 100
     default_value: ""
   SUB6_RESET_DAY:
     name: 订阅6 流量重置日
@@ -106,10 +82,6 @@ env_schema:
     name: 订阅7 名称
     description: 显示在组件上的名称
     default_value: ""
-  SUB7_TOTAL_GB:
-    name: 订阅7 套餐总量 (GB)
-    description: 订阅只返回剩余流量时用来估算总量，留空默认 100
-    default_value: ""
   SUB7_RESET_DAY:
     name: 订阅7 流量重置日
     description: 每月几号重置（1~31），留空不显示
@@ -121,10 +93,6 @@ env_schema:
   SUB8_NAME:
     name: 订阅8 名称
     description: 显示在组件上的名称
-    default_value: ""
-  SUB8_TOTAL_GB:
-    name: 订阅8 套餐总量 (GB)
-    description: 订阅只返回剩余流量时用来估算总量，留空默认 100
     default_value: ""
   SUB8_RESET_DAY:
     name: 订阅8 流量重置日
@@ -138,10 +106,6 @@ env_schema:
     name: 订阅9 名称
     description: 显示在组件上的名称
     default_value: ""
-  SUB9_TOTAL_GB:
-    name: 订阅9 套餐总量 (GB)
-    description: 订阅只返回剩余流量时用来估算总量，留空默认 100
-    default_value: ""
   SUB9_RESET_DAY:
     name: 订阅9 流量重置日
     description: 每月几号重置（1~31），留空不显示
@@ -153,10 +117,6 @@ env_schema:
   SUB10_NAME:
     name: 订阅10 名称
     description: 显示在组件上的名称
-    default_value: ""
-  SUB10_TOTAL_GB:
-    name: 订阅10 套餐总量 (GB)
-    description: 订阅只返回剩余流量时用来估算总量，留空默认 100
     default_value: ""
   SUB10_RESET_DAY:
     name: 订阅10 流量重置日
@@ -183,43 +143,33 @@ scriptings:
       env:
         SUB1_URL: ""
         SUB1_NAME: ""
-        SUB1_TOTAL_GB: ""
         SUB1_RESET_DAY: ""
         SUB2_URL: ""
         SUB2_NAME: ""
-        SUB2_TOTAL_GB: ""
         SUB2_RESET_DAY: ""
         SUB3_URL: ""
         SUB3_NAME: ""
-        SUB3_TOTAL_GB: ""
         SUB3_RESET_DAY: ""
         SUB4_URL: ""
         SUB4_NAME: ""
-        SUB4_TOTAL_GB: ""
         SUB4_RESET_DAY: ""
         SUB5_URL: ""
         SUB5_NAME: ""
-        SUB5_TOTAL_GB: ""
         SUB5_RESET_DAY: ""
         SUB6_URL: ""
         SUB6_NAME: ""
-        SUB6_TOTAL_GB: ""
         SUB6_RESET_DAY: ""
         SUB7_URL: ""
         SUB7_NAME: ""
-        SUB7_TOTAL_GB: ""
         SUB7_RESET_DAY: ""
         SUB8_URL: ""
         SUB8_NAME: ""
-        SUB8_TOTAL_GB: ""
         SUB8_RESET_DAY: ""
         SUB9_URL: ""
         SUB9_NAME: ""
-        SUB9_TOTAL_GB: ""
         SUB9_RESET_DAY: ""
         SUB10_URL: ""
         SUB10_NAME: ""
-        SUB10_TOTAL_GB: ""
         SUB10_RESET_DAY: ""
         WIDGET_TITLE: ""
         REFRESH_HOURS: "2"
