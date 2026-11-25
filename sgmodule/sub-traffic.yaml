@@ -16,8 +16,8 @@ env_schema:
     default_value: ""
   SUB1_RESET_DAY:
     name: 订阅1 流量重置日
-    description: 每月几号 0 点（UTC+8）重置，留空默认 1 号
-    default_value: "1"
+    description: 留空 = 永久；填 1~31 表示每月该日 0 点（UTC+8）重置
+    default_value: ""
   SUB2_URL:
     name: 订阅2 链接
     description: 第 2 个订阅地址（可选）
@@ -32,8 +32,8 @@ env_schema:
     default_value: ""
   SUB2_RESET_DAY:
     name: 订阅2 流量重置日
-    description: 每月几号 0 点（UTC+8）重置，留空默认 1 号
-    default_value: "1"
+    description: 留空 = 永久；填 1~31 表示每月该日 0 点（UTC+8）重置
+    default_value: ""
   SUB3_URL:
     name: 订阅3 链接
     description: 第 3 个订阅地址（可选）
@@ -48,8 +48,8 @@ env_schema:
     default_value: ""
   SUB3_RESET_DAY:
     name: 订阅3 流量重置日
-    description: 每月几号 0 点（UTC+8）重置，留空默认 1 号
-    default_value: "1"
+    description: 留空 = 永久；填 1~31 表示每月该日 0 点（UTC+8）重置
+    default_value: ""
   SUB4_URL:
     name: 订阅4 链接
     description: 第 4 个订阅地址（可选）
@@ -64,8 +64,8 @@ env_schema:
     default_value: ""
   SUB4_RESET_DAY:
     name: 订阅4 流量重置日
-    description: 每月几号 0 点（UTC+8）重置，留空默认 1 号
-    default_value: "1"
+    description: 留空 = 永久；填 1~31 表示每月该日 0 点（UTC+8）重置
+    default_value: ""
   SUB5_URL:
     name: 订阅5 链接
     description: 第 5 个订阅地址（可选）
@@ -80,8 +80,8 @@ env_schema:
     default_value: ""
   SUB5_RESET_DAY:
     name: 订阅5 流量重置日
-    description: 每月几号 0 点（UTC+8）重置，留空默认 1 号
-    default_value: "1"
+    description: 留空 = 永久；填 1~31 表示每月该日 0 点（UTC+8）重置
+    default_value: ""
   SUB6_URL:
     name: 订阅6 链接
     description: 第 6 个订阅地址（可选）
@@ -96,8 +96,8 @@ env_schema:
     default_value: ""
   SUB6_RESET_DAY:
     name: 订阅6 流量重置日
-    description: 每月几号 0 点（UTC+8）重置，留空默认 1 号
-    default_value: "1"
+    description: 留空 = 永久；填 1~31 表示每月该日 0 点（UTC+8）重置
+    default_value: ""
   SUB7_URL:
     name: 订阅7 链接
     description: 第 7 个订阅地址（可选）
@@ -112,8 +112,8 @@ env_schema:
     default_value: ""
   SUB7_RESET_DAY:
     name: 订阅7 流量重置日
-    description: 每月几号 0 点（UTC+8）重置，留空默认 1 号
-    default_value: "1"
+    description: 留空 = 永久；填 1~31 表示每月该日 0 点（UTC+8）重置
+    default_value: ""
   SUB8_URL:
     name: 订阅8 链接
     description: 第 8 个订阅地址（可选）
@@ -128,8 +128,8 @@ env_schema:
     default_value: ""
   SUB8_RESET_DAY:
     name: 订阅8 流量重置日
-    description: 每月几号 0 点（UTC+8）重置，留空默认 1 号
-    default_value: "1"
+    description: 留空 = 永久；填 1~31 表示每月该日 0 点（UTC+8）重置
+    default_value: ""
   SUB9_URL:
     name: 订阅9 链接
     description: 第 9 个订阅地址（可选）
@@ -144,8 +144,8 @@ env_schema:
     default_value: ""
   SUB9_RESET_DAY:
     name: 订阅9 流量重置日
-    description: 每月几号 0 点（UTC+8）重置，留空默认 1 号
-    default_value: "1"
+    description: 留空 = 永久；填 1~31 表示每月该日 0 点（UTC+8）重置
+    default_value: ""
   SUB10_URL:
     name: 订阅10 链接
     description: 第 10 个订阅地址（可选）
@@ -160,8 +160,8 @@ env_schema:
     default_value: ""
   SUB10_RESET_DAY:
     name: 订阅10 流量重置日
-    description: 每月几号 0 点（UTC+8）重置，留空默认 1 号
-    default_value: "1"
+    description: 留空 = 永久；填 1~31 表示每月该日 0 点（UTC+8）重置
+    default_value: ""
   WIDGET_TITLE:
     name: 组件标题
     description: 多个订阅时显示的标题，默认「订阅流量」
@@ -184,43 +184,43 @@ scriptings:
         SUB1_URL: ""
         SUB1_NAME: ""
         SUB1_TOTAL_GB: ""
-        SUB1_RESET_DAY: "1"
+        SUB1_RESET_DAY: ""
         SUB2_URL: ""
         SUB2_NAME: ""
         SUB2_TOTAL_GB: ""
-        SUB2_RESET_DAY: "1"
+        SUB2_RESET_DAY: ""
         SUB3_URL: ""
         SUB3_NAME: ""
         SUB3_TOTAL_GB: ""
-        SUB3_RESET_DAY: "1"
+        SUB3_RESET_DAY: ""
         SUB4_URL: ""
         SUB4_NAME: ""
         SUB4_TOTAL_GB: ""
-        SUB4_RESET_DAY: "1"
+        SUB4_RESET_DAY: ""
         SUB5_URL: ""
         SUB5_NAME: ""
         SUB5_TOTAL_GB: ""
-        SUB5_RESET_DAY: "1"
+        SUB5_RESET_DAY: ""
         SUB6_URL: ""
         SUB6_NAME: ""
         SUB6_TOTAL_GB: ""
-        SUB6_RESET_DAY: "1"
+        SUB6_RESET_DAY: ""
         SUB7_URL: ""
         SUB7_NAME: ""
         SUB7_TOTAL_GB: ""
-        SUB7_RESET_DAY: "1"
+        SUB7_RESET_DAY: ""
         SUB8_URL: ""
         SUB8_NAME: ""
         SUB8_TOTAL_GB: ""
-        SUB8_RESET_DAY: "1"
+        SUB8_RESET_DAY: ""
         SUB9_URL: ""
         SUB9_NAME: ""
         SUB9_TOTAL_GB: ""
-        SUB9_RESET_DAY: "1"
+        SUB9_RESET_DAY: ""
         SUB10_URL: ""
         SUB10_NAME: ""
         SUB10_TOTAL_GB: ""
-        SUB10_RESET_DAY: "1"
+        SUB10_RESET_DAY: ""
         WIDGET_TITLE: ""
         REFRESH_HOURS: "2"
         SUBSCRIPTION_USER_AGENT: ""

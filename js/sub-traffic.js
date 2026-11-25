@@ -6,14 +6,14 @@
  *   - 本地生成 SVG 圆环 / 半圆仪表 / 柱状图，不依赖外部图片服务，离线可用
  *   - 剩余流量、已用 / 总量、今日已用、近 7 天用量、日均可用、用完预测、到期与重置倒计时
  *   - 总量优先级：SUBn_TOTAL_GB → 订阅返回的 total → 都没有显示 ∞
- *   - 重置日默认 UTC+8 每月 1 号 0 点，可用 SUBn_RESET_DAY 改成 N 号（填 0/off 表示永久）
+ *   - 重置日留空即永久；填 N = UTC+8 每月 N 号 0 点重置
  *   - 1 个订阅：小 / 中 / 大三套布局；2~4 个：卡片网格；5~10 个：紧凑双列网格
  *   - 支持锁屏圆形 / 矩形 / 内联
  *
  * Env：
  *   SUB1_URL / SUB1_NAME / SUB1_TOTAL_GB / SUB1_RESET_DAY … SUB10_*
  *   SUBn_TOTAL_GB：套餐总量（GB），填了就优先用它，留空用订阅返回的 total
- *   SUBn_RESET_DAY：每月几号 0 点（UTC+8）重置，留空默认 1 号
+ *   SUBn_RESET_DAY：每月几号 0 点（UTC+8）重置，留空 = 永久不重置
  *   WIDGET_TITLE（多订阅标题）、REFRESH_HOURS、SUBSCRIPTION_USER_AGENT
  *   兼容按 | 或换行分隔的 SUBSCRIPTION_URL / SUBSCRIPTION_NAME / RESET_DAY / PLAN_TOTAL_GB
  */
@@ -303,7 +303,7 @@ function readSubs(ctx) {
       url,
       name: String(env[`SUB${i}_NAME`] || '').trim() || `订阅 ${i}`,
       planGB: String(env[`SUB${i}_TOTAL_GB`] || '').trim(),
-      resetDay: String(env[`SUB${i}_RESET_DAY`] ?? '').trim() || '1',
+      resetDay: String(env[`SUB${i}_RESET_DAY`] ?? '').trim(),
     });
   }
   // 方式二：SUBSCRIPTION_URL 用 | 或换行分隔多个地址，名称 / 重置日 / 总量同样用 | 对应
@@ -317,7 +317,7 @@ function readSubs(ctx) {
       url,
       name: names[i] || (urls.length === 1 && names[0]) || `订阅 ${subs.length + 1}`,
       planGB: totals[i] || totals[0] || '',
-      resetDay: resets[i] || resets[0] || '1',
+      resetDay: resets[i] || resets[0] || '',
     });
   });
   return subs.slice(0, MAX_SUBS);
@@ -436,14 +436,14 @@ function daysUntil(ts) {
   return Math.ceil((ts - Date.now()) / 86400000);
 }
 
-// 流量重置统一按 UTC+8 每月 N 号 0 点算；留空或非法值默认 1 号，填 0/off/不重置 表示不重置
+// 重置日留空 = 永久；填 N = UTC+8 每月 N 号 0 点（自动适配大小月）
 const RESET_TZ_OFFSET = 8 * 3600000;
 
 function resetDayOf(resetDayStr) {
   const raw = String(resetDayStr == null ? '' : resetDayStr).trim();
-  if (/^(0|off|no|none|不重置|永久|不限)$/i.test(raw)) return 0;
+  if (!raw || /^(0|off|no|none|不重置|永久|不限)$/i.test(raw)) return 0;
   const day = Math.floor(Number(raw));
-  if (!Number.isFinite(day) || day < 1 || day > 31) return 1;
+  if (!Number.isFinite(day) || day < 1 || day > 31) return 0;
   return day;
 }
 
