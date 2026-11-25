@@ -2,16 +2,16 @@
  * Egern 小组件：订阅流量监控 v1（iOS 液态玻璃风格 · 多订阅）
  *
  * 功能：
- *   - 同时读取最多 10 个机场 / 代理订阅（并行请求，各自独立缓存）
+ *   - 同时读取最多 4 个机场 / 代理订阅（并行请求，各自独立缓存）
  *   - 本地生成 SVG 圆环 / 半圆仪表 / 柱状图，不依赖外部图片服务，离线可用
  *   - 剩余流量、已用 / 总量、今日已用、近 7 天用量、日均可用、用完预测、到期与重置倒计时
  *   - 总量优先级：SUBn_TOTAL_GB → 订阅返回的 total → 都没有显示 ∞
  *   - 重置日留空即永久；填 N = UTC+8 每月 N 号 0 点重置
- *   - 1 个订阅：小 / 中 / 大三套布局；2~4 个：卡片网格；5~10 个：紧凑双列网格
+ *   - 1 个订阅：小 / 中 / 大三套布局；2~4 个：卡片网格
  *   - 支持锁屏圆形 / 矩形 / 内联
  *
  * Env：
- *   SUB1_URL / SUB1_NAME / SUB1_TOTAL_GB / SUB1_RESET_DAY … SUB10_*
+ *   SUB1_URL / SUB1_NAME / SUB1_TOTAL_GB / SUB1_RESET_DAY … SUB4_*
  *   SUBn_TOTAL_GB：套餐总量（GB），填了就优先用它，留空用订阅返回的 total
  *   SUBn_RESET_DAY：每月几号 0 点（UTC+8）重置，留空 = 永久不重置
  *   WIDGET_TITLE（多订阅标题）、REFRESH_HOURS、SUBSCRIPTION_USER_AGENT
@@ -286,7 +286,7 @@ async function fetchSubscription(ctx, url, customUA) {
 // 订阅配置
 // ---------------------------------------------------------------------------
 
-const MAX_SUBS = 10;
+const MAX_SUBS = 4;
 
 function splitList(v) {
   return String(v || '').split(/\s*[|\n]\s*/).map(s => s.trim()).filter(Boolean);
@@ -295,7 +295,7 @@ function splitList(v) {
 function readSubs(ctx) {
   const env = ctx.env || {};
   const subs = [];
-  // 方式一：SUB1_URL … SUB10_URL，各自可配名称 / 总量 / 重置日
+  // 方式一：SUB1_URL … SUB4_URL，各自可配名称 / 总量 / 重置日
   for (let i = 1; i <= MAX_SUBS; i += 1) {
     const url = String(env[`SUB${i}_URL`] || '').trim();
     if (!url) continue;
@@ -994,104 +994,6 @@ function compactCard(s, i) {
   ], CARD);
 }
 
-// 密集网格单元：按可用高度自动选择信息密度（5 个及以上订阅用）
-function miniCell(s, i, h) {
-  const color = colorOf(i);
-  const st = status(s);
-  const t = s.traffic;
-  const wrap = children => glass(children, { flex: 1, height: h, gap: h >= 44 ? 2 : 1, padding: h >= 34 ? [4, 7, 4, 7] : [2, 6, 2, 6], borderRadius: 12 });
-
-  if (!t) {
-    return wrap([
-      {
-        type: 'stack', direction: 'row', alignItems: 'center', gap: 3,
-        children: [dot(st.color), T(s.name, 9, C.text, 'semibold', { minScale: 0.6 }), { type: 'spacer' }, T(s.nodeCount > 0 ? `${s.nodeCount} 节点` : st.label, 8, st.color, 'semibold', { minScale: 0.6 })],
-      },
-      ...(h >= 34 ? [{ type: 'spacer' }, T(s.nodeCount > 0 ? '未返回流量信息' : (s.error || '读取失败'), 8, C.dim, 'medium', { maxLines: 2, minScale: 0.6 })] : []),
-    ]);
-  }
-
-  const p = pctLeft(t);
-  const pctText = pctLabel(t);
-  const head = {
-    type: 'stack', direction: 'row', alignItems: 'center', gap: 3,
-    children: [dot(st.color === C.ok ? color : st.color), T(s.name, h >= 34 ? 10 : 9, C.text, 'semibold', { minScale: 0.6 }), { type: 'spacer' }, T(pctText, 9, color, 'semibold', { minScale: 0.6 })],
-  };
-
-  // 高度不够：压成单行
-  if (h < 24) {
-    return wrap([{
-      type: 'stack', direction: 'row', alignItems: 'center', gap: 3,
-      children: [dot(st.color === C.ok ? color : st.color), T(s.name, 9, C.text, 'semibold', { minScale: 0.5 }), { type: 'spacer' }, T(fmtBytes(remainKnown(t) ? t.remaining : t.used), 10, C.text, 'bold', { minScale: 0.5 }), T(pctText, 8, color, 'semibold', { minScale: 0.5 })],
-    }]);
-  }
-
-  const b = splitBytes(remainKnown(t) ? t.remaining : t.used);
-  const children = [head];
-  if (h >= 34) {
-    children.push({
-      type: 'stack', direction: 'row', alignItems: 'end', gap: 2,
-      children: [
-        T(b.n, h >= 60 ? 18 : 14, C.text, 'bold', { minScale: 0.6 }),
-        T(b.u, 8, C.dim, 'semibold', { minScale: 0.6 }),
-        { type: 'spacer' },
-        T(s.today == null ? '' : `今日 ${fmtBytes(s.today)}`, 8, C.dim, 'medium', { minScale: 0.5 }),
-      ],
-    });
-    children.push({ type: 'image', src: barSvg(ringPct(t), color, 120, 3), width: 120, height: 3 });
-    if (h >= 80) {
-      const e = daysUntil(t.expireAt);
-      const r = nextReset(s.resetDay);
-      children.push(T(remainKnown(t) ? `已用 ${fmtBytes(t.used)} / ${totalLabel(t)}` : `已用 ${fmtBytes(t.used)} · 总量 ∞`, 8, C.dim, 'medium', { minScale: 0.5 }));
-      children.push(T(`${e == null ? '长期有效' : `到期 ${Math.max(0, e)} 天`}${r ? (r.days === 0 ? ' · 今日重置' : ` · 重置 ${r.days} 天`) : ''}`, 8, C.dim, 'medium', { minScale: 0.5 }));
-    }
-  } else {
-    children.push({
-      type: 'stack', direction: 'row', alignItems: 'end', gap: 2,
-      children: [T(b.n, 13, C.text, 'bold', { minScale: 0.6 }), T(b.u, 8, C.dim, 'semibold', { minScale: 0.6 }), { type: 'spacer' }, T(s.today == null ? '' : fmtBytes(s.today), 8, C.dim, 'medium', { minScale: 0.5 })],
-    });
-  }
-  return wrap(children);
-}
-
-// 双列密集网格（5~10 个订阅）
-function denseGrid(ctx, list, family) {
-  const large = family !== 'systemMedium';
-  const rows = Math.ceil(list.length / 2);
-  const inner = large ? 272 : 116;
-  const gap = large ? 6 : 4;
-  const cellH = Math.max(18, Math.min(large ? 100 : 40, Math.floor((inner - gap * (rows - 1)) / rows)));
-
-  const cells = list.map((s, i) => miniCell(s, i, cellH));
-  if (cells.length % 2 === 1) cells.push({ type: 'stack', flex: 1, height: cellH, children: [] });
-
-  const rowEls = [];
-  for (let k = 0; k < cells.length; k += 2) {
-    rowEls.push({ type: 'stack', direction: 'row', alignItems: 'start', gap, height: cellH, children: cells.slice(k, k + 2) });
-  }
-
-  const withT = list.filter(s => s.traffic && !s.traffic.unlimited && Number.isFinite(s.traffic.remaining));
-  const sumRemain = withT.reduce((a, s) => a + s.traffic.remaining, 0);
-  const sumToday = list.reduce((a, s) => a + (s.today || 0), 0);
-
-  return {
-    type: 'widget', padding: large ? [10, 12, 10, 12] : [6, 8, 6, 8], gap: 5, backgroundGradient: bg(), refreshAfter: refreshAt(ctx),
-    children: [
-      header(list, titleOf(ctx, list)),
-      ...(large ? [{
-        type: 'stack', direction: 'row', alignItems: 'end', gap: 5,
-        children: [
-          T(`${list.length} 个订阅 剩余`, 10, C.dim, 'medium'),
-          bigRemain(withT.length ? { remaining: sumRemain } : {}, 18),
-          { type: 'spacer' },
-          T(`今日 ${fmtBytes(sumToday)}`, 10, C.accent, 'semibold'),
-        ],
-      }] : []),
-      ...rowEls,
-    ],
-  };
-}
-
 function multiMedium(ctx, list) {
   const n = list.length;
   if (n === 2) {
@@ -1106,7 +1008,7 @@ function multiMedium(ctx, list) {
       children: [header(list, titleOf(ctx, list)), { type: 'stack', direction: 'row', gap: 6, flex: 1, children: list.map((s, i) => compactCard(s, i)) }],
     };
   }
-  if (n === 4) {
+  if (n >= 4) {
     const shown = list.slice(0, 4);
     return {
       type: 'widget', padding: 14, gap: 8, backgroundGradient: bg(), refreshAfter: refreshAt(ctx),
@@ -1122,7 +1024,6 @@ function multiMedium(ctx, list) {
       ],
     };
   }
-  return denseGrid(ctx, list, 'systemMedium');
 }
 
 function weekCard(shown, height) {
@@ -1168,7 +1069,6 @@ function sumCard(shown, sumRemain, sumToday, o) {
 }
 
 function multiLarge(ctx, list) {
-  if (list.length >= 5) return denseGrid(ctx, list, 'systemLarge');
   const shown = list.slice(0, 4);
   const withT = shown.filter(s => s.traffic && !s.traffic.unlimited && Number.isFinite(s.traffic.remaining));
   const sumRemain = withT.reduce((a, s) => a + s.traffic.remaining, 0);
@@ -1236,7 +1136,7 @@ export default async function (ctx) {
   const list = await loadAll(ctx);
   const family = ctx.widgetFamily || 'systemMedium';
   if (family.startsWith('accessory')) return lockWidget(list, family);
-  if (!list.length) return emptyWidget(ctx, '等待订阅地址', '在 Env 里填 SUB1_URL、SUB2_URL……最多 10 个，也可以在 SUBSCRIPTION_URL 里用 | 分隔多个地址');
+  if (!list.length) return emptyWidget(ctx, '等待订阅地址', '在 Env 里填 SUB1_URL、SUB2_URL……最多 4 个，也可以在 SUBSCRIPTION_URL 里用 | 分隔多个地址');
   if (list.length === 1) {
     const s = list[0];
     if (!s.traffic) return emptyWidget(ctx, s.nodeCount > 0 ? `${s.nodeCount} 个可用节点` : '无法读取流量', s.error || '订阅未提供流量信息');
