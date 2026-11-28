@@ -803,7 +803,7 @@ function singleSmall(ctx, s) {
   return {
     type: 'widget', padding: 14, gap: 6, backgroundGradient: bg(), refreshAfter: refreshAt(ctx),
     children: [
-      { type: 'stack', direction: 'row', alignItems: 'center', gap: 5, children: [icon('chart.pie.fill', C.accent, 12), T(s.name, 12, C.text, 'semibold'), { type: 'spacer' }, dot(status(s).color)] },
+      { type: 'stack', direction: 'row', alignItems: 'center', gap: 5, children: [icon('chart.pie.fill', C.accent, 12), T(s.name, 11.5, C.text, 'semibold'), { type: 'spacer' }, dot(status(s).color)] },
       { type: 'spacer' },
       {
         type: 'stack', direction: 'row', alignItems: 'center', gap: 8,
@@ -889,7 +889,7 @@ function multiSmall(ctx, list) {
   return {
     type: 'widget', padding: 14, gap: two ? 7 : 8, backgroundGradient: bg(), refreshAfter: refreshAt(ctx),
     children: [
-      { type: 'stack', direction: 'row', alignItems: 'center', gap: 5, children: [icon('chart.pie.fill', C.accent, 12), T(titleOf(ctx, list), 12, C.text, 'semibold'), { type: 'spacer' }, T(lastUpdated(list), 9, C.dim)] },
+      { type: 'stack', direction: 'row', alignItems: 'center', gap: 5, children: [icon('chart.pie.fill', C.accent, 12), T(titleOf(ctx, list), 11.5, C.text, 'semibold'), { type: 'spacer' }, T(lastUpdated(list), 9, C.dim)] },
       ...(two ? [{ type: 'stack', direction: 'column', alignItems: 'start', gap: 0, children: [T('合计剩余', 9, C.dim, 'medium'), bigRemain(withT.length ? { remaining: sumRemain } : {}, 24)] }] : []),
       { type: 'spacer' },
       ...shown.map((s, i) => subRow(s, i, 126, { valueSize: 12, barH: 3 })),

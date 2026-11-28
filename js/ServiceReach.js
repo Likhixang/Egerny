@@ -243,8 +243,8 @@ function header(tally, region, options) {
   const opts = options || {};
   const tone = headlineTone(tally);
   const children = [
-    icon('antenna.radiowaves.left.and.right', tone, opts.small ? 11 : 13),
-    text('服务可达', opts.small ? 11 : 13, TONE.text, 'semibold'),
+    icon('antenna.radiowaves.left.and.right', tone, opts.small ? 12 : 13),
+    text('服务可达', opts.small ? 11.5 : 13, TONE.text, 'semibold'),
     spacer(),
   ];
   if (region) children.push(mono(flag(region.cc) + ' ' + region.cc, opts.small ? 9 : 9.5, TONE.dim, 'medium'));
@@ -439,7 +439,7 @@ function renderLock(rows, tally, family) {
     children: [
       stack('row', [
         icon('antenna.radiowaves.left.and.right', tone, 10),
-        text('服务可达', 10, TONE.text, 'semibold'),
+        text('服务可达', 10.5, TONE.text, 'semibold'),
         spacer(),
         mono(tally.ok + '/' + tally.total, 10, tone, 'bold'),
       ], { alignItems: 'center', gap: 4 }),

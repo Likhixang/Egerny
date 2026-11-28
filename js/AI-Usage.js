@@ -1025,7 +1025,7 @@ function uiUsageLock(snapshot, meta, family, options) {
   const value = metric ? uiUsageValue(metric) : '—';
   if (family === 'accessoryInline') {
     const label = state ? `${meta.title} · ${state.title}` : `${meta.title} ${metric ? metric.label : '无指标'} ${value} ${risk.text}${hidden}${hiddenMetrics}${flags ? ` · ${flags}` : ''}`;
-    const children = [uiUsageTextNode(label, 12, state ? state.color : risk.color, 'medium', false)];
+    const children = [uiUsageTextNode(label, 11, state ? state.color : risk.color, 'medium', false)];
     if (snapshot.stale) children.push(uiUsageDate(snapshot.lastUpdated, 'relative', 11) || uiUsageTextNode('更新时间未知', 11, UI_USAGE_COLORS.neutral));
     return uiUsageStack(children, 'row', 3);
   }
@@ -1036,7 +1036,7 @@ function uiUsageLock(snapshot, meta, family, options) {
     if (snapshot.stale) children.push(uiUsageDate(snapshot.lastUpdated, 'relative', 10) || uiUsageTextNode('更新时间未知', 10, UI_USAGE_COLORS.neutral));
     return uiUsageStack(children, 'column', 1, { alignItems: 'center' });
   }
-  const children = [uiUsageTextNode(state ? `${meta.title} · ${state.title}` : `${account.email || account.name}${hidden} · ${flags || status.text}`, 12, state ? state.color : UI_USAGE_COLORS.primary, 'semibold')];
+  const children = [uiUsageTextNode(state ? `${meta.title} · ${state.title}` : `${account.email || account.name}${hidden} · ${flags || status.text}`, 10.5, state ? state.color : UI_USAGE_COLORS.primary, 'semibold')];
   if (state) children.push(uiUsageTextNode(state.detail, 11, UI_USAGE_COLORS.secondary, 'regular', false, 2));
   else children.push(uiUsageTextNode(metric ? `${metric.label} ${value} · ${risk.text}${hiddenMetrics}` : '暂无指标 · 未知', 13, risk.color, 'semibold', true));
   if (snapshot.stale) children.push(uiUsageFreshness(snapshot, true));
