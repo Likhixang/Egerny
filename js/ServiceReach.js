@@ -121,18 +121,44 @@ function ringImage(fraction, color, size, stroke) {
   return { type: 'image', src: svgUri("<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 " + s + ' ' + s + "'>" + body + '</svg>'), width: s, height: s };
 }
 
-function background() {
+// 统一渐变：四个组件共用同一套深度（浅色明度 97.6% → 93.6%，深色 14.5% → 6.8%），
+// 色相随当前时刻缓慢漂移，并按小时桶做确定性微调 —— 每次刷新都可能略有不同。
+const GRAD_HUE = 218;
+
+function gradHsl(h, s, l) {
+  const hue = ((h % 360) + 360) % 360;
+  const amp = (s / 100) * Math.min(l / 100, 1 - l / 100);
+  const channel = n => {
+    const k = (n + hue / 30) % 12;
+    const c = l / 100 - amp * Math.max(-1, Math.min(k - 3, 9 - k, 1));
+    return Math.round(Math.max(0, Math.min(1, c)) * 255).toString(16).padStart(2, '0');
+  };
+  return '#' + channel(0) + channel(8) + channel(4);
+}
+
+function softGradient() {
+  const now = new Date();
+  const hours = now.getHours() + now.getMinutes() / 60;
+  const slow = Math.sin((hours / 24) * Math.PI * 2) * 9;
+  const jitter = Math.abs((Math.sin(Math.floor(now.getTime() / 3600000) * 12.9898) * 43758.5453) % 1);
+  const hue = (GRAD_HUE + slow + (jitter - 0.5) * 6 + 360) % 360;
+  const lift = (jitter - 0.5) * 1.8;
+  const mix = (a, b, t) => a + (b - a) * t;
+  const stop = (dh, t) => ({
+    light: gradHsl(hue + dh, mix(56, 44, t), mix(97.6, 93.6, t) + lift * 0.5),
+    dark: gradHsl(hue + dh, mix(38, 30, t), mix(14.5, 6.8, t) + lift * 0.6),
+  });
   return {
     type: 'linear',
-    colors: [
-      { light: '#F4F7FF', dark: '#141D31' },
-      { light: '#EDF1FF', dark: '#0C1425' },
-      { light: '#F0FAF5', dark: '#091511' },
-    ],
-    stops: [0, 0.6, 1],
+    colors: [stop(0, 0), stop(16, 0.5), stop(-12, 1)],
+    stops: [0, 0.55, 1],
     startPoint: { x: 0, y: 0 },
     endPoint: { x: 1, y: 1 },
   };
+}
+
+function background() {
+  return softGradient();
 }
 
 function flag(cc) {

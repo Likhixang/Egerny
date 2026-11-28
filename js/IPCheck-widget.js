@@ -378,11 +378,48 @@ const C = {
   pillBg: { light: "rgba(0, 0, 0, 0.05)", dark: "rgba(255, 255, 255, 0.10)" }
 };
 
+// 统一渐变：四个组件共用同一套深度（浅色明度 97.6% → 93.6%，深色 14.5% → 6.8%），
+// 色相随当前时刻缓慢漂移，并按小时桶做确定性微调 —— 每次刷新都可能略有不同。
+const GRAD_HUE = 168;
+
+function gradHsl(h, s, l) {
+  const hue = ((h % 360) + 360) % 360;
+  const amp = (s / 100) * Math.min(l / 100, 1 - l / 100);
+  const channel = n => {
+    const k = (n + hue / 30) % 12;
+    const c = l / 100 - amp * Math.max(-1, Math.min(k - 3, 9 - k, 1));
+    return Math.round(Math.max(0, Math.min(1, c)) * 255).toString(16).padStart(2, "0");
+  };
+  return "#" + channel(0) + channel(8) + channel(4);
+}
+
+function softGradient() {
+  const now = new Date();
+  const hours = now.getHours() + now.getMinutes() / 60;
+  const slow = Math.sin((hours / 24) * Math.PI * 2) * 9;
+  const jitter = Math.abs((Math.sin(Math.floor(now.getTime() / 3600000) * 12.9898) * 43758.5453) % 1);
+  const hue = (GRAD_HUE + slow + (jitter - 0.5) * 6 + 360) % 360;
+  const lift = (jitter - 0.5) * 1.8;
+  const mix = (a, b, t) => a + (b - a) * t;
+  const stop = (dh, t) => ({
+    light: gradHsl(hue + dh, mix(56, 44, t), mix(97.6, 93.6, t) + lift * 0.5),
+    dark: gradHsl(hue + dh, mix(38, 30, t), mix(14.5, 6.8, t) + lift * 0.6)
+  });
+  return {
+    type: "linear",
+    colors: [stop(0, 0), stop(16, 0.5), stop(-12, 1)],
+    stops: [0, 0.55, 1],
+    startPoint: { x: 0, y: 0 },
+    endPoint: { x: 1, y: 1 }
+  };
+}
+
+
 function renderSystemSmall(d, family) {
   const compact = family === "accessoryRectangular" || family === "accessoryInline";
   return {
     type: "widget",
-    backgroundColor: C.widgetBg,
+    ...(compact ? { backgroundColor: C.widgetBg } : { backgroundGradient: softGradient() }),
     padding: 12,
     children: [
       {
@@ -499,7 +536,7 @@ function createSmallSourceRow(name, scoreText, label, color) {
 function renderSystemMedium(d) {
   return {
     type: "widget",
-    backgroundColor: C.widgetBg,
+    backgroundGradient: softGradient(),
     padding: [11, 14, 11, 14],
     children: [
       {
@@ -658,7 +695,7 @@ function createCleanColumn({ sourceName, scoreVal, scoreColor, tagPrimary, tagSe
 function renderSystemLarge(d) {
   return {
     type: "widget",
-    backgroundColor: C.widgetBg,
+    backgroundGradient: softGradient(),
     padding: 16,
     gap: 12,
     children: [
@@ -872,7 +909,7 @@ function createMatrixCard(icon, title, items, flexVal) {
 function renderErrorWidget(errorMsg) {
   return {
     type: "widget",
-    backgroundColor: C.widgetBg,
+    backgroundGradient: softGradient(),
     padding: 14,
     children: [
       {

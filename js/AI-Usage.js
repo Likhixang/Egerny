@@ -842,7 +842,7 @@ async function fetchAgyData(ctx, config) {
  */
 const UI_USAGE_COLORS = {
   background: { light: '#FFFFFF', dark: '#151515' },
-  card: { light: '#F3F3F5', dark: '#252527' },
+  card: { light: 'rgba(255,255,255,0.62)', dark: 'rgba(255,255,255,0.075)' },
   primary: { light: '#171717', dark: '#FFFFFF' },
   secondary: { light: '#616167', dark: '#ACACB3' },
   neutral: { light: '#616167', dark: '#ACACB3' },
@@ -850,6 +850,42 @@ const UI_USAGE_COLORS = {
   warning: { light: '#925000', dark: '#FFBC56' },
   danger: { light: '#AF201A', dark: '#FF7D75' },
 };
+// 统一渐变：四个组件共用同一套深度（浅色明度 97.6% → 93.6%，深色 14.5% → 6.8%），
+// 色相随当前时刻缓慢漂移，并按小时桶做确定性微调 —— 每次刷新都可能略有不同。
+const GRAD_HUE = 236;
+
+function gradHsl(h, s, l) {
+  const hue = ((h % 360) + 360) % 360;
+  const amp = (s / 100) * Math.min(l / 100, 1 - l / 100);
+  const channel = n => {
+    const k = (n + hue / 30) % 12;
+    const c = l / 100 - amp * Math.max(-1, Math.min(k - 3, 9 - k, 1));
+    return Math.round(Math.max(0, Math.min(1, c)) * 255).toString(16).padStart(2, '0');
+  };
+  return '#' + channel(0) + channel(8) + channel(4);
+}
+
+function softGradient() {
+  const now = new Date();
+  const hours = now.getHours() + now.getMinutes() / 60;
+  const slow = Math.sin((hours / 24) * Math.PI * 2) * 9;
+  const jitter = Math.abs((Math.sin(Math.floor(now.getTime() / 3600000) * 12.9898) * 43758.5453) % 1);
+  const hue = (GRAD_HUE + slow + (jitter - 0.5) * 6 + 360) % 360;
+  const lift = (jitter - 0.5) * 1.8;
+  const mix = (a, b, t) => a + (b - a) * t;
+  const stop = (dh, t) => ({
+    light: gradHsl(hue + dh, mix(56, 44, t), mix(97.6, 93.6, t) + lift * 0.5),
+    dark: gradHsl(hue + dh, mix(38, 30, t), mix(14.5, 6.8, t) + lift * 0.6),
+  });
+  return {
+    type: 'linear',
+    colors: [stop(0, 0), stop(16, 0.5), stop(-12, 1)],
+    stops: [0, 0.55, 1],
+    startPoint: { x: 0, y: 0 },
+    endPoint: { x: 1, y: 1 },
+  };
+}
+
 const UI_USAGE_FAMILIES = ['systemSmall', 'systemMedium', 'systemLarge', 'systemExtraLarge', 'accessoryCircular', 'accessoryRectangular', 'accessoryInline'];
 
 function uiUsageText(value, fallback) {
@@ -1010,7 +1046,7 @@ function uiUsageCard(account, snapshot, count, small) {
   const hidden = account.metrics.length - metrics.length;
   if (hidden > 0) children.push(uiUsageTextNode(`另有 ${hidden} 项指标`, 11, UI_USAGE_COLORS.secondary));
   return uiUsageStack(children, 'column', small ? 4 : 6,
-    { padding: small ? 0 : 10, backgroundColor: small ? UI_USAGE_COLORS.background : UI_USAGE_COLORS.card, borderRadius: small ? 0 : 12, borderWidth: small ? 0 : 0.5, borderColor: { light: '#00000012', dark: '#FFFFFF18' }, flex: 1 });
+    { padding: small ? 0 : 10, backgroundColor: small ? { light: 'rgba(255,255,255,0.42)', dark: 'rgba(255,255,255,0.04)' } : UI_USAGE_COLORS.card, borderRadius: small ? 0 : 12, borderWidth: small ? 0 : 0.5, borderColor: { light: '#00000012', dark: '#FFFFFF18' }, flex: 1 });
 }
 function uiUsageLock(snapshot, meta, family, options) {
   const state = uiUsageState(snapshot, options);
@@ -1060,7 +1096,7 @@ function renderUsageWidget(ctx, snapshot, meta, options) {
   }
   const small = family === 'systemSmall';
   const state = uiUsageState(data, opts);
-  root.backgroundColor = UI_USAGE_COLORS.background;
+  root.backgroundGradient = softGradient();
   root.padding = small ? 11 : 13;
   root.children.push(uiUsageHeader(data, provider, small));
   if (state) {
