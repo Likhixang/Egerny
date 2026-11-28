@@ -1,0 +1,82 @@
+name: "服务可达监测"
+description: "并发探测所选流媒体与 AI 服务，显示 HTTP 状态分类（正常 / 受限 / 异常 / 不可达）与响应延迟：8 项服务可逐项开关，支持主屏小 / 中 / 大及锁屏三种尺寸，深浅色自动适配。"
+author: "Likhixang"
+homepage: "https://github.com/Likhixang/Egerny"
+icon: "antenna.radiowaves.left.and.right"
+
+env_schema:
+  SHOW_YOUTUBE:
+    name: YouTube
+    description: "探测 youtube.com 的 204 响应。"
+    options:
+      - "true"
+      - "false"
+    default_value: "true"
+  SHOW_NETFLIX:
+    name: Netflix
+    description: "探测 netflix.com。"
+    options:
+      - "true"
+      - "false"
+    default_value: "true"
+  SHOW_DISNEY:
+    name: Disney+
+    description: "探测 disneyplus.com。"
+    options:
+      - "true"
+      - "false"
+    default_value: "true"
+  SHOW_SPOTIFY:
+    name: Spotify
+    description: "探测 open.spotify.com。"
+    options:
+      - "true"
+      - "false"
+    default_value: "true"
+  SHOW_CHATGPT:
+    name: ChatGPT
+    description: "探测 chatgpt.com。"
+    options:
+      - "true"
+      - "false"
+    default_value: "true"
+  SHOW_CLAUDE:
+    name: Claude
+    description: "探测 claude.ai。"
+    options:
+      - "true"
+      - "false"
+    default_value: "true"
+  SHOW_GEMINI:
+    name: Gemini
+    description: "探测 gemini.google.com。"
+    options:
+      - "true"
+      - "false"
+    default_value: "true"
+  SHOW_GROK:
+    name: Grok
+    description: "探测 grok.com。"
+    options:
+      - "true"
+      - "false"
+    default_value: "true"
+
+scriptings:
+  - generic:
+      name: ServiceReach
+      script_url: https://raw.githubusercontent.com/Likhixang/Egerny/main/js/ServiceReach.js
+      timeout: 20
+      env:
+        SHOW_YOUTUBE: "true"
+        SHOW_NETFLIX: "true"
+        SHOW_DISNEY: "true"
+        SHOW_SPOTIFY: "true"
+        SHOW_CHATGPT: "true"
+        SHOW_CLAUDE: "true"
+        SHOW_GEMINI: "true"
+        SHOW_GROK: "true"
+
+widgets:
+  - name: 服务可达
+    script_name: ServiceReach
