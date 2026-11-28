@@ -966,9 +966,9 @@ function uiUsageState(snapshot, options) {
   return { title: '暂无账号', detail: '未返回账号，请检查服务账号与权限', color: UI_USAGE_COLORS.neutral };
 }
 function uiUsageHeader(snapshot, meta, small) {
-  const children = [{ type: 'image', src: meta.logo || 'sf-symbol:chart.bar.xaxis', width: small ? 14 : 17, height: small ? 14 : 17, borderRadius: 4 },
-    Object.assign(uiUsageTextNode(meta.title, small ? 13 : 15, UI_USAGE_COLORS.primary, 'bold'), { flex: 1 })];
-  if (!small) children.push(uiUsageTextNode(`${snapshot.accounts.length} 个账号`, 12, UI_USAGE_COLORS.secondary));
+  const children = [{ type: 'image', src: meta.logo || 'sf-symbol:chart.bar.xaxis', width: small ? 12 : 13, height: small ? 12 : 13, borderRadius: 3.5 },
+    Object.assign(uiUsageTextNode(meta.title, small ? 11.5 : 13, UI_USAGE_COLORS.primary, 'semibold'), { flex: 1 })];
+  if (!small) children.push(uiUsageTextNode(`${snapshot.accounts.length} 个账号`, 10.5, UI_USAGE_COLORS.secondary));
   return uiUsageStack(children, 'row', 5, { alignItems: 'center' });
 }
 function uiUsageFreshness(snapshot, small) {
@@ -1038,7 +1038,7 @@ function uiUsageLock(snapshot, meta, family, options) {
   }
   const children = [uiUsageTextNode(state ? `${meta.title} · ${state.title}` : `${account.email || account.name}${hidden} · ${flags || status.text}`, 12, state ? state.color : UI_USAGE_COLORS.primary, 'semibold')];
   if (state) children.push(uiUsageTextNode(state.detail, 11, UI_USAGE_COLORS.secondary, 'regular', false, 2));
-  else children.push(uiUsageTextNode(metric ? `${metric.label} ${value} · ${risk.text}${hiddenMetrics}` : '暂无指标 · 未知', 14, risk.color, 'bold', true));
+  else children.push(uiUsageTextNode(metric ? `${metric.label} ${value} · ${risk.text}${hiddenMetrics}` : '暂无指标 · 未知', 13, risk.color, 'semibold', true));
   if (snapshot.stale) children.push(uiUsageFreshness(snapshot, true));
   else if (metric && metric.resetAt !== null) children.push(uiUsageStack([uiUsageTextNode('重置', 11, UI_USAGE_COLORS.secondary), uiUsageDate(metric.resetAt, 'relative', 11)], 'row', 3));
   return uiUsageStack(children, 'column', 2);
@@ -1064,8 +1064,8 @@ function renderUsageWidget(ctx, snapshot, meta, options) {
   root.padding = small ? 11 : 13;
   root.children.push(uiUsageHeader(data, provider, small));
   if (state) {
-    root.children.push(uiUsageTextNode(state.title, small ? 19 : 23, state.color, 'bold'));
-    root.children.push(uiUsageTextNode(state.detail, 12, UI_USAGE_COLORS.secondary, 'regular', false, small ? 2 : 3));
+    root.children.push(uiUsageTextNode(state.title, small ? 14 : 16, state.color, 'semibold'));
+    root.children.push(uiUsageTextNode(state.detail, 11, UI_USAGE_COLORS.secondary, 'regular', false, small ? 2 : 3));
   } else {
     const limit = small ? 1 : family === 'systemMedium' ? 2 : family === 'systemLarge' ? 4 : 8;
     const visible = data.accounts.slice(0, limit);

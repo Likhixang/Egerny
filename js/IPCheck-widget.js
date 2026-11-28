@@ -127,7 +127,7 @@ export default async function (ctx) {
   };
 
   if (family === "systemSmall" || family === "accessoryRectangular" || family === "accessoryInline") {
-    return renderSystemSmall(model);
+    return renderSystemSmall(model, family);
   }
   if (family === "accessoryCircular") {
     return renderAccessoryCircular(model);
@@ -378,7 +378,8 @@ const C = {
   pillBg: { light: "rgba(0, 0, 0, 0.05)", dark: "rgba(255, 255, 255, 0.10)" }
 };
 
-function renderSystemSmall(d) {
+function renderSystemSmall(d, family) {
+  const compact = family === "accessoryRectangular" || family === "accessoryInline";
   return {
     type: "widget",
     backgroundColor: C.widgetBg,
@@ -389,9 +390,9 @@ function renderSystemSmall(d) {
         direction: "row",
         alignItems: "center",
         children: [
-          { type: "image", src: CHECK_LOGO, width: 14, height: 14, borderRadius: 3.5 },
+          { type: "image", src: CHECK_LOGO, width: compact ? 10 : 12, height: compact ? 10 : 12, borderRadius: 3 },
           { type: "spacer", length: 5 },
-          { type: "text", text: "IP质检", font: { size: "caption1", weight: "heavy" }, textColor: C.textPrimary },
+          { type: "text", text: "IP质检", font: { size: compact ? 10.5 : 11.5, weight: "semibold" }, textColor: C.textPrimary },
           { type: "spacer" },
           createPillBadge(d.overall === null ? "无评分" : `${d.overallText}分`, d.level.color, d.level.badgeBg, d.level.icon)
         ]
@@ -506,9 +507,9 @@ function renderSystemMedium(d) {
         direction: "row",
         alignItems: "center",
         children: [
-          { type: "image", src: CHECK_LOGO, width: 14, height: 14, borderRadius: 3.5 },
+          { type: "image", src: CHECK_LOGO, width: 13, height: 13, borderRadius: 3.5 },
           { type: "spacer", length: 6 },
-          { type: "text", text: "IP质检", font: { size: "subheadline", weight: "heavy" }, textColor: C.textPrimary },
+          { type: "text", text: "IP质检", font: { size: 13, weight: "semibold" }, textColor: C.textPrimary },
           { type: "spacer" },
           createPillBadge(d.overall === null ? "综合 无评分" : `综合 ${d.overallText}分`, d.level.color, d.level.badgeBg, d.level.icon)
         ]
@@ -666,9 +667,9 @@ function renderSystemLarge(d) {
         direction: "row",
         alignItems: "center",
         children: [
-          { type: "image", src: CHECK_LOGO, width: 16, height: 16, borderRadius: 4 },
+          { type: "image", src: CHECK_LOGO, width: 13, height: 13, borderRadius: 3.5 },
           { type: "spacer", length: 6 },
-          { type: "text", text: "IP质检", font: { size: "subheadline", weight: "heavy" }, textColor: C.textPrimary },
+          { type: "text", text: "IP质检", font: { size: 13, weight: "semibold" }, textColor: C.textPrimary },
           { type: "spacer", length: 6 },
           {
             type: "stack",
@@ -880,8 +881,8 @@ function renderErrorWidget(errorMsg) {
         alignItems: "center",
         gap: 4,
         children: [
-          { type: "image", src: CHECK_LOGO, width: 14, height: 14 },
-          { type: "text", text: "IP质检", font: { size: "caption1", weight: "bold" }, textColor: C.textPrimary }
+          { type: "image", src: CHECK_LOGO, width: 12, height: 12 },
+          { type: "text", text: "IP质检", font: { size: 11.5, weight: "semibold" }, textColor: C.textPrimary }
         ]
       },
       { type: "spacer" },
